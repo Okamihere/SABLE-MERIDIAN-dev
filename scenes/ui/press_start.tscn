@@ -1,0 +1,66 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/press_start.gd" id="script"]
+[ext_resource type="PackedScene" path="res://scenes/ui/title_screen.tscn" id="title_preview"]
+[ext_resource type="FontFile" path="res://assets/ui/fonts/NotoSerifDisplay-Medium.ttf" id="display"]
+[ext_resource type="FontFile" path="res://assets/ui/fonts/NotoSans-Regular.ttf" id="sans"]
+
+[node name="PressStart" type="Control"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("script")
+
+[node name="TitlePreview" parent="." instance=ExtResource("title_preview")]
+
+[node name="IntroViewport" type="SubViewport" parent="."]
+disable_3d = true
+size = Vector2i(1000, 650)
+render_target_update_mode = 4
+
+[node name="ScreenUi" type="Control" parent="IntroViewport"]
+offset_right = 1000.0
+offset_bottom = 650.0
+mouse_filter = 2
+
+[node name="Backdrop" type="ColorRect" parent="IntroViewport/ScreenUi"]
+offset_right = 1000.0
+offset_bottom = 650.0
+mouse_filter = 2
+color = Color(0.06, 0.14, 0.19, 1)
+
+[node name="Title" type="Label" parent="IntroViewport/ScreenUi"]
+offset_top = 190.0
+offset_right = 1000.0
+offset_bottom = 312.0
+mouse_filter = 2
+theme_override_fonts/font = ExtResource("display")
+theme_override_font_sizes/font_size = 135
+theme_override_colors/font_color = Color(0.94, 0.83, 0.69, 1)
+text = "SABLE"
+horizontal_alignment = 1
+
+[node name="Subtitle" type="Label" parent="IntroViewport/ScreenUi"]
+offset_top = 360.0
+offset_right = 1000.0
+offset_bottom = 410.0
+mouse_filter = 2
+theme_override_fonts/font = ExtResource("sans")
+theme_override_font_sizes/font_size = 38
+theme_override_colors/font_color = Color(0.82, 0.65, 0.43, 1)
+text = "M E R I D I A N"
+horizontal_alignment = 1
+
+[node name="Prompt" type="Label" parent="IntroViewport/ScreenUi"]
+offset_top = 480.0
+offset_right = 1000.0
+offset_bottom = 530.0
+mouse_filter = 2
+theme_override_fonts/font = ExtResource("sans")
+theme_override_font_sizes/font_size = 38
+theme_override_colors/font_color = Color(0.72, 0.96, 0.98, 1)
+text = "PRESS START TO PLAY"
+horizontal_alignment = 1
