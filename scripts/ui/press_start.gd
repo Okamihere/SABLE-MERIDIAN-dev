@@ -3,6 +3,7 @@ extends Control
 const TITLE_SCENE := "res://scenes/ui/title_screen.tscn"
 const CRT_SHADER := preload("res://shaders/press_start_crt.gdshader")
 const CAMERA_MOVE_TIME := 1.35
+const FADE_IN_TIME := 1.0
 const INTRO_FOCUS := Vector3(0, 1.35, 1.7)
 const TITLE_FOCUS := Vector3(0, 1.75, 0)
 
@@ -17,7 +18,6 @@ var _time := 0.0
 var _flight_time := 0.0
 var _flight_from := Vector3.ZERO
 var _flight_to := Vector3.ZERO
-var _fade_started := false
 
 func _ready() -> void:
 	preview.set("cinematic_preview", true)
@@ -238,16 +238,13 @@ func _noise_texture(kind: String, side: int, seed_value: int) -> Texture2D:
 func _process(delta: float) -> void:
 	_time += delta
 	var prompt_brightness := 0.78 + 0.22 * sin(_time * 2.4)
-	if _starting and not _fade_started:
+	if _starting:
 		_flight_time = minf(_flight_time + delta, CAMERA_MOVE_TIME)
 		var progress := _flight_time / CAMERA_MOVE_TIME
 		var eased := progress * progress * (3.0 - 2.0 * progress)
 		preview_camera.position = _flight_from.lerp(_flight_to, eased)
 		preview_camera.look_at(INTRO_FOCUS.lerp(TITLE_FOCUS, eased))
 		prompt_brightness *= 1.0 - eased
-		if progress >= 1.0:
-			_fade_started = true
-			_finish_transition()
 	prompt.modulate.a = prompt_brightness
 	screen_light.light_energy = 1.65 + 0.025 * sin(_time * 5.1)
 
@@ -267,23 +264,23 @@ func _start() -> void:
 	_flight_from = preview_camera.position
 	var title_distance: float = preview.get("_camera_distance")
 	_flight_to = Vector3(0, 2.0, title_distance)
+	_finish_transition()
 
 func _finish_transition() -> void:
-	preview_camera.position = _flight_to
-	preview_camera.look_at(TITLE_FOCUS)
 	var veil_layer := CanvasLayer.new()
 	veil_layer.layer = 250
 	var veil := ColorRect.new()
 	veil.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	veil.color = Color(0.012, 0.006, 0.018, 0)
+	veil.color = Color(0, 0, 0, 0)
 	veil.mouse_filter = Control.MOUSE_FILTER_STOP
 	veil_layer.add_child(veil)
 	get_tree().root.add_child(veil_layer)
 	var tree := get_tree()
 	var scene_path := TITLE_SCENE
 	var fade := veil_layer.create_tween()
-	fade.tween_property(veil, "color:a", 1.0, 0.16)
+	fade.tween_property(veil, "color:a", 1.0, FADE_IN_TIME).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	fade.tween_interval(CAMERA_MOVE_TIME - FADE_IN_TIME + 0.05)
 	fade.tween_callback(func(): tree.change_scene_to_file(scene_path))
-	fade.tween_interval(0.08)
-	fade.tween_property(veil, "color:a", 0.0, 0.28)
+	fade.tween_interval(0.12)
+	fade.tween_property(veil, "color:a", 0.0, 1.2).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	fade.tween_callback(veil_layer.queue_free)
