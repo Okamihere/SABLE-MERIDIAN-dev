@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/gameplay-title.png" width="100%" alt="SABLE MERIDIAN — tela inicial na televisão 3D">
+  <img src="docs/gameplay-press-start.png" width="100%" alt="SABLE MERIDIAN — tela press start na televisão 3D">
 </p>
 
 <h1 align="center">SABLE MERIDIAN</h1>
