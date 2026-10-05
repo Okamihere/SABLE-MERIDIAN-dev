@@ -136,8 +136,8 @@ for expected_node in [
     "Hitboxes/LightHitbox", "Hitboxes/HeavyHitbox", "Skeleton3D", "PlayerAnimationController"
 ]:
     if expected_node == "Skeleton3D" and (
-        'res://assets/characters/jester_rig.glb' in player_scene
-        and 'NodePath("../ModelRoot/Jester/world/Skeleton3D")' in player_scene
+        'res://assets/characters/veyl_rig.glb' in player_scene
+        and 'NodePath("../ModelRoot/Veyl/world/Skeleton3D")' in player_scene
     ):
         continue  # The imported GLB owns the Skeleton3D, not the wrapper scene.
     leaf = expected_node.split("/")[-1]

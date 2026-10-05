@@ -5,7 +5,7 @@
 <h1 align="center">SABLE MERIDIAN</h1>
 
 <p align="center">
-  <i>Protótipo de ação em terceira pessoa — dark fantasy teatral num palco de jester.</i>
+  <i>Protótipo de ação em terceira pessoa — dark fantasy teatral num palco de veyl.</i>
 </p>
 
 <p align="center">
@@ -19,7 +19,7 @@ Protótipo feito em **Godot 4.7 (GDScript, GL Compatibility, 1920×1080)**. O p�
 
 **Destaques**
 - Combate com combos, esquiva perfeita em câmera lenta, ranking de estilo D–S e 5 armas com skills Q/E/R.
-- Grimório Vivo em 3D, HUD de jester com HP/MP, TV de título 3D e tela de opções com presets e confirmação de tela.
+- Grimório Vivo em 3D, HUD de veyl com HP/MP, TV de título 3D e tela de opções com presets e confirmação de tela.
 
 ## Galeria
 

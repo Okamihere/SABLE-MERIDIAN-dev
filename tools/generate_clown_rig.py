@@ -1,4 +1,4 @@
-"""Build a lightweight gameplay rig for the supplied static jester GLB.
+"""Build a lightweight gameplay rig for the supplied static veyl GLB.
 
 Usage: python3 tools/generate_clown_rig.py /path/to/paiaço.glb
 Requires NumPy. Keeps the source mesh; adds normals, vertex colors, skin weights,
@@ -181,11 +181,11 @@ def main(source: Path):
     for i, location in enumerate(absolute):
         inverse_bind[i, :3, 3] = -location
     ibm_id = append_array(inverse_bind.transpose(0, 2, 1).astype("<f4"), "MAT4", 5126, 7)
-    gltf["skins"] = [{"name": "JesterRig", "inverseBindMatrices": ibm_id, "joints": list(range(first_bone, first_bone + 7)), "skeleton": first_bone}]
+    gltf["skins"] = [{"name": "VeylRig", "inverseBindMatrices": ibm_id, "joints": list(range(first_bone, first_bone + 7)), "skeleton": first_bone}]
     gltf["nodes"][1]["skin"] = 0
-    gltf["nodes"][1]["name"] = "JesterMesh"
+    gltf["nodes"][1]["name"] = "VeylMesh"
     gltf["materials"] = [{
-        "name": "JesterCostume",
+        "name": "VeylCostume",
         "pbrMetallicRoughness": {"baseColorFactor": [1, 1, 1, 1], "metallicFactor": 0.16, "roughnessFactor": 0.58},
         "doubleSided": True,
     }]
@@ -196,7 +196,7 @@ def main(source: Path):
     json_data += b" " * (-len(json_data) % 4)
     binary.extend(b"\0" * (-len(binary) % 4))
     total = 12 + 8 + len(json_data) + 8 + len(binary)
-    target = Path(__file__).resolve().parents[1] / "assets/characters/jester_rig.glb"
+    target = Path(__file__).resolve().parents[1] / "assets/characters/veyl_rig.glb"
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_bytes(
         struct.pack("<III", 0x46546C67, 2, total)

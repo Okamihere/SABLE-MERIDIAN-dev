@@ -62,6 +62,11 @@ var _time_scale_generation: int = 0
 const BACKGROUND_FPS: int = 30
 ## FPS configurado pelo usuário (restaurado ao ganhar foco).
 var _user_max_fps: int = 0
+## Silencia o Master quando a janela perde o foco (opção em Áudio).
+var mute_in_background: bool = true
+## Guarda se o mute atual foi aplicado pela perda de foco (para restaurar).
+var _focus_muted: bool = false
+var _master_muted_before_focus: bool = false
 
 ## Inicializa o GameManager: cria StyleMeter e configura inputs.
 func _ready() -> void:
@@ -79,17 +84,32 @@ func _process(_delta: float) -> void:
 		DEBUG_COMBAT = not DEBUG_COMBAT
 		debug_changed.emit(DEBUG_COMBAT)
 
-## Detecta ganho/perda de foco da janela para ajustar FPS.
+## Detecta ganho/perda de foco da janela para ajustar FPS e áudio.
 func _notification(what: int) -> void:
 	match what:
 		NOTIFICATION_APPLICATION_FOCUS_OUT:
 			# Janela perdeu foco: limita a 30 FPS para economizar CPU/GPU
 			if Engine.max_fps != BACKGROUND_FPS:
 				Engine.max_fps = BACKGROUND_FPS
+			if mute_in_background:
+				var master := AudioServer.get_bus_index("Master")
+				_master_muted_before_focus = AudioServer.is_bus_mute(master)
+				AudioServer.set_bus_mute(master, true)
+				_focus_muted = true
 		NOTIFICATION_APPLICATION_FOCUS_IN:
-			# Janela recuperou foco: restaura FPS do usuário
+			# Janela recuperou foco: restaura FPS e mute anteriores do usuário
 			if _user_max_fps > 0 and Engine.max_fps != _user_max_fps:
 				Engine.max_fps = _user_max_fps
+			if _focus_muted:
+				AudioServer.set_bus_mute(AudioServer.get_bus_index("Master"), _master_muted_before_focus)
+				_focus_muted = false
+
+## Liga/desliga o silenciamento em segundo plano (opção de Áudio).
+func set_mute_in_background(value: bool) -> void:
+	mute_in_background = value
+	if not value and _focus_muted:
+		AudioServer.set_bus_mute(AudioServer.get_bus_index("Master"), _master_muted_before_focus)
+		_focus_muted = false
 
 ## Registra o jogador global.
 ## @param value Nó do jogador.

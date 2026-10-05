@@ -73,7 +73,7 @@ var _dead_time: float = 0.0
 ## Inicializa o controlador: cacheia ossos e conecta sinais.
 func _ready() -> void:
 	_skeleton = get_node(skeleton_path) as Skeleton3D
-	_staff_visual = get_node_or_null("../ModelRoot/Jester/world/Skeleton3D/StaffAttachment/MageStaff") as Node3D
+	_staff_visual = get_node_or_null("../ModelRoot/Veyl/world/Skeleton3D/StaffAttachment/MageStaff") as Node3D
 	if _staff_visual != null:
 		_staff_trail = _staff_visual.get_node_or_null("Crystal/AttackTrail") as GPUParticles3D
 	_state_machine = get_node(state_machine_path) as PlayerStateMachine

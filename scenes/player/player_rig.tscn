@@ -1,4 +1,4 @@
-[gd_scene load_steps=22 format=3]
+[gd_scene load_steps=24 format=3]
 
 [ext_resource type="Script" path="res://scripts/player/player.gd" id="1_player"]
 [ext_resource type="Script" path="res://scripts/player/player_state_machine.gd" id="2_state"]
@@ -8,8 +8,8 @@
 [ext_resource type="Script" path="res://scripts/components/hurtbox_component.gd" id="6_hurt"]
 [ext_resource type="Script" path="res://scripts/components/hitbox_component.gd" id="7_hit"]
 [ext_resource type="Script" path="res://scripts/player/player_animation_controller.gd" id="8_anim"]
-[ext_resource type="PackedScene" path="res://assets/characters/jester_rig.glb" id="9_jester"]
-[ext_resource type="Material" path="res://materials/jester_costume.tres" id="10_costume"]
+[ext_resource type="PackedScene" path="res://assets/characters/veyl_rig.glb" id="9_veyl"]
+[ext_resource type="Material" path="res://materials/veyl_costume.tres" id="10_costume"]
 [ext_resource type="Resource" path="res://resources/spells/cursed_deck.tres" id="11_cards"]
 [ext_resource type="PackedScene" path="res://scenes/player/mage_staff.tscn" id="14_staff"]
 [ext_resource type="PackedScene" path="res://scenes/player/card_blade.tscn" id="15_blade"]
@@ -17,6 +17,8 @@
 [ext_resource type="Material" path="res://materials/card_ink.tres" id="17_mask_ink"]
 [ext_resource type="Script" path="res://scripts/player/directional_sprite.gd" id="18_directional_sprite"]
 [ext_resource type="Script" path="res://scripts/player/weapon_display.gd" id="19_weapon_display"]
+[ext_resource type="PackedScene" path="res://effects/blob_shadow.tscn" id="20_blob"]
+[ext_resource type="Script" path="res://scripts/outline_applier.gd" id="21_outline"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape_player"]
 radius = 0.42
@@ -56,7 +58,8 @@ position = Vector3(0, 0.98, 0)
 pixel_size = 0.0029
 billboard = 2
 shaded = true
-alpha_cut = 2
+alpha_cut = 1
+alpha_scissor_threshold = 0.1
 texture_filter = 2
 layers = 2
 script = ExtResource("18_directional_sprite")
@@ -71,54 +74,61 @@ omni_range = 2.8
 shadow_enabled = false
 light_cull_mask = 2
 
-[node name="Jester" parent="ModelRoot" instance=ExtResource("9_jester")]
+[node name="BlobShadow" parent="." instance=ExtResource("20_blob")]
+position = Vector3(0, 0.02, 0)
+scale = Vector3(1.6, 1, 1.6)
 
-[node name="JesterMesh" parent="ModelRoot/Jester/world/Skeleton3D" index="0"]
+[node name="OutlineApplier" type="Node" parent="."]
+script = ExtResource("21_outline")
+
+[node name="Veyl" parent="ModelRoot" instance=ExtResource("9_veyl")]
+
+[node name="VeylMesh" parent="ModelRoot/Veyl/world/Skeleton3D" index="0"]
 material_override = ExtResource("10_costume")
 
-[node name="StaffAttachment" type="BoneAttachment3D" parent="ModelRoot/Jester/world/Skeleton3D"]
+[node name="StaffAttachment" type="BoneAttachment3D" parent="ModelRoot/Veyl/world/Skeleton3D"]
 visible = false
 position = Vector3(0.32, 0, 0)
 rotation_degrees = Vector3(0, 0, 0)
 bone_name = "RightArm"
 
-[node name="MageStaff" parent="ModelRoot/Jester/world/Skeleton3D/StaffAttachment" instance=ExtResource("14_staff")]
+[node name="MageStaff" parent="ModelRoot/Veyl/world/Skeleton3D/StaffAttachment" instance=ExtResource("14_staff")]
 position = Vector3(-0.35, 0, 0)
 rotation_degrees = Vector3(0, 0, 60)
 
-[node name="DaggerRight" type="BoneAttachment3D" parent="ModelRoot/Jester/world/Skeleton3D"]
+[node name="DaggerRight" type="BoneAttachment3D" parent="ModelRoot/Veyl/world/Skeleton3D"]
 visible = false
 position = Vector3(0.28, -0.05, 0)
 bone_name = "RightArm"
 
-[node name="CardBlade" parent="ModelRoot/Jester/world/Skeleton3D/DaggerRight" instance=ExtResource("15_blade")]
+[node name="CardBlade" parent="ModelRoot/Veyl/world/Skeleton3D/DaggerRight" instance=ExtResource("15_blade")]
 
-[node name="DaggerLeft" type="BoneAttachment3D" parent="ModelRoot/Jester/world/Skeleton3D"]
+[node name="DaggerLeft" type="BoneAttachment3D" parent="ModelRoot/Veyl/world/Skeleton3D"]
 visible = false
 position = Vector3(-0.28, -0.05, 0)
 bone_name = "LeftArm"
 
-[node name="CardBlade" parent="ModelRoot/Jester/world/Skeleton3D/DaggerLeft" instance=ExtResource("15_blade")]
+[node name="CardBlade" parent="ModelRoot/Veyl/world/Skeleton3D/DaggerLeft" instance=ExtResource("15_blade")]
 rotation_degrees = Vector3(0, 180, 0)
 
-[node name="LaughMask" type="BoneAttachment3D" parent="ModelRoot/Jester/world/Skeleton3D"]
+[node name="LaughMask" type="BoneAttachment3D" parent="ModelRoot/Veyl/world/Skeleton3D"]
 visible = false
 bone_name = "Head"
 
-[node name="Plate" type="MeshInstance3D" parent="ModelRoot/Jester/world/Skeleton3D/LaughMask"]
+[node name="Plate" type="MeshInstance3D" parent="ModelRoot/Veyl/world/Skeleton3D/LaughMask"]
 position = Vector3(0, 0, 0.22)
 scale = Vector3(1, 0.82, 0.2)
 mesh = SubResource("LaughMask_plate")
 material_override = ExtResource("16_mask_ivory")
 
-[node name="Smile" type="MeshInstance3D" parent="ModelRoot/Jester/world/Skeleton3D/LaughMask"]
+[node name="Smile" type="MeshInstance3D" parent="ModelRoot/Veyl/world/Skeleton3D/LaughMask"]
 position = Vector3(0, -0.055, 0.265)
 mesh = SubResource("LaughMask_smile")
 material_override = ExtResource("17_mask_ink")
 
 [node name="PlayerAnimationController" type="Node" parent="."]
 script = ExtResource("8_anim")
-skeleton_path = NodePath("../ModelRoot/Jester/world/Skeleton3D")
+skeleton_path = NodePath("../ModelRoot/Veyl/world/Skeleton3D")
 state_machine_path = NodePath("../StateMachine")
 
 [node name="StateMachine" type="Node" parent="."]
@@ -162,4 +172,4 @@ script = ExtResource("7_hit")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Hitboxes/HeavyHitbox"]
 shape = SubResource("BoxShape_heavy")
 
-[editable path="ModelRoot/Jester"]
+[editable path="ModelRoot/Veyl"]

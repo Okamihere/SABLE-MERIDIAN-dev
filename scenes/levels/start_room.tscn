@@ -15,6 +15,7 @@
 [ext_resource type="Script" uid="uid://56intx54chci" path="res://scripts/levels/visual_atmosphere.gd" id="visual_atmosphere"]
 [ext_resource type="PackedScene" path="res://scenes/collectibles/wall_orb.tscn" id="wall_orb"]
 [ext_resource type="PackedScene" path="res://scenes/collectibles/weapon_exhibit.tscn" id="weapon_exhibit"]
+[ext_resource type="Shader" path="res://shaders/stars.gdshader" id="stars_shader"]
 
 [sub_resource type="Environment" id="Environment_start"]
 background_mode = 2
@@ -25,9 +26,9 @@ ambient_light_source = 2
 ambient_light_color = Color(0.16, 0.17, 0.3, 1)
 ambient_light_energy = 0.7
 glow_enabled = true
-glow_intensity = 1.05
+glow_intensity = 0.8
 glow_bloom = 0.09
-glow_hdr_threshold = 0.75
+glow_hdr_threshold = 0.9
 fog_enabled = true
 fog_light_color = Color(0.18, 0.12, 0.29, 1)
 fog_sun_scatter = 0.12
@@ -38,6 +39,13 @@ fog_depth_end = 74.0
 adjustment_enabled = true
 adjustment_contrast = 1.16
 adjustment_saturation = 1.06
+
+[sub_resource type="ShaderMaterial" id="StarDomeMat"]
+shader = ExtResource("stars_shader")
+
+[sub_resource type="SphereMesh" id="StarDomeMesh"]
+radius = 300.0
+height = 600.0
 
 [sub_resource type="BoxMesh" id="BoxMesh_floor"]
 size = Vector3(28, 1, 32)
@@ -198,6 +206,11 @@ size = Vector3(3, 0.6, 2.2)
 [node name="StartRoom" type="Node3D" unique_id=2120275198]
 script = ExtResource("1_script")
 
+[node name="StarDome" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0, 0)
+mesh = SubResource("StarDomeMesh")
+material_override = SubResource("StarDomeMat")
+
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=835744707]
 environment = SubResource("Environment_start")
 
@@ -210,6 +223,7 @@ transform = Transform3D(0.8660254, -0.35355338, 0.35355338, 0, 0.70710677, 0.707
 light_color = Color(0.5, 0.6, 1, 1)
 light_energy = 1.7
 shadow_enabled = true
+directional_shadow_max_distance = 70.0
 
 [node name="OmniLight3D" type="OmniLight3D" parent="." unique_id=1692550262]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5, 0)
@@ -232,6 +246,7 @@ omni_range = 8.0
 [node name="PlayerRim" type="OmniLight3D" parent="." unique_id=1077122252]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 4, -8)
 light_color = Color(0.54, 0.61, 0.96, 1)
+light_energy = 0.7
 omni_range = 10.0
 
 [node name="Floor" type="MeshInstance3D" parent="." unique_id=1302964074]

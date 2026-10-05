@@ -80,11 +80,11 @@ var _skill_guard_until := 0.0
 @export var spells: Array[SpellResource] = []
 ## Para cenas que começam depois da obtenção do cajado, como a cidade.
 @export var starts_with_staff: bool = false
-@onready var staff_attachment: BoneAttachment3D = get_node_or_null("ModelRoot/Jester/world/Skeleton3D/StaffAttachment") as BoneAttachment3D
-@onready var dagger_right: BoneAttachment3D = get_node_or_null("ModelRoot/Jester/world/Skeleton3D/DaggerRight") as BoneAttachment3D
-@onready var dagger_left: BoneAttachment3D = get_node_or_null("ModelRoot/Jester/world/Skeleton3D/DaggerLeft") as BoneAttachment3D
+@onready var staff_attachment: BoneAttachment3D = get_node_or_null("ModelRoot/Veyl/world/Skeleton3D/StaffAttachment") as BoneAttachment3D
+@onready var dagger_right: BoneAttachment3D = get_node_or_null("ModelRoot/Veyl/world/Skeleton3D/DaggerRight") as BoneAttachment3D
+@onready var dagger_left: BoneAttachment3D = get_node_or_null("ModelRoot/Veyl/world/Skeleton3D/DaggerLeft") as BoneAttachment3D
 @onready var weapon_display: Node3D = get_node_or_null("WeaponDisplay") as Node3D
-@onready var laugh_mask_visual: BoneAttachment3D = get_node_or_null("ModelRoot/Jester/world/Skeleton3D/LaughMask") as BoneAttachment3D
+@onready var laugh_mask_visual: BoneAttachment3D = get_node_or_null("ModelRoot/Veyl/world/Skeleton3D/LaughMask") as BoneAttachment3D
 ## Caminho para o controlador de câmera (evita dependência de hierarquia frágil).
 @export var camera_controller_path: NodePath
 

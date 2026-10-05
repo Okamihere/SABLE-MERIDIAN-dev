@@ -9,7 +9,7 @@ The phase overview also lives in [docs/roadmap.md](docs/roadmap.md).
 - [x] Hitboxes, health, combos, launchers, aerial attacks and dodge
 - [x] Basic enemies, style ranks, training room and gothic city blockout
 - [x] Responsive HUD and collectible wall-jump upgrades
-- [x] Integrate the supplied jester model as the playable character with a procedural rig
+- [x] Integrate the supplied veyl model as the playable character with a procedural rig
 
 ## Next phases
 

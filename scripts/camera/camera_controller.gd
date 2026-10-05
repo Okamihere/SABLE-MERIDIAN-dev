@@ -29,7 +29,7 @@ const TARGET_BLEND_DURATION := 0.22
 ## Velocidade de suavização da rotação.
 @export var rotation_lag: float = 10.0
 ## Distância base da câmera.
-@export var base_distance: float = 6.4
+@export var base_distance: float = 5.0
 ## Distância desejada ajustável com a roda, antes da colisão do SpringArm.
 @export var min_distance: float = 3.2
 @export var max_distance: float = 9.2
@@ -68,7 +68,7 @@ var _shake_strength: float = 0.0
 var _shake_decay: float = 8.0
 ## Tween de FOV atual.
 var _fov_tween: Tween
-var _zoom_distance: float = 6.4
+var _zoom_distance: float = 5.0
 var _composition: float = 0.0
 var _lock_focus_amount: float = 0.0
 var _focus_transition_locked: bool = false

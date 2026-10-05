@@ -14,6 +14,9 @@ func _run() -> void:
 	var menu := root.get_node("PauseMenu")
 	var progress := root.get_node("Progression")
 	menu.settings_path = "user://settings_flow_test.cfg"
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(menu.settings_path))
+	menu._load_settings()
+	assert(is_equal_approx(db_to_linear(AudioServer.get_bus_volume_db(AudioServer.get_bus_index("Master"))) * 100.0, 75.0), "Master padrao 75%")
 	progress.save_path = "user://settings_flow_orbs_test.cfg"
 	change_scene_to_file("res://scenes/ui/title_screen.tscn")
 	await _frames(5)
@@ -55,6 +58,17 @@ func _run() -> void:
 	assert(config.get_value("video", "fps_limit") == 120, "FPS deve persistir")
 	assert(config.get_value("video", "vsync") == false, "VSync deve persistir")
 	assert(config.get_value("gameplay", "camera_sensitivity_percent") == 150.0, "Câmera deve persistir")
+	assert(config.get_value("audio", "mute_in_background", true) == true, "Mute fundo padrao ligado")
+	var gm := root.get_node("GameManager")
+	menu._bg_mute_selector.item_selected.emit(0)
+	assert(gm.mute_in_background == false, "Toggle desliga")
+	menu._load_settings()
+	assert(gm.mute_in_background == false, "Toggle persiste")
+	gm.set_mute_in_background(true)
+	gm._notification(MainLoop.NOTIFICATION_APPLICATION_FOCUS_OUT)
+	assert(AudioServer.is_bus_mute(AudioServer.get_bus_index("Master")), "Fundo silencia")
+	gm._notification(MainLoop.NOTIFICATION_APPLICATION_FOCUS_IN)
+	assert(not AudioServer.is_bus_mute(AudioServer.get_bus_index("Master")), "Foco restaura")
 	menu._on_back_pressed()
 	assert(menu.pause_page.visible and paused, "Voltar deve mostrar pause")
 	menu.resume_game()
@@ -68,7 +82,8 @@ func _run() -> void:
 	await create_timer(0.8).timeout
 	await _frames(10)
 	assert(current_scene.scene_file_path.ends_with("start_room.tscn") and not paused, "Continuar deve reabrir gameplay")
-	assert(Input.mouse_mode == Input.MOUSE_MODE_CAPTURED, "Gameplay deve capturar o mouse")
+	if DisplayServer.get_name() != "headless":
+		assert(Input.mouse_mode == Input.MOUSE_MODE_CAPTURED, "Gameplay deve capturar o mouse")
 	menu._load_settings()
 	assert(is_equal_approx(root.get_node("GameManager").camera_sensitivity, 0.0042), "Configuração deve recarregar")
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(menu.settings_path))

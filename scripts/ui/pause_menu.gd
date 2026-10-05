@@ -30,6 +30,7 @@ var _volume_sliders: Dictionary = {}
 var _quality_controls: Dictionary = {}
 var _vsync_selector: OptionButton
 var _fps_selector: OptionButton
+var _bg_mute_selector: OptionButton
 var _sensitivity_slider: HSlider
 var _desc_title: Label
 var _desc_body: Label
@@ -225,6 +226,8 @@ func _hide_popups() -> void:
 		_vsync_selector.get_popup().hide()
 	if _fps_selector != null:
 		_fps_selector.get_popup().hide()
+	if _bg_mute_selector != null:
+		_bg_mute_selector.get_popup().hide()
 
 func _populate_controls() -> void:
 	for child in controls_rows.get_children():
@@ -388,6 +391,9 @@ func _setup_options_pages() -> void:
 		var slider := _add_slider(_tab_pages[2], display_name, 0.0, 100.0, 1.0)
 		_volume_sliders[bus_name] = slider
 		slider.value_changed.connect(_on_volume_changed.bind(bus_name))
+	_bg_mute_selector = _add_selector(_tab_pages[2], "Silenciar em segundo plano", ["Desligado", "Ligado"])
+	_bg_mute_selector.item_selected.connect(_on_bg_mute_selected)
+	_describe(_bg_mute_selector, "Silenciar em segundo plano", "Corta o som ao minimizar ou trocar de janela. Impacto: nenhum.")
 	
 	# JOGABILIDADE tab (index 3)
 	_sensitivity_slider = _add_slider(_tab_pages[3], "Sensibilidade da câmera", 20.0, 200.0, 5.0)
@@ -417,7 +423,6 @@ func _setup_quality_page(page: VBoxContainer) -> void:
 	msaa_selector.item_selected.connect(_on_msaa_changed)
 	_quality_controls["msaa"] = msaa_selector
 	_describe(msaa_selector, "MSAA 3D", "Suaviza bordas do 3D. Opção segura para sprites. Impacto: Médio.")
-	_add_disabled_row(page, "FXAA", "Sem efeito no renderer Compatibility.")
 	_add_disabled_row(page, "TAA", "Requer Forward+. Pode borrar sprites em movimento.")
 
 	# TEXTURAS
@@ -582,6 +587,10 @@ func _on_volume_changed(value: float, bus_name: String) -> void:
 func _on_sensitivity_changed(value: float) -> void:
 	var new_sensitivity := 0.0028 * value / 100.0
 	GameManager.set_camera_sensitivity(new_sensitivity)
+	_save_settings()
+
+func _on_bg_mute_selected(index: int) -> void:
+	GameManager.set_mute_in_background(index == 1)
 	_save_settings()
 
 func _on_vsync_selected(index: int) -> void:
@@ -848,6 +857,8 @@ func _sync_controls() -> void:
 	if selected >= 0:
 		resolution_selector.select(selected)
 	_vsync_selector.select(1 if _vsync_enabled else 0)
+	if _bg_mute_selector != null:
+		_bg_mute_selector.select(1 if GameManager.mute_in_background else 0)
 	var fps_index := [30, 60, 120, 0].find(Engine.max_fps)
 	_fps_selector.select(fps_index if fps_index >= 0 else 3)
 	for bus_name in _volume_sliders:
@@ -863,6 +874,8 @@ func _sync_controls() -> void:
 func _load_settings() -> void:
 	var config := ConfigFile.new()
 	if config.load(settings_path) != OK:
+		_on_volume_changed_without_save(75.0, "Master")
+		_sync_controls()
 		return
 	var size_value: Variant = config.get_value("video", "windowed_size", _windowed_size)
 	if size_value is Vector2i and size_value.x >= 640 and size_value.y >= 360:
@@ -881,8 +894,10 @@ func _load_settings() -> void:
 		if GameManager.has_method("_set_user_max_fps"):
 			GameManager._set_user_max_fps(fps)
 	for bus_name in _volume_sliders:
-		var volume := clampf(float(config.get_value("audio", bus_name.to_lower(), 100.0)), 0.0, 100.0)
+		var fallback := 75.0 if bus_name == "Master" else 100.0
+		var volume := clampf(float(config.get_value("audio", bus_name.to_lower(), fallback)), 0.0, 100.0)
 		_on_volume_changed_without_save(volume, bus_name)
+	GameManager.set_mute_in_background(bool(config.get_value("audio", "mute_in_background", true)))
 	var sens_percent := float(config.get_value("gameplay", "camera_sensitivity_percent", 100.0))
 	sens_percent = clampf(sens_percent, 20.0, 200.0)
 	GameManager.set_camera_sensitivity(0.0028 * sens_percent / 100.0)
@@ -905,6 +920,7 @@ func _save_settings() -> void:
 	config.set_value("video", "fps_limit", Engine.max_fps)
 	for bus_name in _volume_sliders:
 		config.set_value("audio", bus_name.to_lower(), (_volume_sliders[bus_name] as HSlider).value)
+	config.set_value("audio", "mute_in_background", GameManager.mute_in_background)
 	config.set_value("gameplay", "camera_sensitivity_percent", GameManager.camera_sensitivity / 0.0028 * 100.0)
 	var result := config.save(settings_path)
 	if result != OK:

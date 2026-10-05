@@ -14,7 +14,7 @@ extends Node
 ## TAA, FSR 2 (temporal), FXAA/SMAA, SSIL, volumetric fog, debanding.
 ## (Ver tabela oficial "Overview of renderers" para Compatibility.)
 ##
-## Chaves legadas (fxaa, ssil_enabled, volumetric_fog_quality) continuam
+## Chaves legadas (volumetric_fog_quality) continuam
 ## sendo lidas/preservadas no arquivo por compatibilidade, mas não dirigem nada.
 
 signal preset_changed(preset_name: String)
@@ -38,9 +38,7 @@ var ssao_enabled: bool = false
 var fog_enabled: bool = true
 var glow_enabled: bool = true
 
-# Campos legados: preservados no arquivo, sem efeito na renderização.
-var fxaa: bool = false
-var ssil_enabled: bool = false
+# Campo legado: preservado no arquivo, sem efeito na renderização.
 var volumetric_fog_quality: int = -1
 
 const SHADOW_ATLAS_SIZES := [1024, 2048, 4096]
@@ -175,8 +173,6 @@ func set_setting(setting_name: String, value: Variant) -> void:
 		"fog_enabled": fog_enabled = value
 		"glow_enabled": glow_enabled = value
 		# Legados: aceitos por compatibilidade, sem efeito.
-		"fxaa": fxaa = value
-		"ssil_enabled": ssil_enabled = value
 		"volumetric_fog_quality": volumetric_fog_quality = value
 		_: return
 
@@ -249,9 +245,7 @@ func _load_settings() -> void:
 	ssao_enabled = bool(config.get_value("graphics", "ssao_enabled", false))
 	fog_enabled = bool(config.get_value("graphics", "fog_enabled", true))
 	glow_enabled = bool(config.get_value("graphics", "glow_enabled", true))
-	# Legados (sem efeito, preservados).
-	fxaa = bool(config.get_value("graphics", "fxaa", false))
-	ssil_enabled = bool(config.get_value("graphics", "ssil_enabled", false))
+	# Legado (sem efeito, preservado).
 	volumetric_fog_quality = int(config.get_value("graphics", "volumetric_fog_quality", -1))
 
 	_apply_settings()
@@ -274,8 +268,6 @@ func _save_settings() -> void:
 	config.set_value("graphics", "ssao_enabled", ssao_enabled)
 	config.set_value("graphics", "fog_enabled", fog_enabled)
 	config.set_value("graphics", "glow_enabled", glow_enabled)
-	config.set_value("graphics", "fxaa", fxaa)
-	config.set_value("graphics", "ssil_enabled", ssil_enabled)
 	config.set_value("graphics", "volumetric_fog_quality", volumetric_fog_quality)
 
 	var result := config.save(SETTINGS_PATH)

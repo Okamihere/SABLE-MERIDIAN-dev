@@ -22,11 +22,11 @@ func _run() -> void:
 	var forward: Vector3 = player._camera_relative_direction(Vector2(0.0, -1.0))
 	Input.action_press("move_forward")
 	await _frames(18)
-	assert(model.global_transform.basis.z.dot(forward) > 0.9, "W must point the jester away from the camera")
+	assert(model.global_transform.basis.z.dot(forward) > 0.9, "W must point the veyl away from the camera")
 	Input.action_release("move_forward")
 	Input.action_press("move_back")
 	await _frames(18)
-	assert(model.global_transform.basis.z.dot(-forward) > 0.9, "S must point the jester toward the camera")
+	assert(model.global_transform.basis.z.dot(-forward) > 0.9, "S must point the veyl toward the camera")
 	Input.action_release("move_back")
 	player.equip_staff()
 	for attack in [player.combat.LIGHT_1, player.combat.HEAVY]:

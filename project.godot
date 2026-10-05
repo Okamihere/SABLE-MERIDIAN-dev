@@ -28,6 +28,7 @@ GraphicsSettings="*res://scripts/systems/graphics_settings.gd"
 PauseMenu="*res://scenes/ui/pause_menu.tscn"
 NpcInteraction="*res://scenes/ui/npc_interaction.tscn"
 AreaTransition="*res://scenes/ui/area_transition.tscn"
+MusicManager="*res://scripts/systems/music_manager.gd"
 
 [display]
 
@@ -36,6 +37,8 @@ window/size/viewport_height=1080
 window/size/mode=4
 window/size/window_width_override=1280
 window/size/window_height_override=720
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
 
 [layer_names]
 
@@ -54,3 +57,4 @@ common/enable_pause_aware_picking=true
 
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
+anti_aliasing/quality/msaa_3d=2

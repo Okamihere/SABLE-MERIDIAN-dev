@@ -4,9 +4,9 @@ The broader plan is in [ROADMAP.md](ROADMAP.md) and [docs/roadmap.md](docs/roadm
 
 ## Character and combat
 
-- [x] Replace the placeholder player visual with the supplied jester model.
+- [x] Replace the placeholder player visual with the supplied veyl model.
 - [x] Add a gameplay rig, costume colors and procedural movement/combat poses.
-- [ ] Build authored idle, run, jump, dodge, hit and combo animations for the jester.
+- [ ] Build authored idle, run, jump, dodge, hit and combo animations for the veyl.
 - [ ] Review skin weights, facial detail and costume colors in the running game.
 - [ ] Add target switching while locked on, more playable weapons and larger combo trees.
 - [ ] Add new enemy archetypes, navigation and boss encounters.

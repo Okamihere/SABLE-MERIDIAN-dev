@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://scripts/enemies/basic_enemy.gd" id="1_enemy"]
 [ext_resource type="Script" path="res://scripts/components/health_component.gd" id="2_health"]
@@ -6,6 +6,7 @@
 [ext_resource type="Script" path="res://scripts/components/hitbox_component.gd" id="4_hit"]
 [ext_resource type="Material" path="res://materials/enemy_body.tres" id="5_bodymat"]
 [ext_resource type="Material" path="res://materials/enemy_accent.tres" id="6_accent"]
+[ext_resource type="Script" path="res://scripts/outline_applier.gd" id="7_outline"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape_enemy"]
 radius = 0.48
@@ -79,3 +80,6 @@ source_path = NodePath("..")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="AttackHitbox"]
 shape = SubResource("BoxShape_attack")
+
+[node name="OutlineApplier" type="Node" parent="."]
+script = ExtResource("7_outline")

@@ -15,11 +15,11 @@ func _run() -> void:
 	await physics_frame
 	var training := current_scene
 	var stone := training.get_node("Floor").material_override as StandardMaterial3D
-	var costume := training.get_node("Player/ModelRoot/Jester/world/Skeleton3D/JesterMesh") as MeshInstance3D
+	var costume := training.get_node("Player/ModelRoot/Veyl/world/Skeleton3D/VeylMesh") as MeshInstance3D
 	assert(stone.diffuse_mode == BaseMaterial3D.DIFFUSE_TOON, "Shared scenery material must use toon lighting")
 	assert(stone.specular_mode == BaseMaterial3D.SPECULAR_TOON, "Scenery highlights must use the same style")
-	assert(costume != null, "Imported jester model must remain in the scene")
-	assert((costume.material_override as StandardMaterial3D).diffuse_mode == BaseMaterial3D.DIFFUSE_TOON, "Jester costume must share toon lighting")
+	assert(costume != null, "Imported veyl model must remain in the scene")
+	assert((costume.material_override as StandardMaterial3D).diffuse_mode == BaseMaterial3D.DIFFUSE_TOON, "Veyl costume must share toon lighting")
 	var gate := training.get_node("FogGate")
 	assert(gate.get_node("FrontFog").material_override is ShaderMaterial, "Transparent fog must keep its dedicated shader")
 	var space: PhysicsDirectSpaceState3D = training.get_world_3d().direct_space_state
