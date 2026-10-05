@@ -27,6 +27,7 @@ var _dial_drag_amount := 0.0
 var _time := 0.0
 var _mouse_offset := Vector2.ZERO
 var _transitioning := false
+var cinematic_preview := false
 var _camera_distance := 4.3
 var _props: Dictionary = {}
 var _prop_tweens: Dictionary = {}
@@ -45,6 +46,7 @@ func _ready() -> void:
 	_update_camera_distance()
 	_build_stage()
 	_build_television()
+	_build_living_room()
 	ui.choice_selected.connect(_on_choice)
 	ui.selection_changed.connect(_on_selection_changed)
 	ui.set_continue_available(not Progression.collected.is_empty())
@@ -56,10 +58,10 @@ func _process(delta: float) -> void:
 	tv.rotation.y = lerpf(tv.rotation.y, _mouse_offset.x * 0.045 + sin(_time * 0.43) * 0.009, minf(1.0, delta * 3.0))
 	tv.rotation.x = lerpf(tv.rotation.x, -_mouse_offset.y * 0.025, minf(1.0, delta * 3.0))
 	var desired_camera := Vector3(_mouse_offset.x * 0.13, 2.0 - _mouse_offset.y * 0.075, _camera_distance)
-	if not _transitioning:
+	if not _transitioning and not cinematic_preview:
 		camera.position = camera.position.lerp(desired_camera, minf(1.0, delta * 2.1))
 		camera.look_at(Vector3(0, 1.75, 0))
-	if not _transitioning:
+	if not _transitioning and not cinematic_preview:
 		key_light.light_energy = 1.35 + 0.08 * sin(_time * 1.2)
 		rim_light.light_energy = 0.82 + 0.08 * sin(_time * 0.87 + 1.1)
 		screen_glow.light_energy = 1.1 + 0.08 * sin(_time * 2.4)
@@ -91,7 +93,7 @@ func _update_particles_mouse_pos() -> void:
 				shader_mat.set_shader_parameter("mouse_world_pos", world_pos)
 
 func _unhandled_input(event: InputEvent) -> void:
-	if _transitioning or PauseMenu.overlay.visible:
+	if cinematic_preview or _transitioning or PauseMenu.overlay.visible:
 		return
 	if event is InputEventMouseMotion:
 		if _dragging_dial:
@@ -269,9 +271,9 @@ func _on_selection_changed(index: int) -> void:
 	if is_instance_valid(_dial):
 		if is_instance_valid(_dial_tween):
 			_dial_tween.kill()
-		var target := Vector3(PI * 0.5, 0, float(index) * 0.35)
+		var target := Quaternion(Vector3.BACK, -float(index) * 0.35) * Quaternion(Vector3.RIGHT, PI * 0.5)
 		_dial_tween = create_tween()
-		_dial_tween.tween_property(_dial, "rotation", target, 0.32).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		_dial_tween.tween_property(_dial, "quaternion", target, 0.32).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 func _power_off_exit() -> void:
 	if _transitioning:
@@ -328,7 +330,7 @@ func _update_camera_distance() -> void:
 	var aspect := viewport_size.x / viewport_size.y
 	var half_fov := deg_to_rad(camera.fov) * 0.5
 	_camera_distance = maxf(4.3, 4.45 / (2.0 * tan(half_fov) * aspect))
-	if not _transitioning:
+	if not _transitioning and not cinematic_preview:
 		camera.position.z = _camera_distance
 		camera.look_at(Vector3(0, 1.75, 0))
 
@@ -422,6 +424,128 @@ func _build_television() -> void:
 		_gem(aerial, "AntennaTip", Vector3(side * 0.06, 0.18, 0), 0.06, brass)
 		_register_prop(aerial, Vector3(side * 0.035, 0.09, 0), Vector3(0.2, 0.4, 0.2), &"antenna")
 
+func _build_living_room() -> void:
+	var floor_material := _material(Color(0.11, 0.075, 0.085), 0.0, 0.94)
+	var wood := _material(Color(0.27, 0.13, 0.095), 0.0, 0.68)
+	var wood_edge := _material(Color(0.43, 0.25, 0.16), 0.0, 0.6)
+	var upholstery := _material(Color(0.25, 0.12, 0.19), 0.0, 0.95)
+	var cushions := _material(Color(0.37, 0.19, 0.25), 0.0, 0.98)
+	var seams := _material(Color(0.16, 0.075, 0.12), 0.0, 0.98)
+	_box(stage, "LivingRoomFloor", Vector3(0, -0.12, 2.2), Vector3(8.0, 0.18, 6.0), floor_material)
+	var furniture_light := OmniLight3D.new()
+	furniture_light.name = "FurnitureLight"
+	furniture_light.position = Vector3(-1.2, 2.3, 3.0)
+	furniture_light.light_color = Color(0.9, 0.64, 0.48)
+	furniture_light.light_energy = 0.9
+	furniture_light.omni_range = 3.2
+	stage.add_child(furniture_light)
+
+	var table := Node3D.new()
+	table.name = "CoffeeTable"
+	table.position = Vector3(0, 0, 2.2)
+	stage.add_child(table)
+	_box(table, "Top", Vector3(0, 0.47, 0), Vector3(2.2, 0.13, 0.8), wood_edge)
+	_box(table, "TopInset", Vector3(0, 0.54, 0), Vector3(2.02, 0.025, 0.66), wood)
+	_box(table, "LowerShelf", Vector3(0, 0.17, 0), Vector3(1.92, 0.055, 0.6), wood)
+	for side in [-1.0, 1.0]:
+		for end in [-1.0, 1.0]:
+			_box(table, "Leg", Vector3(side * 0.94, 0.22, end * 0.28), Vector3(0.11, 0.43, 0.11), wood_edge)
+	_build_table_cigarettes(table)
+
+	var sofa := Node3D.new()
+	sofa.name = "SofaFacingTelevision"
+	sofa.position = Vector3(0, 0, 3.7)
+	stage.add_child(sofa)
+	_box(sofa, "Base", Vector3(0, 0.33, 0), Vector3(2.75, 0.44, 1.15), upholstery)
+	_box(sofa, "Back", Vector3(0, 0.82, 0.45), Vector3(2.75, 0.86, 0.3), upholstery)
+	_box(sofa, "BackTop", Vector3(0, 1.27, 0.45), Vector3(2.6, 0.11, 0.32), cushions)
+	for side in [-1.0, 1.0]:
+		_box(sofa, "Armrest", Vector3(side * 1.28, 0.66, -0.03), Vector3(0.28, 0.65, 1.22), upholstery)
+		_box(sofa, "ArmrestTop", Vector3(side * 1.28, 1.0, -0.03), Vector3(0.3, 0.09, 1.12), cushions)
+	for seat in [-1, 0, 1]:
+		_box(sofa, "SeatCushion", Vector3(float(seat) * 0.79, 0.59, -0.16), Vector3(0.75, 0.17, 0.72), cushions)
+		_box(sofa, "BackCushion", Vector3(float(seat) * 0.79, 0.88, 0.23), Vector3(0.74, 0.5, 0.16), cushions)
+		if seat < 1:
+			_box(sofa, "BackSeam", Vector3((float(seat) + 0.5) * 0.79, 0.87, 0.61), Vector3(0.015, 0.66, 0.012), seams)
+
+func _build_table_cigarettes(table: Node3D) -> void:
+	var pack_paper := _material(Color(0.78, 0.69, 0.55), 0.0, 0.9)
+	var pack_band := _material(Color(0.45, 0.1, 0.13), 0.0, 0.9)
+	var pack_inside := _material(Color(0.12, 0.08, 0.07), 0.0, 1.0)
+	var cigarette_paper := _material(Color(0.86, 0.79, 0.66), 0.0, 0.95)
+	var filter_material := _material(Color(0.54, 0.34, 0.18), 0.0, 0.95)
+	var ash := _material(Color(0.34, 0.32, 0.31), 0.0, 1.0)
+	var ember := _material(Color(1.0, 0.21, 0.07), 0.0, 0.7, Color(1.0, 0.16, 0.03))
+	var pack := Node3D.new()
+	pack.name = "OpenCigarettePack"
+	pack.position = Vector3(-0.5, 0, 0.02)
+	table.add_child(pack)
+	_box(pack, "Bottom", Vector3(0, 0.58, 0), Vector3(0.32, 0.05, 0.22), pack_paper)
+	_box(pack, "Inside", Vector3(0, 0.605, 0), Vector3(0.28, 0.006, 0.18), pack_inside)
+	for side in [-1.0, 1.0]:
+		_box(pack, "Side", Vector3(side * 0.15, 0.71, 0), Vector3(0.025, 0.22, 0.22), pack_paper)
+		_box(pack, "End", Vector3(0, 0.71, side * 0.10), Vector3(0.28, 0.22, 0.025), pack_paper)
+	_box(pack, "FrontBand", Vector3(0, 0.68, 0.115), Vector3(0.27, 0.09, 0.008), pack_band)
+	for row in 2:
+		for column in 4:
+			var stub := _cylinder(pack, "CigaretteButt", Vector3((float(column) - 1.5) * 0.064, 0.74 + 0.018 * float((row + column) % 2), (float(row) - 0.5) * 0.075), 0.022, 0.21, filter_material if (row + column) % 2 == 0 else cigarette_paper)
+			_cylinder(stub, "AshTip", Vector3(0, 0.106, 0), 0.022, 0.018, ash)
+	var cigarette := Node3D.new()
+	cigarette.name = "LitCigarette"
+	cigarette.position = Vector3(0.3, 0.585, 0.04)
+	table.add_child(cigarette)
+	var paper := _cylinder(cigarette, "Paper", Vector3.ZERO, 0.025, 0.46, cigarette_paper)
+	paper.rotation.z = PI * 0.5
+	var filter_tip := _cylinder(cigarette, "Filter", Vector3(-0.18, 0, 0), 0.026, 0.12, filter_material)
+	filter_tip.rotation.z = PI * 0.5
+	_gem(cigarette, "BurningTip", Vector3(0.24, 0, 0), 0.027, ember)
+	_add_cigarette_smoke(cigarette)
+
+func _add_cigarette_smoke(cigarette: Node3D) -> void:
+	var smoke := GPUParticles3D.new()
+	smoke.name = "TipSmoke"
+	smoke.position = Vector3(0.25, 0.025, 0)
+	smoke.amount = 18
+	smoke.lifetime = 3.2
+	smoke.preprocess = 3.2
+	smoke.local_coords = false
+	smoke.visibility_aabb = AABB(Vector3(-0.4, -0.1, -0.4), Vector3(0.8, 1.2, 0.8))
+	var movement := ParticleProcessMaterial.new()
+	movement.direction = Vector3(0.08, 1.0, 0)
+	movement.spread = 16.0
+	movement.gravity = Vector3.ZERO
+	movement.initial_velocity_min = 0.1
+	movement.initial_velocity_max = 0.16
+	movement.scale_min = 0.65
+	movement.scale_max = 1.15
+	var fade := Gradient.new()
+	fade.set_color(0, Color(0.8, 0.86, 0.88, 0))
+	fade.add_point(0.2, Color(0.8, 0.86, 0.88, 0.6))
+	fade.add_point(0.68, Color(0.8, 0.86, 0.88, 0.32))
+	fade.set_color(fade.get_point_count() - 1, Color(0.8, 0.86, 0.88, 0))
+	var fade_texture := GradientTexture1D.new()
+	fade_texture.gradient = fade
+	movement.color_ramp = fade_texture
+	smoke.process_material = movement
+	var puff := QuadMesh.new()
+	puff.size = Vector2(0.085, 0.14)
+	var image := Image.create(16, 16, false, Image.FORMAT_RGBA8)
+	for y in 16:
+		for x in 16:
+			var distance := Vector2(float(x) - 7.5, float(y) - 7.5).length() / 7.5
+			var alpha := pow(maxf(0.0, 1.0 - distance), 1.7)
+			image.set_pixel(x, y, Color(1, 1, 1, alpha))
+	var smoke_material := StandardMaterial3D.new()
+	smoke_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	smoke_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	smoke_material.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+	smoke_material.vertex_color_use_as_albedo = true
+	smoke_material.albedo_texture = ImageTexture.create_from_image(image)
+	smoke_material.albedo_color = Color(0.78, 0.82, 0.84, 0.42)
+	puff.material = smoke_material
+	smoke.draw_pass_1 = puff
+	cigarette.add_child(smoke)
+
 func _curtain_mesh(parent: Node3D, side: float, width: float, height: float, material: Material) -> void:
 	var surface := SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -431,7 +555,7 @@ func _curtain_mesh(parent: Node3D, side: float, width: float, height: float, mat
 			var u1 := float(column + 1) / 10.0
 			var v0 := float(row) / 3.0
 			var v1 := float(row + 1) / 3.0
-			var shade := Color(0.72, 0.72, 0.72) if column % 2 == 0 else Color(1.0, 0.91, 0.95)
+			var shade := Color(0.62, 0.62, 0.62) if column % 2 == 0 else Color(1.0, 0.91, 0.95)
 			var a := _curtain_point(side, width, height, u0, v0)
 			var b := _curtain_point(side, width, height, u1, v0)
 			var c := _curtain_point(side, width, height, u1, v1)
@@ -445,7 +569,7 @@ func _curtain_mesh(parent: Node3D, side: float, width: float, height: float, mat
 	parent.add_child(mesh)
 
 func _curtain_point(side: float, width: float, height: float, u: float, v: float) -> Vector3:
-	var fold := sin(u * PI * 10.0) * 0.07
+	var fold := sin(u * PI * 10.0) * 0.12
 	var hem := sin(u * PI * 5.0) * 0.065
 	return Vector3(-side * width * u, height * (0.5 - v) + hem * v, fold + 0.035 * v)
 
@@ -473,6 +597,7 @@ func _crown_mesh(parent: Node3D, material: Material) -> void:
 func _cloth_quad(surface: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, d: Vector3, color: Color) -> void:
 	for point in [a, b, c, a, c, d]:
 		surface.set_color(color)
+		surface.set_uv(Vector2(point.x * 0.32 + 0.5, point.y * 0.22 + 0.5))
 		surface.add_vertex(point)
 
 func _material(color: Color, metal: float, rough: float, emission: Color = Color.BLACK) -> StandardMaterial3D:
