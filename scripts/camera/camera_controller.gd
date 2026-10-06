@@ -81,6 +81,7 @@ var _focus_target: Node3D
 
 ## Inicializa a câmera: configura SpringArm, captura mouse e posiciona.
 func _ready() -> void:
+	process_physics_priority = 1  # Player atualiza antes do seguimento da câmera.
 	mouse_sensitivity = GameManager.camera_sensitivity
 	GameManager.camera_sensitivity_changed.connect(_on_camera_sensitivity_changed)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -165,10 +166,8 @@ func _process(delta: float) -> void:
 		
 		if first_acquisition:
 			# Initialize previous_target from current target on FIRST acquisition
-			print("DEBUG: First acquisition - initializing previous_target")
 			var prev_uv = _focus_material.get_shader_parameter("target_uv")
 			var prev_radius = _focus_material.get_shader_parameter("target_radius")
-			print("DEBUG: target_uv = ", prev_uv, " target_radius = ", prev_radius)
 			_focus_material.set_shader_parameter("previous_target_uv", prev_uv)
 			_focus_material.set_shader_parameter("previous_target_radius", prev_radius)
 			_target_blend_elapsed = 0.0
@@ -189,12 +188,6 @@ func _process(delta: float) -> void:
 		_focus_material.set_shader_parameter("previous_target_radius", Vector2(0.08, 0.16))
 		_target_blend_elapsed = 0.0
 	
-	var follow_target := _player.global_position + Vector3.UP * follow_height
-	if locked:
-		var toward_target := lock_target.global_position - _player.global_position
-		toward_target.y = 0.0
-		follow_target += toward_target.limit_length(7.0) * 0.12
-	global_position = global_position.lerp(follow_target, 1.0 - exp(-camera_lag * delta))
 	if is_instance_valid(lock_target):
 		var direction := lock_target.global_position - _player.global_position
 		direction.y = 0.0
@@ -210,6 +203,18 @@ func _process(delta: float) -> void:
 	_composition = lerpf(_composition, lock_composition_offset if locked else composition_offset, 1.0 - exp(-composition_smoothing * delta))
 	_target_blend_elapsed = minf(_target_blend_elapsed + delta, TARGET_BLEND_DURATION)
 	_update_shake(delta)
+
+## Segue no mesmo tick que move o CharacterBody3D para evitar avanço/recuo relativo.
+func _physics_process(delta: float) -> void:
+	if not is_instance_valid(_player):
+		return
+	var follow_target := _player.global_position + Vector3.UP * follow_height
+	var lock_target: Node3D = _player.get_lock_target() if _player.has_method("get_lock_target") else null
+	if is_instance_valid(lock_target) and (not lock_target.has_method("is_alive") or lock_target.call("is_alive")):
+		var toward_target := lock_target.global_position - _player.global_position
+		toward_target.y = 0.0
+		follow_target += toward_target.limit_length(7.0) * 0.12
+	global_position = global_position.lerp(follow_target, 1.0 - exp(-camera_lag * delta))
 
 ## Reposiciona a câmera imediatamente para a posição do jogador.
 func snap_to_player() -> void:

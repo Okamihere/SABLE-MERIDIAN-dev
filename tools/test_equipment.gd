@@ -30,7 +30,7 @@ func _run() -> void:
 	player.combat._start_attack(player.combat.LIGHT_1, 1)
 	assert(equipment.request_weapon(&"card_daggers") and equipment.has_pending_weapon(), "Weapon change during attack must queue")
 	player.combat._buffer_action(&"light")
-	await _frames(9)
+	await _frames(12)
 	assert(equipment.weapon.weapon_id == &"card_daggers", "Buffered combo must commit weapon switch at the combo window")
 	assert(player.combat._current_attack.attack_id == &"dagger_light_2", "Next hit must use the new weapon without resetting the chain")
 	assert(not player.staff_attachment.visible and player.dagger_right.visible and player.dagger_left.visible, "Dagger visual must replace staff")
@@ -59,16 +59,16 @@ func _run() -> void:
 	equipment.equip_mask(&"")
 	assert(not player.combat.can_cancel_to_dodge(), "Removing mask must restore normal cancel timing")
 	equipment.equip_mask(&"laugh")
-	player.combat._start_attack(equipment.weapon.light_chain[2], 3)
+	player.combat._start_attack(equipment.weapon.light_chain[3], 4)
 	player.combat._buffer_action(&"light")
-	await _frames(9)
+	await _frames(30)
 	assert(player.combat._current_attack == equipment.weapon.light_chain[0] and player.combat._chain_index == 1, "Laugh mask must restart the chain after the finisher")
 	player.combat.cancel_attack()
 	player.spell_manager._cooldowns[&"cursed_deck"] = 1.0
 	player._trigger_perfect_dodge()
 	assert(player.spell_manager.get_cooldown_remaining(player.spells[0]) == 0.0, "Encore ticket must refresh the deck on perfect dodge")
 	await create_timer(0.35, true, false, true).timeout
-	player.global_position = Vector3(0, 0.05, 18.35)
+	player.global_position = Vector3(0, 0.05, 19.6)
 	player.velocity = Vector3.ZERO
 	await _frames(5)
 	assert(root.get_node("AreaTransition").is_travelling, "Fog gate must begin the scene transition")

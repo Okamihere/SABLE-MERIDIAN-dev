@@ -37,13 +37,13 @@ func _run() -> void:
 	assert(not get_root().get_node("GameManager").has_staff, "Training must begin without the staff")
 	player.combat._start_attack(player.combat.LIGHT_1, 1)
 	assert(not player.combat.is_attacking(), "The veyl must not punch before taking the staff")
-	player.global_position = Vector3(0, 0.05, -5.5)
+	player.global_position = Vector3(0, 0.05, -2.0)
 	await frames(12)
 	assert(get_root().get_node("GameManager").has_staff and player.staff_attachment.visible, "Central staff must equip on contact")
 	assert(get_root().get_camera_3d() != null, "Training camera is missing")
 	var animation = player.get_node("PlayerAnimationController")
 	var veyl_skeleton := player.get_node("ModelRoot/Veyl/world/Skeleton3D") as Skeleton3D
-	var veyl_mesh := veyl_skeleton.get_node("VeylMesh") as MeshInstance3D
+	var veyl_mesh := veyl_skeleton.get_node("JesterMesh") as MeshInstance3D
 	assert(animation._skeleton == veyl_skeleton, "Veyl animation must target its imported rig")
 	assert(veyl_skeleton.get_bone_count() == 7 and veyl_mesh.skin != null, "Veyl mesh must be skinned")
 	var left_arm := veyl_skeleton.find_bone(&"LeftArm")
@@ -102,7 +102,7 @@ func _run() -> void:
 	assert(current_scene == training_room, "Jump/confirm must never leave the training area")
 	assert(training_room.has_node("FogGate"), "The route to the city must be visible in the training area")
 	player.combat.cancel_attack()
-	player.global_position = Vector3(0, 0.05, 18.35)
+	player.global_position = Vector3(0, 0.05, 19.6)
 	player.velocity = Vector3.ZERO
 	await frames(5)
 	assert(get_root().get_node("AreaTransition").is_travelling, "Crossing the fog gate must start the transition")

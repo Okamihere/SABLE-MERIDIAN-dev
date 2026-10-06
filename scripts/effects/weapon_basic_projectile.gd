@@ -85,6 +85,7 @@ func _build_hitbox() -> void:
 	_hitbox = area as HitboxComponent
 	_hitbox.source = _caster
 	_hitbox.configure_from_attack(_attack)
+	_hitbox.style_weapon_id = _weapon_id
 	_hitbox.hit_landed.connect(_on_hit_landed)
 	_hitbox.begin_attack()
 

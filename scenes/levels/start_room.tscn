@@ -271,6 +271,7 @@ mesh = SubResource("BoxMesh_arch")
 
 [node name="FogGate" parent="." unique_id=471699727 instance=ExtResource("fog_gate")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 13.10019)
+destination_scene = "res://scenes/levels/vertical_pilot.tscn"
 
 [node name="CameraRig" parent="." unique_id=1526410149 instance=ExtResource("5_camera")]
 

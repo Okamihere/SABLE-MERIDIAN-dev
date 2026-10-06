@@ -35,6 +35,12 @@ extends Resource
 @export var recovery: float = 0.20
 ## Início da janela de combo (em segundos).
 @export var combo_window_start: float = 0.16
+## Fim da janela de combo contado do início do golpe (0 = fim do recovery).
+@export var combo_window_end: float = 0.0
+## Intervalo após o recovery em que a cadeia ainda pode continuar.
+@export var combo_followup_time: float = 0.22
+## Tempo de buffer deste golpe (0 = valor do CombatController).
+@export var input_buffer_time: float = 0.0
 ## Janela para cancelar ataque com esquiva (em segundos).
 @export var attack_cancel_window: float = 0.20
 ## Pontos de estilo concedidos ao acertar.

@@ -2,6 +2,7 @@ shader_type spatial;
 render_mode unshaded, cull_disabled;
 
 uniform sampler2D screen_texture : source_color, filter_linear;
+uniform vec4 screen_tint : source_color = vec4(1.0);
 uniform float scanline_strength = 0.095;
 uniform float noise_strength = 0.012;
 
@@ -18,6 +19,6 @@ void fragment() {
 	float wear = smoothstep(0.985, 1.0, worn_line) * 0.012;
 	float flicker = 0.99 + 0.012 * sin(TIME * 7.0) + 0.006 * sin(TIME * 19.0);
 	vec3 color = screen.rgb * vignette * scanlines * edge * flicker + noise * noise_strength + vec3(0.3, 0.7, 0.85) * wear;
-	ALBEDO = max(color, vec3(0.0)) * 1.1;
-	EMISSION = max(color - vec3(0.18), vec3(0.0)) * 0.48;
+	ALBEDO = max(color, vec3(0.0)) * 1.1 * screen_tint.rgb;
+	EMISSION = max(color - vec3(0.18), vec3(0.0)) * 0.48 * screen_tint.rgb;
 }

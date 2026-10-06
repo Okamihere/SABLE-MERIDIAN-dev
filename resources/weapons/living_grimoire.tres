@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="WeaponData" load_steps=12 format=3]
+[gd_resource type="Resource" script_class="WeaponData" load_steps=13 format=3]
 [ext_resource type="Script" path="res://scripts/resources/weapon_data.gd" id="weapon"]
 [ext_resource type="Resource" path="res://resources/spells/living_grimoire_q.tres" id="skill_0"]
 [ext_resource type="Resource" path="res://resources/spells/living_grimoire_e.tres" id="skill_1"]
@@ -6,6 +6,7 @@
 [ext_resource type="Resource" path="res://resources/attacks/grimoire_light_1.tres" id="atk_0"]
 [ext_resource type="Resource" path="res://resources/attacks/light_2.tres" id="atk_1"]
 [ext_resource type="Resource" path="res://resources/attacks/light_3.tres" id="atk_2"]
+[ext_resource type="Resource" path="res://resources/attacks/grimoire_light_4.tres" id="atk_7"]
 [ext_resource type="Resource" path="res://resources/attacks/grimoire_heavy.tres" id="atk_3"]
 [ext_resource type="Resource" path="res://resources/attacks/launcher.tres" id="atk_4"]
 [ext_resource type="Resource" path="res://resources/attacks/air_light.tres" id="atk_5"]
@@ -16,7 +17,7 @@ weapon_id = &"living_grimoire"
 display_name = "Grimório Vivo"
 identity = "Conjurações lentas, grandes e absurdas que reescrevem a arena."
 skills = Array[Resource]([ExtResource("skill_0"), ExtResource("skill_1"), ExtResource("skill_2")])
-light_chain = Array[Resource]([ExtResource("atk_0"), ExtResource("atk_1"), ExtResource("atk_2")])
+light_chain = Array[Resource]([ExtResource("atk_0"), ExtResource("atk_1"), ExtResource("atk_2"), ExtResource("atk_7")])
 heavy = ExtResource("atk_3")
 launcher = ExtResource("atk_4")
 air_light = ExtResource("atk_5")

@@ -13,9 +13,11 @@
   <img src="https://img.shields.io/badge/Renderer-GL_Compatibility-6D28D9" alt="GL Compatibility">
   <img src="https://img.shields.io/badge/Status-Prot%C3%B3tipo-E8B84B" alt="Protótipo">
   <img src="https://img.shields.io/badge/License-MIT-3E7C4F" alt="MIT">
+  <img src="https://img.shields.io/badge/Platform-Linux_%7C_Windows-2b2b2b" alt="Linux e Windows">
+  <a href="https://github.com/Okamihere/SABLE-MERIDIAN/actions/workflows/validate.yml"><img src="https://github.com/Okamihere/SABLE-MERIDIAN/actions/workflows/validate.yml/badge.svg" alt="validate"></a>
 </p>
 
-Protótipo feito em **Godot 4.7 (GDScript, GL Compatibility, 1920×1080)**. O pátio de treino leva a uma cidade gótica em construção; o foco atual é movimento, combate e apresentação visual.
+> **Godot 4.7 · GDScript · GL Compatibility · 1920×1080** — ação 3D dark fantasy teatral. Pátio de treino → cidade gótica em construção. Foco atual: movimento, combate e apresentação visual.
 
 **Destaques**
 - Combate com combos, esquiva perfeita em câmera lenta, ranking de estilo D–S e 5 armas com skills Q/E/R.
@@ -77,6 +79,21 @@ Na tela inicial, use mouse ou setas e `Enter` para selecionar. A lista de atalho
 ## Documentação
 
 - [Arquitetura](docs/architecture.md) · [Equipamento](docs/equipment.md) · [Habilidades](docs/combat_abilities.md)
-- [Contribuição](docs/contributing.md) · [Validação](docs/validation.md) · [Roadmap](docs/roadmap.md)
+- [Contribuição](docs/contributing.md) · [Validação](docs/validation.md) · [Roadmap](docs/roadmap.md) · [Contexto p/ IA](AI_CONTEXT.md)
+
+<details>
+<summary><b>Estrutura do projeto</b></summary>
+
+```
+scenes/levels   pátio (start_room) + cidade (main) + portal (fog_gate)
+scenes/player   player_rig (em uso) + camera_rig + armas
+scenes/ui       press_start → title_screen → hud / pause / diálogo
+scripts/player  movimento, sprite 8-dir, animação procedural, lock-on, parede
+scripts/combat  combos, hitboxes, input buffer
+resources/      5 armas · 24 ataques · 19 spells · máscaras · relíquia
+tools/          validate_project.py + 17 testes headless
+```
+
+</details>
 
 Licença: [MIT](LICENSE).

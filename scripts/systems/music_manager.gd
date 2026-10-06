@@ -15,7 +15,7 @@ extends Node
 ## Para trocar, altere a constante abaixo.
 
 ## Tema da tela inicial (fixo por direção).
-const TITLE_TRACK := preload("res://assets/audio/music/Music_Box.mp3")
+const TITLE_TRACK := preload("res://assets/audio/music/Sable_Meridian.wav")
 ## Tema da gameplay (PROVISÓRIO — ver comentário acima).
 const GAMEPLAY_TRACK := preload("res://assets/audio/music/05.From_The_Ashes.wav")
 

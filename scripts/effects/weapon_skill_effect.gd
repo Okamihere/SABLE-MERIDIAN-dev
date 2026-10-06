@@ -107,6 +107,7 @@ func _hit(size: Vector3, duration: float, knockback: float, stun: float, launch:
 	_hitbox.launch_force = launch
 	_hitbox.attack_id = _spell.ability_id
 	_hitbox.style_points = 95
+	_hitbox.style_weapon_id = get_meta("style_weapon_id", &"")
 	_hitbox.hit_landed.connect(func(hurtbox: HurtboxComponent, box_hit: HitboxComponent) -> void: _caster.combat.register_magic_hit(hurtbox, box_hit))
 	_hitbox.begin_attack()
 	var hb := _hitbox

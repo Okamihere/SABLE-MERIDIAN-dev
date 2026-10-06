@@ -19,7 +19,7 @@ func run() -> void:
 	await frames(60)
 	var p = current_scene.get_node("Player")
 	p.set_physics_process(false)
-	p.position = Vector3(7.2, 3, -10)
+	p.position = Vector3(-13.2, 0.05, -10)
 	p.velocity = Vector3.ZERO
 	p.move_and_slide()
 	await frames(2)

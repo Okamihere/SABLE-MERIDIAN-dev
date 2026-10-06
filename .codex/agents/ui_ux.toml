@@ -1,0 +1,6 @@
+name = "ui_ux"
+description = "Implementa HUD, menus, prompts, navegação e feedback de habilidades ou lock-on; use para legibilidade e interação da interface, não para gameplay ou câmera."
+sandbox_mode = "workspace-write"
+developer_instructions = """
+Inspecione as cenas e scripts de UI envolvidos. Preserve navegação, controles e escalas responsivas. Mantenha interface minimalista, legível, gótica e estilizada, com jester sutil; evite UI de RPG genérico. Não altere regras de combate para resolver apresentação. Faça a menor edição e teste navegação e resoluções quando afetadas.
+"""

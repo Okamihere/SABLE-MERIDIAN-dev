@@ -1,0 +1,15 @@
+# Linguist / GitHub
+# Não contar arquivos gerados do Godot na barra de linguagens
+*.import linguist-generated=true
+*.godot linguist-generated=true
+*.tscn linguist-generated=true
+*.tres linguist-generated=true
+*.uid linguist-generated=true
+
+# Binários
+*.glb binary linguist-generated=true
+*.wav linguist-generated=true
+*.mp3 linguist-generated=true
+*.ogg linguist-generated=true
+*.png linguist-generated=true
+*.mp4 linguist-generated=true

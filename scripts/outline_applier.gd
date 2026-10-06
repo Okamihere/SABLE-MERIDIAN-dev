@@ -5,7 +5,7 @@ extends Node
 
 @export var enabled: bool = true
 @export var outline_color: Color = Color(0.02, 0.01, 0.05, 1.0)
-@export var outline_width: float = 0.02
+@export var outline_width: float = 0.01
 
 var _outline_material: ShaderMaterial
 
@@ -33,4 +33,9 @@ func _apply_to_mesh(mesh_instance: MeshInstance3D) -> void:
         if mat is BaseMaterial3D:
             if mat.next_pass == _outline_material:
                 continue
-            mat.next_pass = _outline_material
+            var local_material := mat.duplicate() as BaseMaterial3D
+            local_material.next_pass = _outline_material
+            if mesh_instance.material_override != null:
+                mesh_instance.material_override = local_material
+                break
+            mesh_instance.set_surface_override_material(i, local_material)

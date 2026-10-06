@@ -24,7 +24,7 @@ func _run() -> void:
 	var title = current_scene
 	var ui = title.ui
 	assert(ui.buttons.size() == 5 and not ui.continue_available, "Fresh game must disable Continue and show Controls")
-	assert(title.screen_mesh.material_override.albedo_texture == title.screen_viewport.get_texture(), "TV must render the menu on its screen")
+	assert(title.screen_mesh.material_override.get_shader_parameter("screen_texture") == title.screen_viewport.get_texture(), "TV must render the menu on its screen")
 	for dims in [Vector2i(320, 568), Vector2i(640, 360), Vector2i(1280, 720), Vector2i(2560, 1080)]:
 		root.size = dims
 		await _frames(8)

@@ -29,6 +29,8 @@ signal hit_landed(hurtbox: HurtboxComponent, hitbox: HitboxComponent)
 @export var attack_id: StringName = &"attack"
 ## Pontos de estilo concedidos ao acertar.
 @export var style_points: int = 100
+## Arma que criou este golpe; conserva a origem de projéteis após uma troca.
+var style_weapon_id: StringName = &""
 ## Caminho para o nó que é a fonte do golpe (para ignorar auto-impacto).
 @export var source_path: NodePath = NodePath("../..")
 

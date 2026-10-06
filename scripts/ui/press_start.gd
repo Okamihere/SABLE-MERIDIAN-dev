@@ -16,13 +16,15 @@ const TITLE_FOCUS := Vector3(0, 1.75, 0)
 var _starting := false
 var _time := 0.0
 var _flight_time := 0.0
-var _flight_from := Vector3.ZERO
 var _flight_to := Vector3.ZERO
+var _intro_pcam: PhantomCamera3D
+var _title_pcam: PhantomCamera3D
 
 func _ready() -> void:
 	preview.set("cinematic_preview", true)
 	get_viewport().size_changed.connect(_update_cinematic_camera)
 	_update_cinematic_camera()
+	_setup_phantom_camera()
 	preview.get_node("Stage/CoffeeTable").scale.x = 1.12
 	var sofa: Node3D = preview.get_node("Stage/SofaFacingTelevision")
 	sofa.position.z = 3.3
@@ -45,6 +47,34 @@ func _update_cinematic_camera() -> void:
 	var distance := maxf(6.4, 4.35 / (2.0 * tan(half_fov) * aspect))
 	preview_camera.position = Vector3(0, 3.35, distance)
 	preview_camera.look_at(INTRO_FOCUS)
+	if is_instance_valid(_intro_pcam):
+		_intro_pcam.global_transform = preview_camera.global_transform
+	if is_instance_valid(_title_pcam):
+		_title_pcam.position = Vector3(0, 2.0, preview.get("_camera_distance"))
+		_title_pcam.look_at(TITLE_FOCUS)
+
+func _setup_phantom_camera() -> void:
+	var host := PhantomCameraHost.new()
+	host.name = "PhantomCameraHost"
+	host.interpolation_mode = PhantomCameraHost.InterpolationMode.IDLE
+	preview_camera.add_child(host)
+	_intro_pcam = PhantomCamera3D.new()
+	_intro_pcam.name = "IntroFraming"
+	_intro_pcam.tween_on_load = false
+	_intro_pcam.priority = 1
+	preview.add_child(_intro_pcam)
+	_intro_pcam.global_transform = preview_camera.global_transform
+	_title_pcam = PhantomCamera3D.new()
+	_title_pcam.name = "TelevisionFraming"
+	_title_pcam.priority = 0
+	var camera_tween := PhantomCameraTween.new()
+	camera_tween.duration = CAMERA_MOVE_TIME
+	camera_tween.transition = PhantomCameraTween.TransitionType.SINE
+	camera_tween.ease = PhantomCameraTween.EaseType.EASE_IN_OUT
+	_title_pcam.tween_resource = camera_tween
+	preview.add_child(_title_pcam)
+	_title_pcam.position = Vector3(0, 2.0, preview.get("_camera_distance"))
+	_title_pcam.look_at(TITLE_FOCUS)
 
 func _build_crt_screen() -> void:
 	var screen: MeshInstance3D = preview.get("screen_mesh")
@@ -242,8 +272,6 @@ func _process(delta: float) -> void:
 		_flight_time = minf(_flight_time + delta, CAMERA_MOVE_TIME)
 		var progress := _flight_time / CAMERA_MOVE_TIME
 		var eased := progress * progress * (3.0 - 2.0 * progress)
-		preview_camera.position = _flight_from.lerp(_flight_to, eased)
-		preview_camera.look_at(INTRO_FOCUS.lerp(TITLE_FOCUS, eased))
 		prompt_brightness *= 1.0 - eased
 	prompt.modulate.a = prompt_brightness
 	screen_light.light_energy = 1.65 + 0.025 * sin(_time * 5.1)
@@ -260,10 +288,13 @@ func _input(event: InputEvent) -> void:
 
 func _start() -> void:
 	_starting = true
+	UiSfx.play_confirm()
 	get_viewport().set_input_as_handled()
-	_flight_from = preview_camera.position
 	var title_distance: float = preview.get("_camera_distance")
 	_flight_to = Vector3(0, 2.0, title_distance)
+	_title_pcam.position = _flight_to
+	_title_pcam.look_at(TITLE_FOCUS)
+	_title_pcam.priority = 2
 	_finish_transition()
 
 func _finish_transition() -> void:

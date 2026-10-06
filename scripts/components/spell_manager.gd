@@ -14,6 +14,8 @@ extends Node
 
 ## Emitido quando uma magia é conjurada com sucesso. Parâmetro: magia conjurada.
 signal spell_cast(spell: SpellResource)
+signal spell_started(spell: SpellResource)
+signal spell_ended(spell: SpellResource)
 
 ## Caminho para o ManaComponent do jogador.
 @export var mana_component_path: NodePath = NodePath("../ManaComponent")
@@ -22,6 +24,11 @@ signal spell_cast(spell: SpellResource)
 var _mana: ManaComponent
 ## Dicionário de cooldowns restantes por magia (spell_name → tempo restante).
 var _cooldowns: Dictionary = {}
+var _current_spell: SpellResource
+var _caster: Node3D
+var _pending_effect: Node
+var _cast_elapsed: float = 0.0
+var _effect_fired: bool = false
 
 ## Inicializa o SpellManager: obtém referência ao ManaComponent.
 func _ready() -> void:
@@ -34,6 +41,13 @@ func _process(delta: float) -> void:
 	for spell_name in _cooldowns.keys():
 		if _cooldowns[spell_name] > 0.0:
 			_cooldowns[spell_name] = maxf(0.0, _cooldowns[spell_name] - delta)
+	if _current_spell == null:
+		return
+	_cast_elapsed += delta
+	if not _effect_fired and _cast_elapsed >= _current_spell.startup_time:
+		_activate_current_spell()
+	if _current_spell != null and _cast_elapsed >= _current_spell.startup_time + _current_spell.active_time + _current_spell.recovery_time:
+		cancel_cast()
 
 ## Tenta conjurar uma magia.
 ## Verifica mana e cooldown antes de executar.
@@ -48,28 +62,75 @@ func cast_spell(spell: SpellResource, caster: Node3D = null) -> bool:
 		return false
 	if not _can_cast(spell):
 		return false
+	if is_cast_committed():
+		return false
 	if _mana == null:
 		push_warning("SpellManager: ManaComponent não disponível, impossível gastar mana")
 		return false
+	if caster != null and get_tree().current_scene == null:
+		return false
+	var effect: Node
 	if caster != null:
-		var effect := spell.effect_scene.instantiate()
-		var scene := get_tree().current_scene
-		if scene == null or not effect.has_method("activate"):
-			effect.queue_free()
-			push_warning("SpellManager: magia '%s' sem cena ativa ou sem método activate" % spell.spell_name)
+		effect = spell.effect_scene.instantiate()
+		if not effect.has_method("activate"):
+			effect.free()
+			push_warning("SpellManager: magia '%s' sem método activate" % spell.spell_name)
 			return false
-		if not _mana.try_spend(spell.mana_cost):
-			effect.queue_free()
-			return false
-		_start_cooldown(spell)
-		scene.add_child(effect)
-		effect.activate(caster, spell)
-	else:
-		if not _mana.try_spend(spell.mana_cost):
-			return false
-		_start_cooldown(spell)
-	spell_cast.emit(spell)
+	if not _mana.try_spend(spell.mana_cost):
+		if effect != null:
+			effect.free()
+		return false
+	_start_cooldown(spell)
+	_current_spell = spell
+	_caster = caster
+	_pending_effect = effect
+	if effect != null and caster is PlayerController and caster.equipment.weapon != null:
+		effect.set_meta("style_weapon_id", caster.equipment.weapon.weapon_id)
+	_cast_elapsed = 0.0
+	_effect_fired = false
+	spell_started.emit(spell)
+	if spell.startup_time <= 0.0:
+		_activate_current_spell()
 	return true
+
+func _activate_current_spell() -> void:
+	if _current_spell == null:
+		return
+	var spell := _current_spell
+	_effect_fired = true
+	if _pending_effect != null:
+		if is_instance_valid(_caster) and get_tree().current_scene != null:
+			get_tree().current_scene.add_child(_pending_effect)
+			_pending_effect.activate(_caster, spell)
+		else:
+			_pending_effect.free()
+		_pending_effect = null
+	spell_cast.emit(spell)
+	if spell.startup_time + spell.active_time + spell.recovery_time <= 0.0:
+		cancel_cast()
+
+func is_cast_committed() -> bool:
+	return _current_spell != null
+
+func can_cancel_cast() -> bool:
+	if _current_spell == null:
+		return true
+	var threshold := _current_spell.cancel_window_start
+	if threshold <= 0.0:
+		threshold = _current_spell.startup_time + _current_spell.active_time
+	return _cast_elapsed >= threshold
+
+func cancel_cast() -> void:
+	var ended_spell := _current_spell
+	if _pending_effect != null:
+		_pending_effect.free()
+		_pending_effect = null
+	_current_spell = null
+	_caster = null
+	_cast_elapsed = 0.0
+	_effect_fired = false
+	if ended_spell != null:
+		spell_ended.emit(ended_spell)
 
 ## Verifica se uma magia pode ser conjurada (mana e cooldown).
 ## @param spell A magia a verificar.

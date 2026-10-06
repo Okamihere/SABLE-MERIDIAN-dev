@@ -77,15 +77,17 @@ func _run() -> void:
 		root.size = dims
 		await process_frame
 		menu._layout_panel()
+		var actual: Vector2 = menu.get_viewport().get_visible_rect().size
 		var bounds: Rect2 = Rect2(menu.panel.position, menu.panel.size * menu.panel.scale)
-		assert(Rect2(Vector2.ZERO, dims).grow(1).encloses(bounds), "Options panel must fit %s" % dims)
+		assert(Rect2(Vector2.ZERO, actual).grow(1).encloses(bounds), "Options panel must fit %s" % actual)
 	menu.show_controls()
 	for dims in [Vector2i(320, 568), Vector2i(640, 360), Vector2i(1280, 720)]:
 		root.size = dims
 		await process_frame
 		menu._layout_panel()
+		var actual_controls: Vector2 = menu.get_viewport().get_visible_rect().size
 		var bounds: Rect2 = Rect2(menu.panel.position, menu.panel.size * menu.panel.scale)
-		assert(Rect2(Vector2.ZERO, dims).grow(1).encloses(bounds), "Controls panel must fit %s" % dims)
+		assert(Rect2(Vector2.ZERO, actual_controls).grow(1).encloses(bounds), "Controls panel must fit %s" % actual_controls)
 	menu.resume_game()
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(menu.settings_path))
 	print("PASS: pause, Esc navigation, mouse, video modes, resolution, persistence, layout")

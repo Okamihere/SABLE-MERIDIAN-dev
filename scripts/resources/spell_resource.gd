@@ -19,6 +19,14 @@ extends Resource
 @export var mana_cost: float = 20.0
 ## Tempo de recarga entre usos (em segundos).
 @export var cooldown: float = 1.0
+## Tempo até o efeito ser ativado (em segundos).
+@export var startup_time: float = 0.0
+## Janela em que o efeito está em execução; não bloqueia a próxima ação após recovery.
+@export var active_time: float = 0.0
+## Compromisso do personagem após ativar a habilidade (em segundos).
+@export var recovery_time: float = 0.0
+## Tempo desde o início em que esquiva ou salto podem cancelar a conjuração (0 = após active).
+@export var cancel_window_start: float = 0.0
 ## Dano base da magia.
 @export var damage: float = 15.0
 ## Ícone da magia exibido na UI.

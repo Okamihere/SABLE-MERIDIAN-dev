@@ -1,6 +1,12 @@
 class_name WallMovement
 extends Node
 
+const GRIP_BELLS: Array[AudioStream] = [
+	preload("res://assets/audio/sfx/bells/bells_jump_1.wav"),
+	preload("res://assets/audio/sfx/bells/bells_jump_2.wav"),
+	preload("res://assets/audio/sfx/bells/bells_jump_3.wav"),
+]
+
 ## Agarre e salto em paredes do mundo. O chão repõe a reserva de saltos.
 ##
 ## Segure uma direção contra a parede; Espaço consome um salto e afasta o corpo.
@@ -33,6 +39,33 @@ var _grip_left: float = 0.4
 var _detach_left: float = 0.0
 ## Direção do impulso de afastamento.
 var _push_direction: Vector3 = Vector3.ZERO
+var _grip_count: int = 0
+var _grip_announced: bool = false
+
+func _ready() -> void:
+	if AudioServer.get_bus_index("VeylBells") == -1:
+		AudioServer.add_bus()
+		var bus_index := AudioServer.bus_count - 1
+		AudioServer.set_bus_name(bus_index, "VeylBells")
+		AudioServer.set_bus_send(bus_index, "SFX")
+		var reverb := AudioEffectReverb.new()
+		reverb.room_size = 0.5
+		reverb.damping = 0.65
+		reverb.wet = 0.16
+		AudioServer.add_bus_effect(bus_index, reverb)
+
+func _play_grip_bell() -> void:
+	var bell := AudioStreamPlayer3D.new()
+	bell.name = "GripBell"
+	bell.stream = GRIP_BELLS[_grip_count - 1]
+	bell.bus = "VeylBells"
+	bell.position = Vector3(0, 1.1, 0)
+	bell.unit_size = 10.0
+	bell.volume_db = -4.0 + float(_grip_count - 1) * 0.7 + randf_range(-0.35, 0.35)
+	bell.pitch_scale = 0.97 + float(_grip_count - 1) * 0.035 + randf_range(-0.012, 0.012)
+	add_child(bell)
+	bell.finished.connect(bell.queue_free)
+	bell.play()
 
 ## Reseta o estado do movimento de parede (usado ao tocar o chão).
 func reset() -> void:
@@ -41,6 +74,8 @@ func reset() -> void:
 	wall_normal = Vector3.ZERO
 	_grip_left = grip_duration
 	_detach_left = 0.0
+	_grip_count = 0
+	_grip_announced = false
 
 ## Retorna o número de saltos de parede restantes.
 ## @return Quantidade de saltos disponíveis.
@@ -72,6 +107,7 @@ func update_motion(body: CharacterBody3D, direction: Vector3, delta: float, allo
 		return
 	if Input.is_action_just_pressed("jump"):
 		used_jumps += 1
+		_grip_announced = false
 		_push_direction = wall_normal
 		body.velocity = wall_normal * push_speed + Vector3.UP * jump_speed
 		body.rotation.y = atan2(wall_normal.x, wall_normal.z)
@@ -80,6 +116,10 @@ func update_motion(body: CharacterBody3D, direction: Vector3, delta: float, allo
 		return
 	if body.velocity.y <= 0.0:
 		gripping = true
+		if not _grip_announced:
+			_grip_announced = true
+			_grip_count = mini(_grip_count + 1, GRIP_BELLS.size())
+			_play_grip_bell()
 		_grip_left = maxf(0.0, _grip_left - delta)
 		body.velocity.y = 0.0 if _grip_left > 0.0 else maxf(body.velocity.y, -slide_speed)
 

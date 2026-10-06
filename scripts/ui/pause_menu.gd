@@ -113,6 +113,7 @@ func _input(event: InputEvent) -> void:
 		return
 	if _confirm_active:
 		get_viewport().set_input_as_handled()
+		UiSfx.play_back()
 		_revert_display_change()
 		return
 	if not overlay.visible and is_instance_valid(get_tree().current_scene) and get_tree().current_scene.is_in_group("title_screen"):
@@ -121,14 +122,18 @@ func _input(event: InputEvent) -> void:
 	if not overlay.visible:
 		open_pause()
 	elif options_page.visible or controls_page.visible:
+		UiSfx.play_back()
 		_on_back_pressed()
 	else:
+		UiSfx.play_back()
 		resume_game()
 
 
 func open_pause() -> void:
 	if overlay.visible:
 		return
+	if not _from_title:
+		UiSfx.play_confirm()
 	if _active_mode == Window.MODE_WINDOWED:
 		_windowed_size = get_window().size
 		_screen_index = clampi(get_window().current_screen, 0, maxi(0, DisplayServer.get_screen_count() - 1))
@@ -940,6 +945,9 @@ func _layout_panel() -> void:
 
 
 func _style_control(control: Button) -> void:
+	control.mouse_entered.connect(UiSfx.play_cursor)
+	control.focus_entered.connect(UiSfx.play_cursor)
+	control.pressed.connect(_on_ui_button_pressed.bind(control))
 	control.add_theme_font_size_override("font_size", 17)
 	control.add_theme_color_override("font_color", Color(0.9, 0.94, 1.0))
 	for state: String in ["normal", "hover", "pressed", "focus"]:
@@ -951,6 +959,12 @@ func _style_control(control: Button) -> void:
 		style.content_margin_left = 14
 		style.content_margin_right = 14
 		control.add_theme_stylebox_override(state, style)
+
+func _on_ui_button_pressed(control: Button) -> void:
+	if control in [back_button, controls_back_button, title_button, quit_button]:
+		UiSfx.play_back()
+	else:
+		UiSfx.play_confirm()
 
 
 func _on_preset_selected(index: int) -> void:

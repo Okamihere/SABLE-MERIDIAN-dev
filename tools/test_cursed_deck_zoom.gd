@@ -32,6 +32,7 @@ func _run() -> void:
 	player.rotation.y = 0.0
 	player.velocity = Vector3.ZERO
 	var dummy := current_scene.get_node("Dummy0")
+	player.rotation.y = atan2(dummy.global_position.x - player.global_position.x, dummy.global_position.z - player.global_position.z)
 	var hits := [0]
 	dummy.struck.connect(func(_id: StringName) -> void: hits[0] += 1)
 	var mana_before: float = player.mana.current_mana

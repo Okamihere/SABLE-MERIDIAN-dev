@@ -26,6 +26,8 @@ func launch(caster: Node3D, direction: Vector3, damage: float, attack: AttackDat
 	if caster.has_method("get_lock_target"):
 		_target = caster.get_lock_target()
 	hitbox.source = caster
+	if caster is PlayerController and caster.equipment.weapon != null:
+		hitbox.style_weapon_id = caster.equipment.weapon.weapon_id
 	if attack != null:
 		hitbox.configure_from_attack(attack)
 	else:

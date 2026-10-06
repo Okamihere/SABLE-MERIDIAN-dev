@@ -9,6 +9,7 @@
 [ext_resource type="Resource" path="res://resources/attacks/dagger_light_1.tres" id="l1"]
 [ext_resource type="Resource" path="res://resources/attacks/dagger_light_2.tres" id="l2"]
 [ext_resource type="Resource" path="res://resources/attacks/dagger_light_3.tres" id="l3"]
+[ext_resource type="Resource" path="res://resources/attacks/dagger_light_4.tres" id="l4"]
 [ext_resource type="Resource" path="res://resources/spells/card_daggers_q.tres" id="skill_0"]
 [ext_resource type="Resource" path="res://resources/spells/card_daggers_e.tres" id="skill_1"]
 [ext_resource type="Resource" path="res://resources/spells/card_daggers_r.tres" id="skill_2"]
@@ -22,7 +23,7 @@ script = ExtResource("weapon")
 weapon_id = &"card_daggers"
 display_name = "Adagas de Cartas"
 identity = "Cadeia curta, ataques aéreos rápidos e corte pesado com dobra de distância."
-light_chain = Array[ExtResource("5_tr4ts")]([ExtResource("l1"), ExtResource("l2"), ExtResource("l3")])
+light_chain = Array[ExtResource("5_tr4ts")]([ExtResource("l1"), ExtResource("l2"), ExtResource("l3"), ExtResource("l4")])
 heavy = ExtResource("heavy")
 air_light = ExtResource("air_light")
 air_heavy = ExtResource("air_heavy")

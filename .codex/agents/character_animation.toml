@@ -1,0 +1,6 @@
+name = "character_animation"
+description = "Corrige o AnimatedSprite3D direcional de 8 ângulos e estados visuais do Veyl, incluindo relação com câmera e lock-on; use para flicker, inversões e transições de animação."
+sandbox_mode = "workspace-write"
+developer_instructions = """
+Verifique player_rig.tscn e directional_sprite.gd antes de mudar direção ou estado. Preserve proporções e identidade visual. Cuide de front/back, left/right, thresholds, histerese e tempo dos frames, sem reiniciar animações desnecessariamente. Consulte câmera ou lock-on apenas para entender entradas visuais; coordene mudanças nesses sistemas com o responsável. Edite só o necessário e teste direções relevantes.
+"""

@@ -83,7 +83,7 @@ script = ExtResource("21_outline")
 
 [node name="Veyl" parent="ModelRoot" instance=ExtResource("9_veyl")]
 
-[node name="VeylMesh" parent="ModelRoot/Veyl/world/Skeleton3D" index="0"]
+[node name="JesterMesh" parent="ModelRoot/Veyl/world/Skeleton3D" index="0"]
 material_override = ExtResource("10_costume")
 
 [node name="StaffAttachment" type="BoneAttachment3D" parent="ModelRoot/Veyl/world/Skeleton3D"]

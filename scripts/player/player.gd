@@ -123,6 +123,8 @@ func _ready() -> void:
 	spell_manager = SpellManager.new()
 	spell_manager.name = "SpellManager"
 	add_child(spell_manager)
+	spell_manager.spell_started.connect(_on_spell_started)
+	spell_manager.spell_ended.connect(_on_spell_ended)
 	equipment = EquipmentComponent.new()
 	equipment.name = "Equipment"
 	add_child(equipment)
@@ -146,7 +148,7 @@ func equip_staff() -> void:
 	equipment.restore_from_manager()
 
 func _on_weapon_changed(weapon: WeaponData) -> void:
-	if is_instance_valid(weapon_display):
+	if is_instance_valid(weapon_display) and (spell_manager == null or not spell_manager.is_cast_committed()):
 		weapon_display.show_weapon(weapon.weapon_id)
 	if is_instance_valid(staff_attachment):
 		staff_attachment.visible = weapon.weapon_id == &"staff"
@@ -154,6 +156,23 @@ func _on_weapon_changed(weapon: WeaponData) -> void:
 		dagger_right.visible = weapon.weapon_id == &"card_daggers"
 	if is_instance_valid(dagger_left):
 		dagger_left.visible = weapon.weapon_id == &"card_daggers"
+
+func _on_spell_started(spell: SpellResource) -> void:
+	if is_instance_valid(weapon_display):
+		weapon_display.play_skill(spell.ability_id, spell.startup_time + spell.active_time + spell.recovery_time)
+
+func _on_spell_ended(spell: SpellResource) -> void:
+	var visual_kind: StringName = weapon_display.get("_action_kind") if is_instance_valid(weapon_display) else &""
+	if is_instance_valid(weapon_display) and (visual_kind == &"" or (visual_kind == &"skill" and weapon_display.get("_action_id") == spell.ability_id)):
+		if combat.is_attacking() and equipment != null and equipment.weapon != null:
+			var attack := combat._current_attack
+			var weapon := equipment.weapon
+			var heavy := attack == weapon.heavy or attack == weapon.launcher or attack == weapon.air_heavy
+			weapon_display.call("resume_attack", weapon.weapon_id, maxi(1, combat.get_chain_index()), attack.startup + attack.active + attack.recovery, combat._attack_elapsed, heavy)
+		else:
+			weapon_display.call("stop_action")
+	if equipment != null and equipment.weapon != null and is_instance_valid(weapon_display) and weapon_display.get("_equipped") != equipment.weapon.weapon_id:
+		weapon_display.show_weapon(equipment.weapon.weapon_id)
 
 func _on_mask_changed(mask: MaskData) -> void:
 	if is_instance_valid(laugh_mask_visual):
@@ -249,6 +268,8 @@ func _cast_spell(spell: SpellResource) -> void:
 		return
 	if combat.is_attacking() and not spell.weave_during_attack:
 		return
+	if spell.startup_time > 0.0 and not combat.can_cancel_to_skill():
+		return
 	spell_manager.cast_spell(spell, self)
 
 ## Rastreia posições seguras no chão para respawn.
@@ -266,6 +287,7 @@ func _track_safe_position(delta: float) -> void:
 func _respawn_from_fall() -> void:
 	wall_movement.reset()
 	combat.cancel_attack()
+	spell_manager.cancel_cast()
 	lock_on.clear_target()
 	velocity = Vector3.ZERO
 	_dodge_elapsed = 0.0
@@ -287,7 +309,8 @@ func _respawn_from_fall() -> void:
 ## Atualiza locomoção: movimento, salto, rotação e transições de estado.
 func _update_locomotion(delta: float) -> void:
 	var attacking := combat.is_attacking()
-	if not attacking and Input.is_action_just_pressed("jump") and is_on_floor():
+	if not attacking and Input.is_action_just_pressed("jump") and is_on_floor() and spell_manager.can_cancel_cast():
+		spell_manager.cancel_cast()
 		velocity.y = jump_velocity
 		state_machine.set_state(PlayerStateMachine.State.JUMP)
 	var input_vec := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
@@ -336,6 +359,8 @@ func _can_start_dodge() -> bool:
 		return false
 	if not is_on_floor() and _air_dodge_used:
 		return false
+	if not spell_manager.can_cancel_cast():
+		return false
 	if combat.is_attacking():
 		return combat.can_cancel_to_dodge()
 	return true
@@ -344,6 +369,7 @@ func _can_start_dodge() -> bool:
 func _start_dodge() -> void:
 	if combat.is_attacking():
 		combat.cancel_attack()
+	spell_manager.cancel_cast()
 	# Clear attack buffer on dodge
 	combat.clear_buffer()
 	var input_vec := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
@@ -386,6 +412,7 @@ func receive_hitbox(hitbox: HitboxComponent) -> bool:
 	if _dead:
 		return true
 	combat.cancel_attack()
+	spell_manager.cancel_cast()
 	# Clear attack buffer on hit stun
 	combat.clear_buffer()
 	var source_position := global_position - global_transform.basis.z
@@ -454,6 +481,7 @@ func _on_died() -> void:
 	_dead = true
 	mana.regeneration_enabled = false
 	combat.cancel_attack()
+	spell_manager.cancel_cast()
 	# Clear attack buffer on death
 	combat.clear_buffer()
 	state_machine.set_state(PlayerStateMachine.State.DEAD)

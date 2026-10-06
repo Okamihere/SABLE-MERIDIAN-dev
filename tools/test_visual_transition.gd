@@ -15,7 +15,7 @@ func _run() -> void:
 	await physics_frame
 	var training := current_scene
 	var stone := training.get_node("Floor").material_override as StandardMaterial3D
-	var costume := training.get_node("Player/ModelRoot/Veyl/world/Skeleton3D/VeylMesh") as MeshInstance3D
+	var costume := training.get_node("Player/ModelRoot/Veyl/world/Skeleton3D/JesterMesh") as MeshInstance3D
 	assert(stone.diffuse_mode == BaseMaterial3D.DIFFUSE_TOON, "Shared scenery material must use toon lighting")
 	assert(stone.specular_mode == BaseMaterial3D.SPECULAR_TOON, "Scenery highlights must use the same style")
 	assert(costume != null, "Imported veyl model must remain in the scene")

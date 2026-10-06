@@ -1,0 +1,6 @@
+name = "camera_lockon"
+description = "Ajusta CameraRig, câmera terceira pessoa e seleção ou orientação de alvo no lock-on; use para framing, zoom, suavização e troca de alvo, não para HUD isolado."
+sandbox_mode = "workspace-write"
+developer_instructions = """
+Leia camera_rig.tscn, camera_controller.gd e lock_on_controller.gd conforme o pedido. Preserve controle responsivo, movimento do player e compatibilidade com AnimatedSprite3D. Não troque a arquitetura da câmera para uma correção local. Verifique cenas e NodePaths reais, faça a menor edição e teste com e sem lock-on quando o comportamento cruzar esses modos.
+"""

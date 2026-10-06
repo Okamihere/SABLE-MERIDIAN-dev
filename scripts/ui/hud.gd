@@ -27,11 +27,22 @@ var _wall_shown: bool = false
 var _wall_base_y: float = 0.0
 var _notice_queue: Array[Dictionary] = []
 var _notice_busy: bool = false
+var _style_debug: Label
 
 func _ready() -> void:
 	get_viewport().size_changed.connect(_apply_responsive_layout)
 	GameManager.player_registered.connect(_bind_player)
+	GameManager.style_changed.connect(_on_style_changed)
+	GameManager.debug_changed.connect(_on_debug_changed)
 	Progression.upgraded.connect(_on_orb_upgraded)
+	_style_debug = Label.new()
+	_style_debug.name = "StyleDebug"
+	_style_debug.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_style_debug.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_style_debug.add_theme_color_override("font_color", Color(0.75, 0.94, 0.97))
+	add_child(_style_debug)
+	_on_style_changed(GameManager.combo_count, GameManager.style_score, GameManager.style_rank)
+	_on_debug_changed(GameManager.DEBUG_COMBAT)
 	_apply_responsive_layout()
 	if GameManager.player is PlayerController:
 		_bind_player(GameManager.player)
@@ -141,6 +152,12 @@ func _on_player_died() -> void:
 func _on_orb_upgraded(maximum: int) -> void:
 	show_notice("ORBE ENCONTRADA", "Agora você pode saltar %d vezes entre paredes." % maximum, 3.4)
 
+func _on_style_changed(combo: int, score: int, rank: String) -> void:
+	_style_debug.text = "Combo: %d\nStyle: %d\nRank: %s" % [combo, score, rank]
+
+func _on_debug_changed(enabled: bool) -> void:
+	_style_debug.visible = enabled
+
 ## Outros sistemas também podem mostrar eventos sem criar texto permanente.
 func show_notice(title: String, detail: String, duration: float = 3.0) -> void:
 	_notice_queue.append({"title": title, "detail": detail, "duration": duration})
@@ -234,6 +251,9 @@ func _apply_responsive_layout() -> void:
 	scale = Vector2.ONE * factor
 	var area := pixels / factor
 	var margin := 12.0 if area.x < 600.0 else 20.0
+	if is_instance_valid(_style_debug):
+		_style_debug.position = Vector2(area.x - margin - 170.0, margin)
+		_style_debug.size = Vector2(170.0, 65.0)
 	var root_control := $Root as Control
 	root_control.position = Vector2.ZERO
 	root_control.size = area

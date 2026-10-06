@@ -15,9 +15,9 @@ extends Node
 ##   - O controlador gerencia automaticamente as janelas de acerto
 
 ## Tempo de buffer de input (em segundos).
-@export var input_buffer_time: float = 0.27
+@export var input_buffer_time: float = 0.32
 ## Janela de combo para encadear golpes (em segundos).
-@export var combo_window: float = 0.12
+@export var combo_window: float = 0.18
 ## Janela para cancelar ataque com esquiva (em segundos).
 @export var attack_cancel_window: float = 0.10
 ## Caminho para a hitbox de ataque leve.
@@ -64,6 +64,8 @@ var _current_attack: AttackData
 var _attack_elapsed: float = 0.0
 ## Índice do combo atual (0 = primeiro golpe).
 var _chain_index: int = 0
+var _chain_weapon: WeaponData
+var _combo_expires_at: float = 0.0
 ## Ação bufferizada (light/heavy).
 var _buffered_action: StringName = &""
 ## Tempo de expiração do buffer (em segundos).
@@ -73,6 +75,7 @@ var _active_hitbox: HitboxComponent
 ## Indica se a hitbox está ativa (janela de acerto aberta).
 var _hitbox_live: bool = false
 var _current_delivery: String = "melee"
+var _finisher_visual_pending: bool = false
 var _last_unarmed_notice_ms: int = -5000
 
 ## Inicializa referências e conecta sinais.
@@ -93,6 +96,9 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	_capture_attack_input()
 	if _current_attack == null:
+		if _chain_index > 0 and Time.get_ticks_msec() / 1000.0 > _combo_expires_at:
+			_chain_index = 0
+			_chain_weapon = null
 		var player := _owner_body as PlayerController
 		if player != null and player.equipment != null:
 			player.equipment.commit_pending_weapon()
@@ -102,6 +108,9 @@ func _physics_process(delta: float) -> void:
 	var active_start := _current_attack.startup
 	var active_end := active_start + _current_attack.active
 	if not _hitbox_live and _attack_elapsed >= active_start and _attack_elapsed < active_end:
+		if _finisher_visual_pending:
+			_spawn_basic_visual(_equipped_weapon(), _current_attack)
+			_finisher_visual_pending = false
 		if _current_delivery == "melee":
 			_active_hitbox.begin_attack()
 		else:
@@ -110,7 +119,13 @@ func _physics_process(delta: float) -> void:
 	elif _hitbox_live and _attack_elapsed >= active_end:
 		_active_hitbox.end_attack()
 		_hitbox_live = false
-	if _buffered_action != &"" and _attack_elapsed >= maxf(_current_attack.combo_window_start, combo_window):
+	var combo_end := _current_attack.combo_window_end
+	if combo_end <= 0.0:
+		combo_end = _current_attack.startup + _current_attack.active + _current_attack.recovery
+	var player := _owner_body as PlayerController
+	var casting := player != null and player.spell_manager != null and player.spell_manager.is_cast_committed()
+	var next_hit_at := maxf(maxf(_current_attack.combo_window_start, combo_window), active_end)
+	if not casting and _buffered_action != &"" and _attack_elapsed >= next_hit_at and _attack_elapsed <= combo_end:
 		_continue_from_buffer()
 		return
 	var total_duration := _current_attack.startup + _current_attack.active + _current_attack.recovery
@@ -141,6 +156,9 @@ func can_cancel_to_dodge() -> bool:
 			return true
 	return _attack_elapsed >= maxf(attack_cancel_window, _current_attack.attack_cancel_window)
 
+func can_cancel_to_skill() -> bool:
+	return _current_attack == null or _attack_elapsed >= maxf(_current_attack.startup, _current_attack.attack_cancel_window)
+
 ## Cancela o ataque atual.
 func cancel_attack() -> void:
 	if _active_hitbox != null:
@@ -149,8 +167,14 @@ func cancel_attack() -> void:
 	_active_hitbox = null
 	_hitbox_live = false
 	_current_delivery = "melee"
+	_finisher_visual_pending = false
 	_chain_index = 0
+	_chain_weapon = null
+	_combo_expires_at = 0.0
 	_buffered_action = &""
+	var player := _owner_body as PlayerController
+	if player != null and is_instance_valid(player.weapon_display):
+		player.weapon_display.call("stop_action")
 
 ## Limpa o buffer de ataque (chamado externamente ao entrar em hit stun, dodge, morte, diálogo).
 func clear_buffer() -> void:
@@ -179,7 +203,8 @@ func _capture_attack_input() -> void:
 ## O buffer usa tempo real; o hit stop não prolonga comandos antigos.
 func _buffer_action(action: StringName) -> void:
 	_buffered_action = action
-	_buffer_expire_at = Time.get_ticks_msec() / 1000.0 + input_buffer_time
+	var duration := _current_attack.input_buffer_time if _current_attack != null and _current_attack.input_buffer_time > 0.0 else input_buffer_time
+	_buffer_expire_at = Time.get_ticks_msec() / 1000.0 + duration
 
 ## Tenta iniciar um ataque a partir do buffer.
 func _try_start_buffered() -> void:
@@ -193,6 +218,15 @@ func _try_start_buffered() -> void:
 	if NpcInteraction.is_dialogue_active():
 		_buffered_action = &""
 		return
+	var player := _owner_body as PlayerController
+	if player != null and player.spell_manager != null and player.spell_manager.is_cast_committed():
+		return
+	if _chain_index > 0:
+		if Time.get_ticks_msec() / 1000.0 <= _combo_expires_at and _chain_weapon == _equipped_weapon():
+			_continue_from_buffer()
+			return
+		_chain_index = 0
+		_chain_weapon = null
 	var action := _buffered_action
 	_buffered_action = &""
 	var weapon := _equipped_weapon()
@@ -236,7 +270,7 @@ func _continue_from_buffer() -> void:
 	elif player != null and player.equipment.mask != null and player.equipment.mask.behavior.continue_after_finisher(weapon):
 		_start_attack(chain[0], 1)
 	else:
-		_finish_attack()
+		_finish_attack(true)
 
 ## Inicia um ataque.
 ## @param data Recurso AttackData com os parâmetros do golpe.
@@ -249,47 +283,79 @@ func _start_attack(data: AttackData, chain_index: int) -> void:
 	_current_attack = data
 	_attack_elapsed = 0.0
 	_chain_index = chain_index
+	_chain_weapon = _equipped_weapon()
+	_combo_expires_at = 0.0
 	_hitbox_live = false
 	var weapon := _equipped_weapon()
+	var player := _owner_body as PlayerController
 	_current_delivery = _delivery_for(weapon, data)
+	_finisher_visual_pending = chain_index == 4
 	_active_hitbox = _heavy_hitbox if (weapon != null and weapon.is_heavy_attack(data)) or data in [HEAVY, LAUNCHER, AIR_HEAVY] else _light_hitbox
 	if weapon != null:
 		_configure_hitbox_geometry(weapon)
 	_active_hitbox.configure_from_attack(data)
+	_active_hitbox.style_weapon_id = weapon.weapon_id if weapon != null else &""
 	_state_machine.set_state(PlayerStateMachine.State.ATTACK if _owner_body.is_on_floor() else PlayerStateMachine.State.AIR_ATTACK)
 	if weapon != null and weapon.behavior != null:
 		weapon.behavior.on_attack_started(_owner_body as PlayerController, data)
 	_face_attack_target()
 	var forward := _owner_body.global_transform.basis.z.normalized()
 	_owner_body.velocity += forward * data.forward_impulse
-	if weapon != null:
-		var effect := BASIC_VFX.instantiate()
-		var scene := get_tree().current_scene
-		if scene == null:
-			effect.queue_free()
-		else:
-			scene.add_child(effect)
-			effect.activate(_owner_body, weapon.weapon_id, weapon.is_heavy_attack(data))
+	if weapon != null and not _finisher_visual_pending:
+		_spawn_basic_visual(weapon, data)
 	if _animation_controller != null:
 		_animation_controller.notify_attack_started(data)
+	if player != null and is_instance_valid(player.weapon_display) and weapon != null:
+		var duration := data.startup + data.active + data.recovery
+		if chain_index > 0:
+			player.weapon_display.call("play_basic", weapon.weapon_id, chain_index, duration)
+		elif data == weapon.heavy or data == weapon.launcher or data == weapon.air_heavy:
+			player.weapon_display.call("play_heavy", weapon.weapon_id, duration)
+		else:
+			player.weapon_display.call("play_basic", weapon.weapon_id, 1, duration)
 
 ## Finaliza o ataque atual.
-func _finish_attack() -> void:
+func _finish_attack(reset_chain: bool = false) -> void:
+	var followup := _current_attack.combo_followup_time if _current_attack != null else 0.0
+	var player := _owner_body as PlayerController
+	var weapon := _equipped_weapon()
+	if weapon != null and _chain_index >= weapon.light_chain.size():
+		if player == null or player.equipment == null or player.equipment.mask == null or not player.equipment.mask.behavior.continue_after_finisher(weapon):
+			reset_chain = true
 	if _active_hitbox != null:
 		_active_hitbox.end_attack()
 	_current_attack = null
 	_active_hitbox = null
 	_hitbox_live = false
 	_current_delivery = "melee"
-	_chain_index = 0
-	var player := _owner_body as PlayerController
+	_finisher_visual_pending = false
+	if reset_chain or _chain_index == 0:
+		_chain_index = 0
+		_chain_weapon = null
+		_combo_expires_at = 0.0
+	else:
+		_combo_expires_at = Time.get_ticks_msec() / 1000.0 + followup
 	if player != null and player.equipment != null:
 		player.equipment.commit_pending_weapon()
+		if player.equipment.weapon != _chain_weapon:
+			_chain_index = 0
+			_chain_weapon = null
 	if _owner_body.is_on_floor():
 		_state_machine.set_state(PlayerStateMachine.State.IDLE)
 	else:
 		_state_machine.set_state(PlayerStateMachine.State.FALL)
 	_try_start_buffered()
+
+func _spawn_basic_visual(weapon: WeaponData, data: AttackData) -> void:
+	if weapon == null:
+		return
+	var effect := BASIC_VFX.instantiate()
+	var scene := get_tree().current_scene
+	if scene == null:
+		effect.queue_free()
+		return
+	scene.add_child(effect)
+	effect.activate(_owner_body, weapon.weapon_id, weapon.is_heavy_attack(data))
 
 func _equipped_weapon() -> WeaponData:
 	var player := _owner_body as PlayerController
@@ -365,7 +431,7 @@ func _face_attack_target() -> void:
 ## Chamado quando um golpe acerta uma hurtbox.
 ## Aplica efeitos: estilo, hit stop, câmera e partícula de impacto.
 func _on_hit_landed(hurtbox: HurtboxComponent, hitbox: HitboxComponent) -> void:
-	GameManager.register_hit(hitbox.attack_id, hitbox.style_points)
+	GameManager.register_hit(hitbox.attack_id, hitbox.style_points, hitbox.style_weapon_id)
 	if hitbox.attack_id == &"launcher":
 		_owner_body.velocity.y = maxf(_owner_body.velocity.y, 6.6)
 	GameManager.hit_stop(hitbox.hit_stop_duration)

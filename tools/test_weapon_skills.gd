@@ -25,14 +25,15 @@ func _run() -> void:
 		assert(player.equipment.weapon.is_playable())
 		assert(player.equipment.weapon.skills.size() == 3)
 		for index in 3:
-			player.global_position = Vector3(3, 0.05, 3)
-			player.rotation.y = 0.0
+			player.global_position = Vector3(8.48, 0.05, 4.74)
+			player.rotation.y = atan2(dummy.global_position.x - player.global_position.x, dummy.global_position.z - player.global_position.z)
 			player.velocity = Vector3.ZERO
 			player.mana.current_mana = player.mana.max_mana
 			var spell: SpellResource = player.equipment.weapon.skills[index]
 			assert(spell.effect_scene != null and spell.ability_id != &"")
 			var before_hits: int = hits[0]
 			assert(player.spell_manager.cast_spell(spell, player), "Skill must cast: " + spell.spell_name)
+			assert(player.weapon_display._action_kind == &"skill" and player.weapon_display._action_id == spell.ability_id, "Unique skill motion must start: " + spell.spell_name)
 			assert(not player.spell_manager.cast_spell(spell, player), "Cooldown must hold: " + spell.spell_name)
 			await _frames(18)
 			if spell.ability_id not in [&"cane_e", &"dagger_e"]:

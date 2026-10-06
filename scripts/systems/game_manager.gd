@@ -54,7 +54,7 @@ var style_score: int:
 ## Rank de estilo atual.
 var style_rank: String:
 	get:
-		return style_meter.rank if is_instance_valid(style_meter) else "D"
+		return style_meter.rank if is_instance_valid(style_meter) else "I"
 
 ## Geração atual de time scale (para evitar conflitos de timers).
 var _time_scale_generation: int = 0
@@ -135,8 +135,8 @@ func _set_user_max_fps(fps: int) -> void:
 ## Registra um golpe que acertou.
 ## @param attack_id Identificador do ataque.
 ## @param base_points Pontos base do ataque.
-func register_hit(attack_id: StringName, base_points: int) -> void:
-	style_meter.register_hit(attack_id, base_points)
+func register_hit(attack_id: StringName, base_points: int, weapon_id: StringName = &"") -> void:
+	style_meter.register_hit(attack_id, base_points, weapon_id if weapon_id != &"" else equipped_weapon_id)
 
 ## Registra um perfect dodge.
 func register_perfect_dodge() -> void:

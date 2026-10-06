@@ -25,10 +25,12 @@ GameManager="*res://scripts/systems/game_manager.gd"
 CelShading="*res://scripts/systems/cel_shading.gd"
 Progression="*res://scripts/systems/progression.gd"
 GraphicsSettings="*res://scripts/systems/graphics_settings.gd"
+UiSfx="*res://scripts/systems/ui_sfx.gd"
 PauseMenu="*res://scenes/ui/pause_menu.tscn"
 NpcInteraction="*res://scenes/ui/npc_interaction.tscn"
 AreaTransition="*res://scenes/ui/area_transition.tscn"
 MusicManager="*res://scripts/systems/music_manager.gd"
+PhantomCameraManager="*res://addons/phantom_camera/scripts/managers/phantom_camera_manager.gd"
 
 [display]
 
@@ -39,6 +41,10 @@ window/size/window_width_override=1280
 window/size/window_height_override=720
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/phantom_camera/plugin.cfg")
 
 [layer_names]
 

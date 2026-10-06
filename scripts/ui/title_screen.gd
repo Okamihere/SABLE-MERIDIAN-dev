@@ -4,6 +4,7 @@ extends Node3D
 const TRAINING_SCENE := "res://scenes/levels/start_room.tscn"
 const SCREEN_SIZE := Vector2(3.08, 2.002)
 const DIAL_DRAG_STEP := 28.0
+const CRT_SHADER := preload("res://shaders/press_start_crt.gdshader")
 
 @onready var camera: Camera3D = $Camera
 @onready var tv: Node3D = $Television
@@ -16,7 +17,7 @@ const DIAL_DRAG_STEP := 28.0
 @onready var title_particles: GPUParticles3D = $TitleParticles
 
 var screen_mesh: MeshInstance3D
-var _screen_material: StandardMaterial3D
+var _screen_material: ShaderMaterial
 var _indicator_material: StandardMaterial3D
 var _dial: MeshInstance3D
 var _dial_tween: Tween
@@ -262,10 +263,10 @@ func _react_prop(prop: Node3D) -> void:
 func _flicker_screen() -> void:
 	if is_instance_valid(_screen_flicker):
 		_screen_flicker.kill()
-	_screen_material.albedo_color = Color.WHITE
+	_screen_material.set_shader_parameter("screen_tint", Color.WHITE)
 	_screen_flicker = create_tween()
-	_screen_flicker.tween_property(_screen_material, "albedo_color", Color(0.72, 0.76, 0.86), 0.055)
-	_screen_flicker.tween_property(_screen_material, "albedo_color", Color.WHITE, 0.11).set_trans(Tween.TRANS_SINE)
+	_screen_flicker.tween_property(_screen_material, "shader_parameter/screen_tint", Color(0.72, 0.76, 0.86), 0.055)
+	_screen_flicker.tween_property(_screen_material, "shader_parameter/screen_tint", Color.WHITE, 0.11).set_trans(Tween.TRANS_SINE)
 
 func _on_selection_changed(index: int) -> void:
 	if is_instance_valid(_dial):
@@ -286,7 +287,7 @@ func _power_off_exit() -> void:
 	ui.power_off()
 	var shutdown := create_tween().set_parallel(true)
 	shutdown.tween_property(_lower_knob, "rotation:z", -0.8, 0.32).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	shutdown.tween_property(_screen_material, "albedo_color", Color.BLACK, 0.52).set_delay(0.12).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	shutdown.tween_property(_screen_material, "shader_parameter/screen_tint", Color.BLACK, 0.52).set_delay(0.12).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
 	shutdown.tween_property(screen_glow, "light_energy", 0.0, 0.56).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
 	shutdown.tween_property(_indicator_material, "emission", Color.BLACK, 0.45).set_delay(0.16)
 	shutdown.tween_property(key_light, "light_energy", 0.24, 0.68)
@@ -389,10 +390,11 @@ func _build_television() -> void:
 	quad.size = SCREEN_SIZE
 	screen_mesh.mesh = quad
 	screen_mesh.position = Vector3(-0.24, 0.09, 0.382)
-	_screen_material = StandardMaterial3D.new()
-	_screen_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	_screen_material.albedo_texture = screen_viewport.get_texture()
-	_screen_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	_screen_material = ShaderMaterial.new()
+	_screen_material.shader = CRT_SHADER
+	_screen_material.set_shader_parameter("screen_texture", screen_viewport.get_texture())
+	_screen_material.set_shader_parameter("scanline_strength", 0.36)
+	_screen_material.set_shader_parameter("noise_strength", 0.05)
 	screen_mesh.material_override = _screen_material
 	tv.add_child(screen_mesh)
 	_box(tv, "ControlBay", Vector3(1.64, 0.1, 0.36), Vector3(0.37, 2.17, 0.045), shadow)

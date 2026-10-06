@@ -11,7 +11,7 @@ references: list[tuple[Path, str]] = []
 def source_files():
     """Ignora caches e histórico: somente fontes entram na validação."""
     return [p for p in root.rglob("*") if p.is_file()
-            and not {".git", ".godot"}.intersection(p.relative_to(root).parts)]
+            and not {".git", ".godot", "addons"}.intersection(p.relative_to(root).parts)]
 
 
 files = source_files()
@@ -24,8 +24,8 @@ for path in files:
         text = path.read_text(encoding="utf-8")
     except UnicodeDecodeError:
         continue
-    for match in re.finditer(r'res://[A-Za-z0-9_./-]+', text):
-        ref = match.group(0).rstrip('"\')],;')
+    for match in re.finditer(r'["\'](res://[^"\']+)["\']', text):
+        ref = match.group(1)
         references.append((path, ref))
         target = root / ref.removeprefix("res://")
         if not target.exists():

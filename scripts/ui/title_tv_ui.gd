@@ -102,6 +102,8 @@ func select_index(index: int, animate: bool = true) -> void:
 	else:
 		_cursor.position.y = target_y
 	if changed:
+		if _booted:
+			UiSfx.play_cursor()
 		if is_instance_valid(_description_tween):
 			_description_tween.kill()
 		if animate and _booted:
@@ -147,6 +149,8 @@ func hover_at(point: Vector2) -> void:
 func click_at(point: Vector2) -> bool:
 	var index := point_to_index(point)
 	if index < 0 or buttons[index].disabled:
+		if index >= 0:
+			UiSfx.play_error()
 		hover_at(point)
 		return false
 	select_index(index)
@@ -157,8 +161,12 @@ func activate_selected() -> void:
 	_choose(selected_index)
 
 func _choose(index: int) -> void:
-	if _closing or (index == 1 and not continue_available):
+	if _closing:
 		return
+	if index == 1 and not continue_available:
+		UiSfx.play_error()
+		return
+	UiSfx.play_confirm()
 	choice_selected.emit(CHOICES[index])
 
 func power_off() -> void:
