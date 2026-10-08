@@ -62,26 +62,17 @@ func _run() -> void:
 	hitbox.end_attack()
 	# Tutorial: progresso depende de alvo adquirido e golpes que acertaram.
 	var training_room = current_scene
-	# Aguardar dummies entrarem no grupo (headless pode precisar de frames extras para _ready)
+	# Aguardar o alvo de treino entrar no grupo.
 	await frames(12)
-	var dummies = get_nodes_in_group("training_dummies")
-	# Filtrar apenas dummies da cena atual (evita lixo de runs anteriores)
-	var current_dummies = []
-	for dummy in dummies:
+	var current_dummies: Array[Node3D] = []
+	for dummy in get_nodes_in_group("training_dummies"):
 		if dummy.get_parent() == training_room:
 			current_dummies.append(dummy)
-	if current_dummies.size() < 2:
-		# Fallback: buscar por nome dos nodes
-		current_dummies = []
-		for i in 2:
-			var dummy = training_room.get_node_or_null("Dummy%d" % i)
-			if dummy != null:
-				current_dummies.append(dummy)
-	dummies = current_dummies
-	assert(dummies.size() >= 2, "Tutorial needs two passive targets")
+	assert(not current_dummies.is_empty(), "Tutorial needs a passive target")
+	var training_dummy := current_dummies[0]
 	assert(training_room.completed.is_empty(), "Tutorial must wait for player actions")
-	player.position = Vector3(-3, 0.05, 4.5)
-	player.rotation.y = 0.0
+	player.global_position = training_dummy.global_position + Vector3(0, 0.05, -1.75)
+	player.rotation.y = atan2(training_dummy.global_position.x - player.global_position.x, training_dummy.global_position.z - player.global_position.z)
 	await frames(8)
 	player.lock_on.acquire_target()
 	await frames(2)
@@ -92,7 +83,7 @@ func _run() -> void:
 	player.combat._start_attack(player.combat.HEAVY, 0)
 	await frames(45)
 	assert(training_room.completed.has("heavy"), "Heavy lesson must require a landed hit")
-	assert(dummies[0].is_alive() and dummies[1].is_alive(), "Training targets must survive")
+	assert(training_dummy.is_alive(), "Training target must survive")
 	assert(player.health.current_health == health_before, "Training targets must not attack")
 	Input.action_press("jump")
 	Input.action_press("ui_accept")
@@ -108,21 +99,26 @@ func _run() -> void:
 	assert(get_root().get_node("AreaTransition").is_travelling, "Crossing the fog gate must start the transition")
 	await create_timer(2.0).timeout
 	await frames(15)
-	assert(current_scene.scene_file_path == "res://scenes/levels/main.tscn", "Crossing the fog gate must open the city")
+	assert(current_scene.scene_file_path == "res://scenes/levels/vertical_pilot.tscn", "Crossing the fog gate must open the hub")
 	player = current_scene.get_node("Player")
-	assert(player.is_on_floor(), "City floor must hold the player")
+	assert(player.is_on_floor(), "Hub floor must hold the player")
 	assert(player.staff_attachment.visible and get_root().get_node("GameManager").has_staff, "The staff must remain equipped after crossing")
 	assert(not get_root().get_node("AreaTransition").is_travelling, "The fog must clear after arrival")
-	# Cidade: valida dano, estado de morte e reinício automático.
+	# A travessia termina no hub; a cena de combate valida dano e reinício.
+	change_scene_to_file("res://scenes/levels/main.tscn")
+	await frames(15)
+	player = current_scene.get_node("Player")
+	assert(player.is_on_floor(), "Combat floor must hold the player")
 	var enemies = get_nodes_in_group("enemies")
-	assert(not enemies.is_empty(), "City must contain enemies")
+	assert(not enemies.is_empty(), "Combat scene must contain enemies")
+	assert(player.equipment.request_weapon(&"cane_blade"), "Melee weapon must equip for the overlapping hit test")
 	for enemy in enemies:
 		enemy.set_physics_process(false)
 	var enemy = enemies[0]
 	player.rotation.y = 0.0
 	enemy.global_position = player.global_position + Vector3(0, 0, 1.5)
 	var enemy_health = enemy.health.current_health
-	player.combat._start_attack(player.combat.LIGHT_1, 1)
+	player.combat._start_attack(player.equipment.weapon.light_chain[0], 1)
 	await frames(30)
 	assert(enemy.health.current_health < enemy_health, "Real attack must damage an overlapping enemy")
 	assert(player.health.current_health == player.health.max_health, "Attack must not hurt its owner")

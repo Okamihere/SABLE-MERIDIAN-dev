@@ -22,6 +22,7 @@ Action game 3D estilizado de dark fantasy com protagonista jester. Godot 4.7 (in
 - Leia cena e script reais antes de editar; verifique NodePaths, sinais, recursos e fluxo. Preserve sistemas existentes e mudanças do usuário. Altere apenas arquivos necessários, sem refatoração ou renomeação gratuita; prefira componentes simples e sinais quando úteis.
 - Não altere gameplay, assets, plugins, engine, renderizador ou sistema operacional fora do pedido. Não instale addons ou dependências sem autorização. Não mascare referências inválidas com null checks genéricos.
 - Use o menor número de agentes necessário. Bug conhecido: especialista → revisão quando relevante. Causa desconhecida: explorer → especialista → revisão. Mudança cruzada: especialistas necessários → integration_tester → revisão. Arquitetura e performance só entram quando a tarefa exigir; paralelize apenas trabalhos independentes e nunca edição concorrente do mesmo arquivo.
+- Subagents deste repo (`.opencode/agents/`, todos só-leitura): `godot-scout` = explorer; `reviewer` = revisão; `tester` = roda `validate_project.py` + `tools/test_*.gd` headless e reporta PASS/FAIL.
 
 ## TESTING / SAFETY
 

@@ -1,7 +1,7 @@
 shader_type spatial;
 render_mode unshaded, cull_disabled;
 
-uniform sampler2D screen_texture : source_color, filter_linear;
+uniform sampler2D screen_texture : filter_linear;
 uniform vec4 screen_tint : source_color = vec4(1.0);
 uniform float scanline_strength = 0.095;
 uniform float noise_strength = 0.012;

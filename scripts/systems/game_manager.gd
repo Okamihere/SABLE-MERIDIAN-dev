@@ -197,6 +197,7 @@ func _ensure_inputs() -> void:
 	_bind_key("interact", KEY_F)
 	_bind_key("weapon_staff", KEY_1)
 	_bind_key("weapon_daggers", KEY_2)
+	_bind_key("weapon_echo_blade", KEY_3)
 	_bind_key("mask_laugh", KEY_TAB)
 
 ## Remove um vínculo antigo sem apagar os demais eventos da ação.

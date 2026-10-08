@@ -1,0 +1,400 @@
+[gd_scene load_steps=15 format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/world_01.gd" id="world_script"]
+[ext_resource type="PackedScene" path="res://scenes/player/player_rig.tscn" id="player"]
+[ext_resource type="PackedScene" path="res://scenes/player/camera_rig.tscn" id="camera"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="hud"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/basic_enemy.tscn" id="enemy"]
+[ext_resource type="PackedScene" path="res://scenes/levels/room_return_portal.tscn" id="entry_return"]
+
+[ext_resource type="Material" path="res://materials/contemplative_sky.tres" id="contemplative_sky"]
+
+[sub_resource type="StandardMaterial3D" id="Stone"]
+albedo_color = Color(0.30, 0.32, 0.38, 1)
+
+[sub_resource type="StandardMaterial3D" id="Route"]
+albedo_color = Color(0.58, 0.60, 0.65, 1)
+
+[sub_resource type="StandardMaterial3D" id="Accent"]
+albedo_color = Color(0.48, 0.29, 0.56, 1)
+
+
+[sub_resource type="Sky" id="World01Sky"]
+sky_material = ExtResource("contemplative_sky")
+
+[sub_resource type="Environment" id="WorldEnvironment"]
+background_mode = 2
+background_color = Color(0.09, 0.10, 0.14, 1)
+background_energy_multiplier = 1.0
+sky = SubResource("World01Sky")
+sky_rotation = Vector3(0, 0, 0)
+ambient_light_source = 1
+ambient_light_color = Color(0.8, 0.8, 0.85, 1)
+ambient_light_energy = 0.8
+fog_light_color = Color(0.09, 0.10, 0.14, 1)
+fog_density = 0.001
+fog_sky_affect = 0.08
+
+[sub_resource type="BoxShape3D" id="ReturnTrigger"]
+size = Vector3(4, 4, 4)
+
+[sub_resource type="BoxMesh" id="ReturnMarkerMesh"]
+size = Vector3(3.6, 3.2, 0.25)
+
+[node name="World01" type="Node3D"]
+script = ExtResource("world_script")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("WorldEnvironment")
+
+[node name="WorkLight" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-55, -25, 0)
+light_energy = 0.8
+
+[node name="Blockout" type="Node3D" parent="."]
+
+[node name="EntryNave" type="Node3D" parent="Blockout"]
+
+[node name="EntryFloor" type="CSGBox3D" parent="Blockout/EntryNave"]
+position = Vector3(0, -0.5, 37)
+size = Vector3(9, 1, 16)
+use_collision = true
+material = SubResource("Route")
+
+[node name="NorthWalk" type="CSGBox3D" parent="Blockout/EntryNave"]
+position = Vector3(0, -0.5, 25.5)
+size = Vector3(9, 1, 7)
+use_collision = true
+material = SubResource("Route")
+
+[node name="WestOuterWall" type="CSGBox3D" parent="Blockout/EntryNave"]
+position = Vector3(-5.5, 2, 36)
+size = Vector3(1.5, 5, 17)
+use_collision = true
+material = SubResource("Stone")
+
+[node name="WestPier30" type="CSGBox3D" parent="Blockout/EntryNave"]
+position = Vector3(-4.375, 2, 30)
+size = Vector3(0.75, 5, 1.5)
+use_collision = true
+material = SubResource("Stone")
+
+[node name="WestPier38" type="CSGBox3D" parent="Blockout/EntryNave"]
+position = Vector3(-4.375, 2, 38)
+size = Vector3(0.75, 5, 1.5)
+use_collision = true
+material = SubResource("Stone")
+
+[node name="WestPier44" type="CSGBox3D" parent="Blockout/EntryNave"]
+position = Vector3(-4.375, 2, 44)
+size = Vector3(0.75, 5, 1.5)
+use_collision = true
+material = SubResource("Stone")
+
+[node name="EastOuterWall" type="CSGBox3D" parent="Blockout/EntryNave"]
+position = Vector3(5.5, 2, 36)
+size = Vector3(1.5, 5, 17)
+use_collision = true
+material = SubResource("Stone")
+
+[node name="EastPier30" type="CSGBox3D" parent="Blockout/EntryNave"]
+position = Vector3(4.375, 2, 30)
+size = Vector3(0.75, 5, 1.5)
+use_collision = true
+material = SubResource("Stone")
+
+[node name="EastPier38" type="CSGBox3D" parent="Blockout/EntryNave"]
+position = Vector3(4.375, 2, 38)
+size = Vector3(0.75, 5, 1.5)
+use_collision = true
+material = SubResource("Stone")
+
+[node name="EastPier44" type="CSGBox3D" parent="Blockout/EntryNave"]
+position = Vector3(4.375, 2, 44)
+size = Vector3(0.75, 5, 1.5)
+use_collision = true
+material = SubResource("Stone")
+
+[node name="EntryLintel" type="CSGBox3D" parent="Blockout/EntryNave"]
+position = Vector3(0, 5, 43)
+size = Vector3(11, 1, 1.5)
+use_collision = false
+material = SubResource("Accent")
+
+[node name="SunkenCombat" type="Node3D" parent="Blockout"]
+
+[node name="DescentStep" type="CSGBox3D" parent="Blockout/SunkenCombat"]
+position = Vector3(0, -1.5, 19.5)
+size = Vector3(9, 1, 5)
+use_collision = true
+material = SubResource("Route")
+
+[node name="CombatFloor" type="CSGBox3D" parent="Blockout/SunkenCombat"]
+position = Vector3(0, -2.5, 12)
+size = Vector3(22, 1, 22)
+use_collision = true
+material = SubResource("Stone")
+
+[node name="RearExit" type="CSGBox3D" parent="Blockout/SunkenCombat"]
+position = Vector3(0, -2.5, 0)
+size = Vector3(7, 1, 2)
+use_collision = true
+material = SubResource("Route")
+
+[node name="WestParapet" type="CSGBox3D" parent="Blockout/SunkenCombat"]
+position = Vector3(-11.5, -0.5, 12)
+size = Vector3(1, 3, 22)
+use_collision = true
+material = SubResource("Stone")
+
+[node name="WestColumn3" type="CSGBox3D" parent="Blockout/SunkenCombat"]
+position = Vector3(-9.2, 1, 3)
+size = Vector3(1.5, 6, 1.5)
+use_collision = true
+material = SubResource("Stone")
+
+[node name="WestColumn12" type="CSGBox3D" parent="Blockout/SunkenCombat"]
+position = Vector3(-9.2, 1, 12)
+size = Vector3(1.5, 6, 1.5)
+use_collision = true
+material = SubResource("Stone")
+
+[node name="WestColumn21" type="CSGBox3D" parent="Blockout/SunkenCombat"]
+position = Vector3(-9.2, 1, 21)
+size = Vector3(1.5, 6, 1.5)
+use_collision = true
+material = SubResource("Stone")
+
+[node name="EastParapet" type="CSGBox3D" parent="Blockout/SunkenCombat"]
+position = Vector3(11.5, -0.5, 12)
+size = Vector3(1, 3, 22)
+use_collision = true
+material = SubResource("Stone")
+
+[node name="EastColumn3" type="CSGBox3D" parent="Blockout/SunkenCombat"]
+position = Vector3(9.2, 1, 3)
+size = Vector3(1.5, 6, 1.5)
+use_collision = true
+material = SubResource("Stone")
+
+[node name="EastColumn12" type="CSGBox3D" parent="Blockout/SunkenCombat"]
+position = Vector3(9.2, 1, 12)
+size = Vector3(1.5, 6, 1.5)
+use_collision = true
+material = SubResource("Stone")
+
+[node name="EastColumn21" type="CSGBox3D" parent="Blockout/SunkenCombat"]
+position = Vector3(9.2, 1, 21)
+size = Vector3(1.5, 6, 1.5)
+use_collision = true
+material = SubResource("Stone")
+
+[node name="FrontRail" type="CSGBox3D" parent="Blockout/SunkenCombat"]
+position = Vector3(0, -1.0, 21.5)
+size = Vector3(16, 2, 1)
+use_collision = false
+material = SubResource("Stone")
+
+[node name="WallJumpWell" type="Node3D" parent="Blockout"]
+
+[node name="WellFloor" type="CSGBox3D" parent="Blockout/WallJumpWell"]
+position = Vector3(0, -2.5, -8)
+size = Vector3(7, 1, 14)
+use_collision = true
+material = SubResource("Route")
+
+[node name="WestJumpWall" type="CSGBox3D" parent="Blockout/WallJumpWell"]
+position = Vector3(-3.9, 0, -8)
+size = Vector3(1, 8, 14)
+use_collision = true
+material = SubResource("Stone")
+
+[node name="WestWallCap" type="CSGBox3D" parent="Blockout/WallJumpWell"]
+position = Vector3(-3.9, 4.4, -8)
+size = Vector3(1.4, 0.5, 14)
+use_collision = false
+material = SubResource("Accent")
+
+[node name="EastJumpWall" type="CSGBox3D" parent="Blockout/WallJumpWell"]
+position = Vector3(3.9, 0, -8)
+size = Vector3(1, 8, 14)
+use_collision = true
+material = SubResource("Stone")
+
+[node name="EastWallCap" type="CSGBox3D" parent="Blockout/WallJumpWell"]
+position = Vector3(3.9, 4.4, -8)
+size = Vector3(1.4, 0.5, 14)
+use_collision = false
+material = SubResource("Accent")
+
+[node name="LowerRecoveryStep" type="CSGBox3D" parent="Blockout/WallJumpWell"]
+position = Vector3(0, -1.5, -12.3)
+size = Vector3(6.2, 1, 2.5)
+use_collision = true
+material = SubResource("Route")
+
+[node name="MiddleRecoveryStep" type="CSGBox3D" parent="Blockout/WallJumpWell"]
+position = Vector3(0, -0.5, -14.3)
+size = Vector3(6.2, 1, 2.5)
+use_collision = true
+material = SubResource("Route")
+
+[node name="UpperLedge" type="CSGBox3D" parent="Blockout/WallJumpWell"]
+position = Vector3(0, 0.5, -19)
+size = Vector3(6.2, 1, 6)
+use_collision = true
+material = SubResource("Route")
+
+[node name="Bridge" type="CSGBox3D" parent="Blockout/WallJumpWell"]
+position = Vector3(0, 0.54, -23)
+size = Vector3(7, 1, 10)
+use_collision = true
+material = SubResource("Route")
+
+[node name="BridgeWestRail" type="CSGBox3D" parent="Blockout/WallJumpWell"]
+position = Vector3(-3.8, 1.5, -23)
+size = Vector3(0.7, 2, 10)
+use_collision = true
+material = SubResource("Stone")
+
+[node name="BridgeEastRail" type="CSGBox3D" parent="Blockout/WallJumpWell"]
+position = Vector3(3.8, 1.5, -23)
+size = Vector3(0.7, 2, 10)
+use_collision = true
+material = SubResource("Stone")
+
+[node name="FinalArena" type="Node3D" parent="Blockout"]
+
+[node name="ArenaFloor" type="CSGBox3D" parent="Blockout/FinalArena"]
+position = Vector3(0, 0.5, -36)
+size = Vector3(26, 1, 26)
+use_collision = true
+material = SubResource("Stone")
+
+[node name="WestOuterWall" type="CSGBox3D" parent="Blockout/FinalArena"]
+position = Vector3(-13.5, 2.5, -36)
+size = Vector3(1, 4, 27)
+use_collision = true
+material = SubResource("Stone")
+
+[node name="WestChoirPier28" type="CSGBox3D" parent="Blockout/FinalArena"]
+position = Vector3(-11.4, 3, -28)
+size = Vector3(1.8, 5, 1.8)
+use_collision = true
+material = SubResource("Stone")
+
+[node name="WestChoirPier40" type="CSGBox3D" parent="Blockout/FinalArena"]
+position = Vector3(-11.4, 3, -40)
+size = Vector3(1.8, 5, 1.8)
+use_collision = true
+material = SubResource("Stone")
+
+[node name="WestChoirPier47" type="CSGBox3D" parent="Blockout/FinalArena"]
+position = Vector3(-11.4, 3, -47)
+size = Vector3(1.8, 5, 1.8)
+use_collision = true
+material = SubResource("Stone")
+
+[node name="WestChoirBench" type="CSGBox3D" parent="Blockout/FinalArena"]
+position = Vector3(-9, 1.4, -36)
+size = Vector3(3, 0.8, 12)
+use_collision = false
+material = SubResource("Accent")
+
+[node name="EastOuterWall" type="CSGBox3D" parent="Blockout/FinalArena"]
+position = Vector3(13.5, 2.5, -36)
+size = Vector3(1, 4, 27)
+use_collision = true
+material = SubResource("Stone")
+
+[node name="EastChoirPier28" type="CSGBox3D" parent="Blockout/FinalArena"]
+position = Vector3(11.4, 3, -28)
+size = Vector3(1.8, 5, 1.8)
+use_collision = true
+material = SubResource("Stone")
+
+[node name="EastChoirPier40" type="CSGBox3D" parent="Blockout/FinalArena"]
+position = Vector3(11.4, 3, -40)
+size = Vector3(1.8, 5, 1.8)
+use_collision = true
+material = SubResource("Stone")
+
+[node name="EastChoirPier47" type="CSGBox3D" parent="Blockout/FinalArena"]
+position = Vector3(11.4, 3, -47)
+size = Vector3(1.8, 5, 1.8)
+use_collision = true
+material = SubResource("Stone")
+
+[node name="EastChoirBench" type="CSGBox3D" parent="Blockout/FinalArena"]
+position = Vector3(9, 1.4, -36)
+size = Vector3(3, 0.8, 12)
+use_collision = false
+material = SubResource("Accent")
+
+[node name="BossDais" type="CSGBox3D" parent="Blockout/FinalArena"]
+position = Vector3(0, 1.015, -41)
+size = Vector3(10, 0.03, 6)
+use_collision = false
+material = SubResource("Accent")
+
+[node name="RearRail" type="CSGBox3D" parent="Blockout/FinalArena"]
+position = Vector3(0, 2.5, -49.5)
+size = Vector3(26, 4, 1)
+use_collision = true
+material = SubResource("Stone")
+
+[node name="ReturnPlinth" type="CSGBox3D" parent="Blockout/FinalArena"]
+position = Vector3(0, 1.015, -46)
+size = Vector3(5, 0.03, 4)
+use_collision = false
+material = SubResource("Route")
+
+[node name="Player" parent="." instance=ExtResource("player")]
+position = Vector3(0, 0.05, 42)
+rotation = Vector3(0, 3.14159, 0)
+starts_with_staff = true
+
+[node name="ReturnToHubAtEntrance" parent="." instance=ExtResource("entry_return")]
+position = Vector3(0, 0, 44.5)
+destination_scene = "res://scenes/levels/vertical_pilot.tscn"
+destination_name = "HUB CENTRAL"
+return_world_id = &"world_01"
+
+[node name="CameraRig" parent="." instance=ExtResource("camera")]
+
+[node name="HUD" parent="." instance=ExtResource("hud")]
+
+[node name="CombatEnemyWest" parent="." instance=ExtResource("enemy")]
+position = Vector3(-5, -1.95, 12)
+
+[node name="CombatEnemyEast" parent="." instance=ExtResource("enemy")]
+position = Vector3(5, -1.95, 9)
+
+[node name="FinalGuardWest" parent="." instance=ExtResource("enemy")]
+position = Vector3(-6, 1.05, -28)
+
+[node name="FinalGuardEast" parent="." instance=ExtResource("enemy")]
+position = Vector3(6, 1.05, -31)
+
+[node name="BossConductor" parent="." instance=ExtResource("enemy")]
+position = Vector3(0, 1.35, -41)
+detection_range = 20.0
+move_speed = 4.1
+attack_cooldown = 0.95
+
+[node name="ReturnPortal" type="Node3D" parent="."]
+position = Vector3(0, 1.15, -46)
+
+[node name="Marker" type="MeshInstance3D" parent="ReturnPortal"]
+position = Vector3(0, 1.7, 0)
+mesh = SubResource("ReturnMarkerMesh")
+material_override = SubResource("Accent")
+
+[node name="Area3D" type="Area3D" parent="ReturnPortal"]
+collision_layer = 0
+collision_mask = 2
+monitoring = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="ReturnPortal/Area3D"]
+position = Vector3(0, 1.7, 0)
+shape = SubResource("ReturnTrigger")

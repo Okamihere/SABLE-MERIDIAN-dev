@@ -1,3 +1,4 @@
+@tool
 extends Area3D
 
 ## Expositor reutilizável: aproximação equipa a arma sem retirar a peça da sala.
@@ -46,7 +47,8 @@ func _ready() -> void:
 	add_child(_light)
 	_label(title.to_upper(), 2.6, 38)
 	_label(description, 2.17, 23)
-	body_entered.connect(_on_body_entered)
+	if not Engine.is_editor_hint():
+		body_entered.connect(_on_body_entered)
 
 func _process(delta: float) -> void:
 	_time += delta

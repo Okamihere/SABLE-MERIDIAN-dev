@@ -9,19 +9,37 @@
 [ext_resource type="Material" path="res://materials/stone_light.tres" id="7_light"]
 [ext_resource type="PackedScene" path="res://scenes/levels/fog_gate.tscn" id="fog_gate"]
 [ext_resource type="PackedScene" path="res://scenes/npc/contrarregra.tscn" id="mentor_npc"]
-[ext_resource type="Sky" uid="uid://cttkl06osuqh7" path="res://materials/night_sky.tres" id="night_sky"]
-[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="shared_hud"]
+[ext_resource type="PackedScene" uid="uid://cda0geljm45bn" path="res://scenes/ui/hud.tscn" id="shared_hud"]
 [ext_resource type="PackedScene" uid="uid://xil2lunxiiu3" path="res://scenes/collectibles/staff_pickup.tscn" id="staff_pickup"]
+[ext_resource type="Shader" uid="uid://b0pmw3whxfjee" path="res://shaders/stars.gdshader" id="stars_shader"]
 [ext_resource type="Script" uid="uid://56intx54chci" path="res://scripts/levels/visual_atmosphere.gd" id="visual_atmosphere"]
-[ext_resource type="PackedScene" path="res://scenes/collectibles/wall_orb.tscn" id="wall_orb"]
+[ext_resource type="PackedScene" uid="uid://chs7qgxrd8xkk" path="res://scenes/collectibles/wall_orb.tscn" id="wall_orb"]
 [ext_resource type="PackedScene" path="res://scenes/collectibles/weapon_exhibit.tscn" id="weapon_exhibit"]
-[ext_resource type="Shader" path="res://shaders/stars.gdshader" id="stars_shader"]
+
+[ext_resource type="Material" path="res://materials/contemplative_sky.tres" id="contemplative_sky"]
+
+[sub_resource type="ShaderMaterial" id="StarDomeMat"]
+render_priority = 0
+shader = ExtResource("stars_shader")
+shader_parameter/cells = 80.0
+shader_parameter/density = 0.965
+shader_parameter/brightness = 1.3
+shader_parameter/twinkle_speed = 1.8
+
+[sub_resource type="SphereMesh" id="StarDomeMesh"]
+radius = 300.0
+height = 600.0
+
+
+[sub_resource type="Sky" id="StartRoomSky"]
+sky_material = ExtResource("contemplative_sky")
 
 [sub_resource type="Environment" id="Environment_start"]
 background_mode = 2
 background_color = Color(0.01, 0.015, 0.03, 1)
 background_energy_multiplier = 0.5
-sky = ExtResource("night_sky")
+sky = SubResource("StartRoomSky")
+sky_rotation = Vector3(0, 0, 0)
 ambient_light_source = 2
 ambient_light_color = Color(0.16, 0.17, 0.3, 1)
 ambient_light_energy = 0.7
@@ -39,13 +57,6 @@ fog_depth_end = 74.0
 adjustment_enabled = true
 adjustment_contrast = 1.16
 adjustment_saturation = 1.06
-
-[sub_resource type="ShaderMaterial" id="StarDomeMat"]
-shader = ExtResource("stars_shader")
-
-[sub_resource type="SphereMesh" id="StarDomeMesh"]
-radius = 300.0
-height = 600.0
 
 [sub_resource type="BoxMesh" id="BoxMesh_floor"]
 size = Vector3(28, 1, 32)
@@ -206,10 +217,10 @@ size = Vector3(3, 0.6, 2.2)
 [node name="StartRoom" type="Node3D" unique_id=2120275198]
 script = ExtResource("1_script")
 
-[node name="StarDome" type="MeshInstance3D" parent="."]
-position = Vector3(0, 0, 0)
-mesh = SubResource("StarDomeMesh")
+[node name="StarDome" type="MeshInstance3D" parent="." unique_id=1406420381]
+visible = false
 material_override = SubResource("StarDomeMat")
+mesh = SubResource("StarDomeMesh")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=835744707]
 environment = SubResource("Environment_start")
@@ -306,6 +317,8 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.4965234)
 
 [node name="DaggersExhibit" parent="." unique_id=1133327833 instance=ExtResource("weapon_exhibit")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.5, 0, -7.7)
+collision_layer = 0
+collision_mask = 2
 weapon_id = &"card_daggers"
 title = "Adagas de Cartas"
 description = "Q leque cortante
@@ -314,6 +327,8 @@ accent = Color(0.82, 0.28, 0.93, 1)
 
 [node name="StringsExhibit" parent="." unique_id=1006934920 instance=ExtResource("weapon_exhibit")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.5, 0, 4.4)
+collision_layer = 0
+collision_mask = 2
 weapon_id = &"puppet_strings"
 title = "Fios de Marionete"
 description = "Q puxa  •  E suspende
@@ -322,6 +337,8 @@ accent = Color(0.35, 0.82, 0.94, 1)
 
 [node name="CaneExhibit" parent="." unique_id=270946578 instance=ExtResource("weapon_exhibit")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.5, 0, -4.7)
+collision_layer = 0
+collision_mask = 2
 weapon_id = &"cane_blade"
 title = "Bengala-Lâmina"
 description = "Q estocada  •  E defesa
@@ -330,6 +347,8 @@ accent = Color(0.95, 0.74, 0.36, 1)
 
 [node name="GrimoireExhibit" parent="." unique_id=1797156326 instance=ExtResource("weapon_exhibit")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.5, 0, 4.4)
+collision_layer = 0
+collision_mask = 2
 weapon_id = &"living_grimoire"
 title = "Grimório Vivo"
 description = "Q página arcana  •  E selo
@@ -583,10 +602,7 @@ mesh = SubResource("JumpStepC_mesh")
 shape = SubResource("JumpStepC_shape")
 
 [node name="Dummy0" parent="." unique_id=1652243240 instance=ExtResource("6_dummy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.804407, 0, 6)
-
-[node name="Dummy1" parent="." unique_id=524680799 instance=ExtResource("6_dummy")]
-transform = Transform3D(0.94657254, 0, 0.32249093, 0, 1, 0, -0.32249093, 0, 0.94657254, 8.479594, 0, 7.241678)
+transform = Transform3D(0.77430046, 0, 0.63281816, 0, 1, 0, -0.63281816, 0, 0.77430046, 8.403339, 0, 7.345308)
 
 [node name="Orb_training_alcove" parent="." unique_id=1466655642 instance=ExtResource("wall_orb")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11, 1, 11)

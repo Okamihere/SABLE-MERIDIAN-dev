@@ -7,12 +7,13 @@ signal weapon_changed(weapon: WeaponData)
 signal mask_changed(mask: MaskData)
 signal relics_changed
 
-const WEAPONS := {
-	&"staff": preload("res://resources/weapons/staff.tres"),
-	&"card_daggers": preload("res://resources/weapons/card_daggers.tres"),
-	&"puppet_strings": preload("res://resources/weapons/puppet_strings.tres"),
-	&"cane_blade": preload("res://resources/weapons/cane_blade.tres"),
-	&"living_grimoire": preload("res://resources/weapons/living_grimoire.tres"),
+var WEAPONS := {
+	&"staff": load("res://resources/weapons/staff.tres"),
+	&"card_daggers": load("res://resources/weapons/card_daggers.tres"),
+	&"puppet_strings": load("res://resources/weapons/puppet_strings.tres"),
+	&"cane_blade": load("res://resources/weapons/cane_blade.tres"),
+	&"living_grimoire": load("res://resources/weapons/living_grimoire.tres"),
+	&"echo_blade": load("res://resources/weapons/echo_blade.tres"),
 }
 const MASKS := {
 	&"laugh": preload("res://resources/masks/laugh.tres"),
@@ -30,6 +31,13 @@ var mask: MaskData
 var relics: Array[RelicData] = []
 var _unlocked_weapons: Dictionary = {}
 var _pending_weapon: StringName = &""
+
+func _ready() -> void:
+	Progression.world_completed.connect(_on_world_completed)
+
+func _on_world_completed(world_id: StringName, _total_keys: int) -> void:
+	if world_id == &"world_01" and unlock_weapon(&"echo_blade"):
+		request_weapon(&"echo_blade")
 
 func unlock_weapon(id: StringName) -> bool:
 	var data := WEAPONS.get(id) as WeaponData
@@ -119,6 +127,8 @@ func restore_from_manager() -> void:
 		var data := WEAPONS.get(id) as WeaponData
 		if data != null and data.is_playable():
 			unlock_weapon(id)
+	if Progression.is_world_complete(&"world_01"):
+		unlock_weapon(&"echo_blade")
 	var selected: StringName = GameManager.equipped_weapon_id
 	_equip_weapon(selected if has_weapon(selected) else &"staff")
 	equip_mask(GameManager.equipped_mask_id)

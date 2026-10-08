@@ -181,6 +181,7 @@ func _register_prop(node: Node3D, center: Vector3, size: Vector3, kind: StringNa
 	var box := BoxShape3D.new()
 	box.size = size
 	shape.shape = box
+	shape.debug_color = Color.TRANSPARENT
 	body.add_child(shape)
 	_props[body] = {"node": node, "kind": kind, "position": node.position, "rotation": node.rotation}
 
@@ -265,8 +266,11 @@ func _flicker_screen() -> void:
 		_screen_flicker.kill()
 	_screen_material.set_shader_parameter("screen_tint", Color.WHITE)
 	_screen_flicker = create_tween()
-	_screen_flicker.tween_property(_screen_material, "shader_parameter/screen_tint", Color(0.72, 0.76, 0.86), 0.055)
-	_screen_flicker.tween_property(_screen_material, "shader_parameter/screen_tint", Color.WHITE, 0.11).set_trans(Tween.TRANS_SINE)
+	_screen_flicker.tween_method(_set_screen_tint, Color.WHITE, Color(0.72, 0.76, 0.86), 0.055)
+	_screen_flicker.tween_method(_set_screen_tint, Color(0.72, 0.76, 0.86), Color.WHITE, 0.11).set_trans(Tween.TRANS_SINE)
+
+func _set_screen_tint(value: Color) -> void:
+	_screen_material.set_shader_parameter("screen_tint", value)
 
 func _on_selection_changed(index: int) -> void:
 	if is_instance_valid(_dial):
@@ -282,12 +286,14 @@ func _power_off_exit() -> void:
 	_transitioning = true
 	_dragging_dial = false
 	_set_hovered_prop(null)
+	# Saída garantida: se qualquer tween acima falhar, o timer fecha o jogo.
+	get_tree().create_timer(1.2).timeout.connect(get_tree().quit)
 	if is_instance_valid(_screen_flicker):
 		_screen_flicker.kill()
 	ui.power_off()
 	var shutdown := create_tween().set_parallel(true)
 	shutdown.tween_property(_lower_knob, "rotation:z", -0.8, 0.32).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	shutdown.tween_property(_screen_material, "shader_parameter/screen_tint", Color.BLACK, 0.52).set_delay(0.12).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	shutdown.tween_method(_set_screen_tint, Color.WHITE, Color.BLACK, 0.52).set_delay(0.12).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
 	shutdown.tween_property(screen_glow, "light_energy", 0.0, 0.56).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
 	shutdown.tween_property(_indicator_material, "emission", Color.BLACK, 0.45).set_delay(0.16)
 	shutdown.tween_property(key_light, "light_energy", 0.24, 0.68)
@@ -357,6 +363,13 @@ func _build_stage() -> void:
 		cord.name = "TasselLeft" if side < 0.0 else "TasselRight"
 		cord.position = Vector3(side * 2.02, 1.0, 0.81)
 		stage.add_child(cord)
+		var tie_points := [Vector3(side * 0.72, 0.42, 0), Vector3(side * 0.36, 0.25, 0.07), Vector3(0, 0.44, 0)]
+		for segment_index in 2:
+			var start: Vector3 = tie_points[segment_index]
+			var end: Vector3 = tie_points[segment_index + 1]
+			var tie_segment := _cylinder(cord, "TiebackCord", (start + end) * 0.5, 0.022, start.distance_to(end), brass)
+			tie_segment.quaternion = Quaternion(Vector3.UP, (end - start).normalized())
+		_gem(cord, "TiebackKnot", Vector3(0, 0.44, 0), 0.048, brass)
 		_cylinder(cord, "Cord", Vector3(0, 0.22, 0), 0.018, 0.49, brass)
 		_gem(cord, "Tassel", Vector3(0, -0.09, 0), 0.085, brass)
 		_register_prop(cord, Vector3(0, 0.13, 0), Vector3(0.2, 0.65, 0.2), &"tassel")
@@ -378,6 +391,7 @@ func _build_television() -> void:
 	_indicator_material = _material(Color(0.95, 0.35, 0.52), 0.0, 0.3, Color(0.95, 0.35, 0.52))
 	_box(tv, "OuterCase", Vector3.ZERO, Vector3(3.9, 2.75, 0.59), casing)
 	_register_prop(tv, Vector3.ZERO, Vector3(3.9, 2.75, 0.59), &"case")
+	_box(tv, "TopLip", Vector3(0, 1.38, 0), Vector3(3.95, 0.055, 0.63), edge)
 	_box(tv, "CaseInset", Vector3(0, 0.015, 0.31), Vector3(3.75, 2.6, 0.055), edge)
 	_box(tv, "ScreenWell", Vector3(-0.24, 0.09, 0.344), Vector3(3.27, 2.19, 0.045), shadow)
 	_box(tv, "LeftTrim", Vector3(-1.87, 0.09, 0.38), Vector3(0.035, 2.25, 0.04), brass)
@@ -415,16 +429,21 @@ func _build_television() -> void:
 		else:
 			_lower_knob = knob
 	_box(tv, "PowerLamp", Vector3(1.64, -0.79, 0.43), Vector3(0.12, 0.07, 0.05), _indicator_material)
+	_box(tv, "AntennaMount", Vector3(0, 1.405, -0.08), Vector3(0.56, 0.08, 0.32), dark_brass)
 	for side in [-1.0, 1.0]:
 		_box(tv, "Foot", Vector3(side * 1.35, -1.46, 0.05), Vector3(0.42, 0.23, 0.7), dark_brass)
 		var aerial := Node3D.new()
 		aerial.name = "AntennaLeft" if side < 0.0 else "AntennaRight"
-		aerial.position = Vector3(side * 0.51, 1.22, 0.46)
+		aerial.position = Vector3(side * 0.18, 1.45, -0.08)
 		tv.add_child(aerial)
-		var antenna := _cylinder(aerial, "Antenna", Vector3.ZERO, 0.024, 0.34, brass)
-		antenna.rotation.z = -side * 0.35
-		_gem(aerial, "AntennaTip", Vector3(side * 0.06, 0.18, 0), 0.06, brass)
-		_register_prop(aerial, Vector3(side * 0.035, 0.09, 0), Vector3(0.2, 0.4, 0.2), &"antenna")
+		_cylinder(aerial, "Socket", Vector3(0, 0.04, 0), 0.07, 0.1, dark_brass)
+		var lower_rod := _cylinder(aerial, "LowerRod", Vector3(side * 0.145, 0.235, 0), 0.03, 0.55, brass)
+		lower_rod.rotation.z = -side * 0.55
+		var upper_rod := _cylinder(aerial, "UpperRod", Vector3(side * 0.39, 0.64, 0), 0.018, 0.4, edge)
+		upper_rod.rotation.z = -side * 0.55
+		_gem(aerial, "RodCollar", Vector3(side * 0.289, 0.47, 0), 0.042, dark_brass)
+		_gem(aerial, "AntennaTip", Vector3(side * 0.495, 0.81, 0), 0.045, brass)
+		_register_prop(aerial, Vector3(side * 0.25, 0.4, 0), Vector3(0.6, 0.95, 0.2), &"antenna")
 
 func _build_living_room() -> void:
 	var floor_material := _material(Color(0.11, 0.075, 0.085), 0.0, 0.94)
@@ -471,30 +490,47 @@ func _build_living_room() -> void:
 			_box(sofa, "BackSeam", Vector3((float(seat) + 0.5) * 0.79, 0.87, 0.61), Vector3(0.015, 0.66, 0.012), seams)
 
 func _build_table_cigarettes(table: Node3D) -> void:
-	var pack_paper := _material(Color(0.78, 0.69, 0.55), 0.0, 0.9)
-	var pack_band := _material(Color(0.45, 0.1, 0.13), 0.0, 0.9)
-	var pack_inside := _material(Color(0.12, 0.08, 0.07), 0.0, 1.0)
+	var ceramic := _material(Color(0.24, 0.16, 0.19), 0.0, 0.55)
+	var ceramic_rim := _material(Color(0.39, 0.27, 0.28), 0.0, 0.5)
 	var cigarette_paper := _material(Color(0.86, 0.79, 0.66), 0.0, 0.95)
 	var filter_material := _material(Color(0.54, 0.34, 0.18), 0.0, 0.95)
 	var ash := _material(Color(0.34, 0.32, 0.31), 0.0, 1.0)
 	var ember := _material(Color(1.0, 0.21, 0.07), 0.0, 0.7, Color(1.0, 0.16, 0.03))
-	var pack := Node3D.new()
-	pack.name = "OpenCigarettePack"
-	pack.position = Vector3(-0.5, 0, 0.02)
-	table.add_child(pack)
-	_box(pack, "Bottom", Vector3(0, 0.58, 0), Vector3(0.32, 0.05, 0.22), pack_paper)
-	_box(pack, "Inside", Vector3(0, 0.605, 0), Vector3(0.28, 0.006, 0.18), pack_inside)
-	for side in [-1.0, 1.0]:
-		_box(pack, "Side", Vector3(side * 0.15, 0.71, 0), Vector3(0.025, 0.22, 0.22), pack_paper)
-		_box(pack, "End", Vector3(0, 0.71, side * 0.10), Vector3(0.28, 0.22, 0.025), pack_paper)
-	_box(pack, "FrontBand", Vector3(0, 0.68, 0.115), Vector3(0.27, 0.09, 0.008), pack_band)
-	for row in 2:
-		for column in 4:
-			var stub := _cylinder(pack, "CigaretteButt", Vector3((float(column) - 1.5) * 0.064, 0.74 + 0.018 * float((row + column) % 2), (float(row) - 0.5) * 0.075), 0.022, 0.21, filter_material if (row + column) % 2 == 0 else cigarette_paper)
-			_cylinder(stub, "AshTip", Vector3(0, 0.106, 0), 0.022, 0.018, ash)
+	var ashtray := Node3D.new()
+	ashtray.name = "Ashtray"
+	ashtray.position = Vector3(-0.5, 0, 0.02)
+	table.add_child(ashtray)
+	_cylinder(ashtray, "CeramicBase", Vector3(0, 0.58, 0), 0.27, 0.045, ceramic)
+	_cylinder(ashtray, "AshBed", Vector3(0, 0.606, 0), 0.205, 0.008, ash)
+	var rim := MeshInstance3D.new()
+	rim.name = "CeramicRim"
+	var rim_mesh := TorusMesh.new()
+	rim_mesh.inner_radius = 0.205
+	rim_mesh.outer_radius = 0.29
+	rim_mesh.rings = 16
+	rim_mesh.ring_segments = 8
+	rim.mesh = rim_mesh
+	rim.material_override = ceramic_rim
+	rim.position.y = 0.615
+	ashtray.add_child(rim)
+	var butt_positions := [Vector3(-0.075, 0.624, -0.065), Vector3(0.055, 0.625, -0.06), Vector3(-0.035, 0.627, 0.065), Vector3(0.07, 0.629, 0.075)]
+	var butt_angles := [0.3, -0.8, 1.7, 2.6]
+	for index in butt_positions.size():
+		var butt := Node3D.new()
+		butt.name = "CigaretteButt"
+		butt.position = butt_positions[index]
+		butt.rotation.y = butt_angles[index]
+		ashtray.add_child(butt)
+		var paper_stub := _cylinder(butt, "Paper", Vector3(0.03, 0, 0), 0.018, 0.115, cigarette_paper)
+		paper_stub.rotation.z = PI * 0.5
+		var filter_stub := _cylinder(butt, "Filter", Vector3(-0.063, 0, 0), 0.019, 0.07, filter_material)
+		filter_stub.rotation.z = PI * 0.5
+		var ash_tip := _cylinder(butt, "AshTip", Vector3(0.1, 0, 0), 0.018, 0.025, ash)
+		ash_tip.rotation.z = PI * 0.5
 	var cigarette := Node3D.new()
 	cigarette.name = "LitCigarette"
-	cigarette.position = Vector3(0.3, 0.585, 0.04)
+	cigarette.position = Vector3(-0.06, 0.585, 0.27)
+	cigarette.rotation.y = PI
 	table.add_child(cigarette)
 	var paper := _cylinder(cigarette, "Paper", Vector3.ZERO, 0.025, 0.46, cigarette_paper)
 	paper.rotation.z = PI * 0.5
@@ -552,11 +588,11 @@ func _curtain_mesh(parent: Node3D, side: float, width: float, height: float, mat
 	var surface := SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 	for column in 10:
-		for row in 3:
+		for row in 6:
 			var u0 := float(column) / 10.0
 			var u1 := float(column + 1) / 10.0
-			var v0 := float(row) / 3.0
-			var v1 := float(row + 1) / 3.0
+			var v0 := float(row) / 6.0
+			var v1 := float(row + 1) / 6.0
 			var shade := Color(0.62, 0.62, 0.62) if column % 2 == 0 else Color(1.0, 0.91, 0.95)
 			var a := _curtain_point(side, width, height, u0, v0)
 			var b := _curtain_point(side, width, height, u1, v0)
@@ -573,7 +609,8 @@ func _curtain_mesh(parent: Node3D, side: float, width: float, height: float, mat
 func _curtain_point(side: float, width: float, height: float, u: float, v: float) -> Vector3:
 	var fold := sin(u * PI * 10.0) * 0.12
 	var hem := sin(u * PI * 5.0) * 0.065
-	return Vector3(-side * width * u, height * (0.5 - v) + hem * v, fold + 0.035 * v)
+	var gather := 1.0 - 0.16 * exp(-pow((v - 0.62) / 0.13, 2.0))
+	return Vector3(-side * width * u * gather, height * (0.5 - v) + hem * v, fold + 0.035 * v)
 
 func _crown_mesh(parent: Node3D, material: Material) -> void:
 	var surface := SurfaceTool.new()

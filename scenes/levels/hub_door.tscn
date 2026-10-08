@@ -1,0 +1,55 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/hub_door.gd" id="1_script"]
+
+[sub_resource type="BoxMesh" id="PanelMesh"]
+size = Vector3(3.4, 4.5, 0.12)
+
+[sub_resource type="BoxShape3D" id="TriggerShape"]
+size = Vector3(3.8, 4.7, 4.0)
+
+[sub_resource type="StandardMaterial3D" id="ApproachAccent"]
+albedo_color = Color(0.46, 0.27, 0.56, 1)
+
+[node name="HubDoor" type="Node3D"]
+script = ExtResource("1_script")
+
+[node name="LeftJamb" type="CSGBox3D" parent="."]
+position = Vector3(-2.2, 2.6, 0)
+size = Vector3(0.8, 5.2, 1.2)
+use_collision = true
+
+[node name="RightJamb" type="CSGBox3D" parent="."]
+position = Vector3(2.2, 2.6, 0)
+size = Vector3(0.8, 5.2, 1.2)
+use_collision = true
+
+[node name="Lintel" type="CSGBox3D" parent="."]
+position = Vector3(0, 5.2, 0)
+size = Vector3(5.2, 0.8, 1.2)
+use_collision = true
+
+[node name="Panel" type="MeshInstance3D" parent="."]
+position = Vector3(0, 2.4, -0.35)
+mesh = SubResource("PanelMesh")
+
+[node name="ApproachStripe" type="CSGBox3D" parent="."]
+position = Vector3(0, 0.035, 2.7)
+size = Vector3(3.2, 0.07, 3.0)
+material = SubResource("ApproachAccent")
+
+[node name="Status" type="Label3D" parent="."]
+position = Vector3(0, 4.9, 6)
+pixel_size = 0.008
+billboard = 1
+font_size = 58
+outline_size = 8
+text = "MUNDO\nCHAVE PENDENTE"
+
+[node name="Threshold" type="Area3D" parent="."]
+collision_layer = 0
+collision_mask = 2
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Threshold"]
+position = Vector3(0, 2.35, 1)
+shape = SubResource("TriggerShape")

@@ -12,7 +12,7 @@ func _run() -> void:
 	await _frames(12)
 	var player = current_scene.get_node("Player")
 	player.equip_staff()
-	var dummy := current_scene.get_node("Dummy1")
+	var dummy := current_scene.get_node("Dummy0")
 	var hits := [0]
 	dummy.struck.connect(func(_attack_id: StringName) -> void: hits[0] += 1)
 	var ids: Array[StringName] = [&"staff", &"card_daggers", &"puppet_strings", &"cane_blade", &"living_grimoire"]

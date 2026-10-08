@@ -41,7 +41,7 @@ func prepare_scene(scene_path: String) -> void:
 	if result != OK:
 		_requested_scene_path = ""
 
-func travel_to(scene_path: String) -> void:
+func travel_to(scene_path: String, arrival: Dictionary = {}) -> void:
 	if is_travelling:
 		# Clean up previous transition if travel_to is called again
 		_reset_transition()
@@ -67,6 +67,20 @@ func travel_to(scene_path: String) -> void:
 		return
 	_requested_scene_path = ""
 	await get_tree().process_frame
+	if not arrival.is_empty():
+		for attempt in 5:
+			if get_tree().current_scene != null:
+				break
+			await get_tree().process_frame
+		var destination_scene := get_tree().current_scene
+		var destination_player := destination_scene.get_node_or_null("Player") as Node3D if destination_scene != null else null
+		if destination_player != null:
+			destination_player.global_position = arrival.get("position", destination_player.global_position)
+			destination_player.rotation.y = arrival.get("rotation_y", destination_player.rotation.y)
+			var camera_rig := get_tree().current_scene.get_node_or_null("CameraRig")
+			if camera_rig != null:
+				camera_rig.snap_to_player()
+				camera_rig.yaw_from_player()
 	await get_tree().create_timer(0.12).timeout
 	var reveal := create_tween()
 	reveal.tween_method(_set_coverage, 1.0, 0.0, 0.9).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)

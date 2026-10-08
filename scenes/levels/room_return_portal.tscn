@@ -1,0 +1,40 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/room_return_portal.gd" id="1_script"]
+
+[sub_resource type="BoxShape3D" id="TriggerShape"]
+size = Vector3(5, 4, 4)
+
+[node name="RoomReturnPortal" type="Node3D"]
+script = ExtResource("1_script")
+
+[node name="LeftPost" type="CSGBox3D" parent="."]
+position = Vector3(-3, 2.5, 0)
+size = Vector3(0.8, 5, 0.8)
+use_collision = true
+
+[node name="RightPost" type="CSGBox3D" parent="."]
+position = Vector3(3, 2.5, 0)
+size = Vector3(0.8, 5, 0.8)
+use_collision = true
+
+[node name="Head" type="CSGBox3D" parent="."]
+position = Vector3(0, 5.2, 0)
+size = Vector3(7, 0.8, 0.8)
+use_collision = true
+
+[node name="Status" type="Label3D" parent="."]
+position = Vector3(0, 6.1, 0)
+billboard = 1
+pixel_size = 0.007
+font_size = 40
+outline_size = 8
+text = "ATRAVESSE PARA VOLTAR"
+
+[node name="Threshold" type="Area3D" parent="."]
+collision_layer = 0
+collision_mask = 2
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Threshold"]
+position = Vector3(0, 2, -1)
+shape = SubResource("TriggerShape")

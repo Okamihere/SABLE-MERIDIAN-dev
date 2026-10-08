@@ -248,7 +248,7 @@ func _populate_controls() -> void:
 	for entry in [["Golpe leve", &"light_attack"], ["Golpe pesado", &"heavy_attack"], ["Focar alvo", &"lock_on"], ["Baralho Maldito", &"spell_q"], ["Conversar / avançar", &"interact"]]:
 		_add_control_row(entry[0], _binding_text(entry[1]))
 	_add_controls_heading("EQUIPAMENTO")
-	for entry in [["Cajado", &"weapon_staff"], ["Adagas de Cartas", &"weapon_daggers"], ["Máscara do Riso", &"mask_laugh"]]:
+	for entry in [["Cajado", &"weapon_staff"], ["Adagas de Cartas", &"weapon_daggers"], ["Lâmina do Eco", &"weapon_echo_blade"], ["Máscara do Riso", &"mask_laugh"]]:
 		_add_control_row(entry[0], _binding_text(entry[1]))
 	_add_controls_heading("MENUS")
 	_add_control_row("Pausa / voltar", _binding_text(&"pause_menu"))

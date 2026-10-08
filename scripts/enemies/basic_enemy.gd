@@ -60,6 +60,8 @@ var _attack_cooldown_left: float = 0.5
 var _attack_elapsed: float = 0.0
 ## Indica se a hitbox de ataque está ativa.
 var _attack_live: bool = false
+var _attack_tween: Tween
+var _attack_rest_scale := Vector3.ONE
 ## Tempo restante de hit stun (em segundos).
 var _hit_stun_left: float = 0.0
 ## Indica se o inimigo está morto.
@@ -69,6 +71,7 @@ var _dead: bool = false
 const ATTACK_WINDUP := 0.42
 const ATTACK_ACTIVE := 0.16
 const ATTACK_RECOVERY := 0.42
+const ATTACK_REACH := 2.3
 
 ## Inicializa o inimigo: adiciona ao grupo "enemies" e configura hitbox.
 func _ready() -> void:
@@ -122,17 +125,27 @@ func _update_chase(delta: float) -> void:
 		velocity.z = move_toward(velocity.z, 0.0, acceleration * delta)
 		return
 	state = State.CHASE
-	if distance <= attack_range and _attack_cooldown_left <= 0.0:
+	if _attack_cooldown_left <= 0.0 and _can_reach_player():
 		_start_attack()
 		return
 	var direction := to_player.normalized() if distance > 0.01 else Vector3.ZERO
 	var separation := _separation_vector()
-	var desired := (direction + separation * separation_strength).normalized()
-	var speed_scale := clampf((distance - preferred_distance) / 3.0, 0.2, 1.0)
+	# A separação desvia para os lados sem anular o avanço até o alvo.
+	var lateral_separation := separation - direction * separation.dot(direction)
+	var desired := (direction + lateral_separation.limit_length(0.6) * separation_strength).normalized()
+	var approach_distance := minf(preferred_distance, minf(attack_range, ATTACK_REACH) - 0.3)
+	var speed_scale := clampf((distance - approach_distance) / 1.5, 0.0, 1.0)
 	velocity.x = move_toward(velocity.x, desired.x * move_speed * speed_scale, acceleration * delta)
 	velocity.z = move_toward(velocity.z, desired.z * move_speed * speed_scale, acceleration * delta)
 	if direction.length_squared() > 0.01:
 		rotation.y = lerp_angle(rotation.y, atan2(direction.x, direction.z), clampf(rotation_speed * delta, 0.0, 1.0))
+
+func _can_reach_player(extra_range: float = 0.0) -> bool:
+	if not is_instance_valid(_player) or (_player.has_method("is_alive") and not _player.call("is_alive")):
+		return false
+	var local_target := to_local(_player.global_position)
+	return absf(local_target.y) <= 1.5 and absf(local_target.x) <= 1.25 \
+		and local_target.z >= 0.0 and local_target.z <= minf(attack_range, ATTACK_REACH) + extra_range
 
 ## Inicia o ataque com animação de windup.
 func _start_attack() -> void:
@@ -141,19 +154,31 @@ func _start_attack() -> void:
 	_attack_live = false
 	velocity.x = 0.0
 	velocity.z = 0.0
-	var tween := create_tween()
-	tween.tween_property(visual, "scale", Vector3(1.08, 0.92, 1.08), ATTACK_WINDUP).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	tween.tween_property(visual, "scale", Vector3.ONE, ATTACK_ACTIVE + ATTACK_RECOVERY).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	if is_instance_valid(_attack_tween):
+		_attack_tween.kill()
+	_attack_rest_scale = visual.scale
+	_attack_tween = create_tween()
+	_attack_tween.tween_property(visual, "scale", _attack_rest_scale * Vector3(1.08, 0.92, 1.08), ATTACK_WINDUP).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	_attack_tween.tween_property(visual, "scale", _attack_rest_scale, ATTACK_ACTIVE + ATTACK_RECOVERY).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 ## Atualiza o ataque em andamento: windup, active e recovery.
 func _update_attack(delta: float) -> void:
 	_attack_elapsed += delta
+	velocity.x = move_toward(velocity.x, 0.0, acceleration * delta)
+	velocity.z = move_toward(velocity.z, 0.0, acceleration * delta)
 	if is_instance_valid(_player):
 		var direction := _player.global_position - global_position
 		direction.y = 0.0
 		if direction.length_squared() > 0.01 and _attack_elapsed < ATTACK_WINDUP * 0.75:
 			rotation.y = lerp_angle(rotation.y, atan2(direction.x, direction.z), clampf(rotation_speed * delta, 0.0, 1.0))
 	if not _attack_live and _attack_elapsed >= ATTACK_WINDUP and _attack_elapsed < ATTACK_WINDUP + ATTACK_ACTIVE:
+		if not _can_reach_player(0.15):
+			if is_instance_valid(_attack_tween):
+				_attack_tween.kill()
+			visual.scale = _attack_rest_scale
+			state = State.CHASE
+			_attack_cooldown_left = minf(attack_cooldown, 0.25)
+			return
 		attack_hitbox.begin_attack()
 		_attack_live = true
 		velocity += global_transform.basis.z * 3.0
@@ -189,6 +214,8 @@ func receive_hitbox(hitbox: HitboxComponent) -> bool:
 		return true
 	attack_hitbox.end_attack()
 	_attack_live = false
+	if is_instance_valid(_attack_tween):
+		_attack_tween.kill()
 	var source_position := global_position - global_transform.basis.z
 	if is_instance_valid(hitbox.source) and hitbox.source is Node3D:
 		source_position = (hitbox.source as Node3D).global_position
@@ -244,6 +271,8 @@ func _on_died() -> void:
 	_dead = true
 	state = State.DEAD
 	attack_hitbox.end_attack()
+	if is_instance_valid(_attack_tween):
+		_attack_tween.kill()
 	hurtbox.set_deferred("monitorable", false)
 	collision_layer = 0
 	collision_mask = 0

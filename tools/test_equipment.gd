@@ -20,7 +20,7 @@ func _run() -> void:
 	assert(player.equipment.weapon == null, "Training room must still require the staff pickup")
 	player.equip_staff()
 	var equipment = player.equipment
-	assert(equipment.WEAPONS.size() == 5 and equipment.MASKS.size() == 3, "All requested identities must be present in the catalog")
+	assert(equipment.WEAPONS.size() == 6 and equipment.MASKS.size() == 3, "All requested identities must be present in the catalog")
 	assert(equipment.weapon.weapon_id == &"staff" and equipment.has_weapon(&"card_daggers"), "Staff pickup must unlock two playable styles")
 	assert(equipment.request_weapon(&"puppet_strings"), "Completed puppet strings must equip")
 	assert(equipment.request_weapon(&"staff"), "Staff must remain available after switching")
@@ -74,7 +74,7 @@ func _run() -> void:
 	assert(root.get_node("AreaTransition").is_travelling, "Fog gate must begin the scene transition")
 	await create_timer(2.0).timeout
 	await _frames(10)
-	assert(current_scene.scene_file_path == "res://scenes/levels/main.tscn", "Fog crossing must reach the city")
+	assert(current_scene.scene_file_path == "res://scenes/levels/vertical_pilot.tscn", "Fog crossing must reach the hub")
 	player = current_scene.get_node("Player")
 	assert(player.equipment.weapon.weapon_id == &"card_daggers" and player.equipment.mask.mask_id == &"laugh", "Weapon and mask must survive scene changes")
 	assert(player.equipment.relics.size() == 1, "Relic must survive scene changes")

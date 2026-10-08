@@ -28,11 +28,10 @@ func _run() -> void:
 	var spell := player.spells[0] as SpellResource
 	assert(spell.spell_name == "Baralho Maldito", "Repertório ativo deve ser teatral")
 	assert(player.spell_manager._mana == player.mana, "Magia deve usar mana real")
-	player.global_position = Vector3(-3, 0.05, 3)
-	player.rotation.y = 0.0
-	player.velocity = Vector3.ZERO
 	var dummy := current_scene.get_node("Dummy0")
+	player.global_position = dummy.global_position + Vector3(0, 0.05, -2.6)
 	player.rotation.y = atan2(dummy.global_position.x - player.global_position.x, dummy.global_position.z - player.global_position.z)
+	player.velocity = Vector3.ZERO
 	var hits := [0]
 	dummy.struck.connect(func(_id: StringName) -> void: hits[0] += 1)
 	var mana_before: float = player.mana.current_mana

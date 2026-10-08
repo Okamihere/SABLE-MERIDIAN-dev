@@ -213,7 +213,7 @@ func _try_start_buffered() -> void:
 	if Time.get_ticks_msec() / 1000.0 > _buffer_expire_at:
 		_buffered_action = &""
 		return
-	if _state_machine.state in [PlayerStateMachine.State.DODGE, PlayerStateMachine.State.HIT, PlayerStateMachine.State.DEAD]:
+	if _state_machine.state in [PlayerStateMachine.State.HIT, PlayerStateMachine.State.DEAD]:
 		return
 	if NpcInteraction.is_dialogue_active():
 		_buffered_action = &""
@@ -243,7 +243,7 @@ func _continue_from_buffer() -> void:
 	if Time.get_ticks_msec() / 1000.0 > _buffer_expire_at:
 		_buffered_action = &""
 		return
-	if _state_machine.state in [PlayerStateMachine.State.DODGE, PlayerStateMachine.State.HIT, PlayerStateMachine.State.DEAD]:
+	if _state_machine.state in [PlayerStateMachine.State.HIT, PlayerStateMachine.State.DEAD]:
 		_buffered_action = &""
 		return
 	if NpcInteraction.is_dialogue_active():
@@ -295,12 +295,15 @@ func _start_attack(data: AttackData, chain_index: int) -> void:
 		_configure_hitbox_geometry(weapon)
 	_active_hitbox.configure_from_attack(data)
 	_active_hitbox.style_weapon_id = weapon.weapon_id if weapon != null else &""
-	_state_machine.set_state(PlayerStateMachine.State.ATTACK if _owner_body.is_on_floor() else PlayerStateMachine.State.AIR_ATTACK)
+	var attacking_during_dodge := _state_machine.state == PlayerStateMachine.State.DODGE
+	if not attacking_during_dodge:
+		_state_machine.set_state(PlayerStateMachine.State.ATTACK if _owner_body.is_on_floor() else PlayerStateMachine.State.AIR_ATTACK)
 	if weapon != null and weapon.behavior != null:
 		weapon.behavior.on_attack_started(_owner_body as PlayerController, data)
 	_face_attack_target()
 	var forward := _owner_body.global_transform.basis.z.normalized()
-	_owner_body.velocity += forward * data.forward_impulse
+	if not attacking_during_dodge:
+		_owner_body.velocity += forward * data.forward_impulse
 	if weapon != null and not _finisher_visual_pending:
 		_spawn_basic_visual(weapon, data)
 	if _animation_controller != null:
@@ -340,10 +343,8 @@ func _finish_attack(reset_chain: bool = false) -> void:
 		if player.equipment.weapon != _chain_weapon:
 			_chain_index = 0
 			_chain_weapon = null
-	if _owner_body.is_on_floor():
-		_state_machine.set_state(PlayerStateMachine.State.IDLE)
-	else:
-		_state_machine.set_state(PlayerStateMachine.State.FALL)
+	if _state_machine.state != PlayerStateMachine.State.DODGE:
+		_state_machine.set_state(PlayerStateMachine.State.IDLE if _owner_body.is_on_floor() else PlayerStateMachine.State.FALL)
 	_try_start_buffered()
 
 func _spawn_basic_visual(weapon: WeaponData, data: AttackData) -> void:

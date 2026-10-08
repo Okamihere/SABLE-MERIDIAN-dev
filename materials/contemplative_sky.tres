@@ -1,0 +1,6 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3]
+
+[ext_resource type="Shader" path="res://shaders/contemplative_sky.gdshader" id="1_sky"]
+
+[resource]
+shader = ExtResource("1_sky")

@@ -1,0 +1,40 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/hub_world_draft.gd" id="1_world"]
+[ext_resource type="PackedScene" path="res://scenes/player/player_rig.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://scenes/player/camera_rig.tscn" id="3_camera"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="4_hud"]
+
+
+[ext_resource type="Material" path="res://materials/contemplative_sky.tres" id="contemplative_sky"]
+
+[sub_resource type="Sky" id="World05Sky"]
+sky_material = ExtResource("contemplative_sky")
+
+[sub_resource type="Environment" id="World05Environment"]
+background_mode = 2
+background_color = Color(0.09, 0.10, 0.14, 1)
+background_energy_multiplier = 1.0
+sky = SubResource("World05Sky")
+sky_rotation = Vector3(0, 0, 0)
+ambient_light_source = 1
+fog_light_color = Color(0.08, 0.045, 0.10, 1)
+fog_density = 0.006
+fog_sky_affect = 0.08
+
+[node name="World05" type="Node3D"]
+script = ExtResource("1_world")
+world_index = 5
+world_title = "ARQUIVO SUSPENSO"
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("World05Environment")
+
+[node name="Player" parent="." instance=ExtResource("2_player")]
+position = Vector3(0, 0.05, 10)
+rotation = Vector3(0, 3.14159, 0)
+starts_with_staff = true
+
+[node name="CameraRig" parent="." instance=ExtResource("3_camera")]
+
+[node name="HUD" parent="." instance=ExtResource("4_hud")]

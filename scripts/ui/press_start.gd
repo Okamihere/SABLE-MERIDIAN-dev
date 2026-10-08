@@ -2,23 +2,26 @@ extends Control
 
 const TITLE_SCENE := "res://scenes/ui/title_screen.tscn"
 const CRT_SHADER := preload("res://shaders/press_start_crt.gdshader")
+const DOF_SHADER := preload("res://shaders/press_start_dof.gdshader")
 const CAMERA_MOVE_TIME := 1.35
 const FADE_IN_TIME := 1.0
-const INTRO_FOCUS := Vector3(0, 1.35, 1.7)
+const INTRO_FOCUS := Vector3(-0.85, 0.55, 2.1)
 const TITLE_FOCUS := Vector3(0, 1.75, 0)
 
 @onready var preview: Node3D = $TitlePreview
 @onready var preview_camera: Camera3D = $TitlePreview/Camera
 @onready var intro_viewport: SubViewport = $IntroViewport
-@onready var prompt: Label = $IntroViewport/ScreenUi/Prompt
+@onready var prompt: Label = $CinematicText/StartPrompt
 @onready var screen_light: OmniLight3D = $TitlePreview/ScreenGlow
 
 var _starting := false
 var _time := 0.0
+var _pilot_material: StandardMaterial3D
 var _flight_time := 0.0
 var _flight_to := Vector3.ZERO
 var _intro_pcam: PhantomCamera3D
 var _title_pcam: PhantomCamera3D
+var _dof_material: ShaderMaterial
 
 func _ready() -> void:
 	preview.set("cinematic_preview", true)
@@ -35,6 +38,7 @@ func _ready() -> void:
 	_configure_lighting()
 	_build_backdrop()
 	_apply_low_res_materials()
+	_add_depth_of_field()
 
 func _update_cinematic_camera() -> void:
 	if _starting:
@@ -44,9 +48,11 @@ func _update_cinematic_camera() -> void:
 		return
 	var aspect := viewport_size.x / viewport_size.y
 	var half_fov := deg_to_rad(preview_camera.fov) * 0.5
-	var distance := maxf(6.4, 4.35 / (2.0 * tan(half_fov) * aspect))
-	preview_camera.position = Vector3(0, 3.35, distance)
+	var distance := maxf(5.0, 3.2 / (2.0 * tan(half_fov) * aspect))
+	preview_camera.position = Vector3(-1.25, 3.3, distance)
 	preview_camera.look_at(INTRO_FOCUS)
+	if is_instance_valid(_dof_material):
+		_update_depth_of_field_focus()
 	if is_instance_valid(_intro_pcam):
 		_intro_pcam.global_transform = preview_camera.global_transform
 	if is_instance_valid(_title_pcam):
@@ -76,6 +82,26 @@ func _setup_phantom_camera() -> void:
 	_title_pcam.position = Vector3(0, 2.0, preview.get("_camera_distance"))
 	_title_pcam.look_at(TITLE_FOCUS)
 
+func _add_depth_of_field() -> void:
+	_dof_material = ShaderMaterial.new()
+	_dof_material.shader = DOF_SHADER
+	_dof_material.render_priority = -128
+	_update_depth_of_field_focus()
+	var quad := QuadMesh.new()
+	quad.size = Vector2(2, 2)
+	var effect := MeshInstance3D.new()
+	effect.name = "CinematicDepthOfField"
+	effect.mesh = quad
+	effect.material_override = _dof_material
+	effect.position.z = -1.0
+	effect.extra_cull_margin = 10000.0
+	effect.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	preview_camera.add_child(effect)
+
+func _update_depth_of_field_focus() -> void:
+	var focus_point: Node3D = preview.get_node("Stage/CoffeeTable/Ashtray")
+	_dof_material.set_shader_parameter("focus_distance", preview_camera.global_position.distance_to(focus_point.global_position + Vector3(0, 0.62, 0)))
+
 func _build_crt_screen() -> void:
 	var screen: MeshInstance3D = preview.get("screen_mesh")
 	var size := (screen.mesh as QuadMesh).size
@@ -97,19 +123,21 @@ func _build_crt_screen() -> void:
 	var crt := ShaderMaterial.new()
 	crt.shader = CRT_SHADER
 	crt.set_shader_parameter("screen_texture", intro_viewport.get_texture())
+	crt.set_shader_parameter("noise_strength", 0.024)
 	screen.material_override = crt
 
 func _configure_lighting() -> void:
 	var key_light: OmniLight3D = preview.get_node("KeyLight")
-	key_light.light_color = Color(0.78, 0.36, 0.4)
+	key_light.light_color = Color(0.71, 0.32, 0.47)
 	key_light.light_energy = 1.0
 	var rim_light: OmniLight3D = preview.get_node("RimLight")
-	rim_light.light_color = Color(0.85, 0.46, 0.28)
+	rim_light.light_color = Color(0.78, 0.37, 0.36)
 	rim_light.light_energy = 0.75
 	screen_light.light_color = Color(0.35, 0.72, 0.88)
 	screen_light.light_energy = 1.65
 	screen_light.omni_range = 5.4
 	screen_light.shadow_enabled = true
+	_pilot_material = (preview.get_node("Television/PowerLamp") as MeshInstance3D).material_override as StandardMaterial3D
 	for side in [-1.0, 1.0]:
 		var curtain_fill := OmniLight3D.new()
 		curtain_fill.name = "CurtainScreenLight"
@@ -143,10 +171,20 @@ func _configure_lighting() -> void:
 	var sofa_fill := OmniLight3D.new()
 	sofa_fill.name = "SofaFill"
 	sofa_fill.position = Vector3(0, 1.7, 5.2)
-	sofa_fill.light_color = Color(0.48, 0.23, 0.29)
-	sofa_fill.light_energy = 0.4
+	sofa_fill.light_color = Color(0.54, 0.23, 0.38)
+	sofa_fill.light_energy = 0.44
 	sofa_fill.omni_range = 3.0
 	preview.add_child(sofa_fill)
+	var smoke: GPUParticles3D = preview.get_node("Stage/CoffeeTable/LitCigarette/TipSmoke")
+	smoke.amount = 24
+	var smoke_mesh := (smoke.draw_pass_1 as QuadMesh).duplicate() as QuadMesh
+	smoke_mesh.size = Vector2(0.105, 0.17)
+	var smoke_material := smoke_mesh.material.duplicate() as StandardMaterial3D
+	var smoke_color := smoke_material.albedo_color
+	smoke_color.a = 0.54
+	smoke_material.albedo_color = smoke_color
+	smoke_mesh.material = smoke_material
+	smoke.draw_pass_1 = smoke_mesh
 	var particles: GPUParticles3D = preview.get_node("TitleParticles")
 	particles.amount = 28
 	_build_dust()
@@ -274,7 +312,9 @@ func _process(delta: float) -> void:
 		var eased := progress * progress * (3.0 - 2.0 * progress)
 		prompt_brightness *= 1.0 - eased
 	prompt.modulate.a = prompt_brightness
-	screen_light.light_energy = 1.65 + 0.025 * sin(_time * 5.1)
+	screen_light.light_energy = 1.62 + 0.095 * sin(_time * 1.35) + 0.035 * sin(_time * 9.7) * sin(_time * 4.1)
+	var pilot_dip := pow(maxf(0.0, sin(_time * 0.55)), 18.0) * 0.7
+	_pilot_material.emission = Color(0.95, 0.33, 0.51).lerp(Color(0.38, 0.02, 0.08), pilot_dip)
 
 func _input(event: InputEvent) -> void:
 	if _starting:

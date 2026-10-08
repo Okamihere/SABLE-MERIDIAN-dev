@@ -16,9 +16,17 @@ var _action_stage := 0
 var _action_time := 0.0
 var _action_duration := 0.0
 var _settle := 0.0
+var _idle_time := 0.0
+var _idle_blend := 0.0
 var _last_pose := {"position": Vector3.ZERO, "body": Vector3.ZERO, "lean": 0.0, "tilt": 0.0, "pitch": 0.0}
 
 const SETTLE_TIME := 0.12
+const IDLE_BLEND_TIME := 0.24
+const IDLE_PERIODS := {
+	&"staff": 3.6, &"card_daggers": 2.8, &"puppet_strings": 4.2,
+	&"cane_blade": 3.2, &"living_grimoire": 4.8, &"echo_blade": 3.9,
+}
+const MOTION_ALIAS := {&"echo_blade": &"cane_blade"}
 
 # Cada linha contém preparação, contato e recuperação em coordenadas de câmera
 # (lateral, altura, profundidade). O quarto golpe usa um arco orbital próprio.
@@ -90,12 +98,16 @@ func _ready() -> void:
 	_props[&"card_daggers"] = _make_daggers()
 	_props[&"puppet_strings"] = _make_strings()
 	_props[&"cane_blade"] = _make_cane()
+	_props[&"echo_blade"] = _make_echo_blade()
 	_props[&"living_grimoire"] = _make_grimoire()
 	for prop in _props.values():
 		prop.visible = false
 
 func show_weapon(id: StringName) -> void:
 	stop_action()
+	if _equipped != id:
+		_idle_time = 0.0
+		_idle_blend = 0.0
 	_equipped = id
 	for key in _props:
 		(_props[key] as Node3D).visible = key == id
@@ -103,10 +115,23 @@ func show_weapon(id: StringName) -> void:
 func _process(delta: float) -> void:
 	if _equipped == &"" or not is_instance_valid(_player):
 		return
+	var state := _player.state_machine.state
+	if state in [PlayerStateMachine.State.HIT, PlayerStateMachine.State.DEAD] or (state == PlayerStateMachine.State.DODGE and not _player.combat.is_attacking()):
+		if _action_kind != &"":
+			stop_action()
+		_settle = 0.0
+	elif state in [PlayerStateMachine.State.JUMP, PlayerStateMachine.State.FALL] and _action_kind == &"skill" and not _player.spell_manager.is_cast_committed():
+		stop_action()
 	if _action_kind != &"":
 		_action_time += delta
 		if _action_time >= _action_duration:
 			stop_action()
+	var idle_allowed := state == PlayerStateMachine.State.IDLE and _action_kind == &"" and not _player.combat.is_attacking() and not _player.spell_manager.is_cast_committed()
+	if idle_allowed:
+		_idle_time = fposmod(_idle_time + delta, IDLE_PERIODS.get(_equipped, 3.6))
+		_idle_blend = minf(1.0, _idle_blend + delta / IDLE_BLEND_TIME)
+	else:
+		_idle_blend = 0.0
 	var pose := _current_pose(delta)
 	var camera := get_viewport().get_camera_3d()
 	if camera == null:
@@ -147,22 +172,25 @@ func _process(delta: float) -> void:
 		&"card_daggers": attack_tilt = -0.48
 		&"puppet_strings": attack_tilt = 0.32
 		&"cane_blade": attack_tilt = -0.9
+		&"echo_blade": attack_tilt = -0.9
 		&"living_grimoire":
 			attack_tilt = 0.18
 			idle_tilt = -0.18
 	prop.rotation.z = lerp_angle(prop.rotation.z, (attack_tilt if attacking else idle_tilt) + pose.tilt, clampf(delta * 24.0, 0.0, 1.0))
-	prop.rotation.x = pose.pitch
+	prop.rotation.x = lerp_angle(prop.rotation.x, pose.pitch, clampf(delta * 24.0, 0.0, 1.0))
 
 func play_basic(weapon_id: StringName, stage: int, duration: float) -> void:
-	if stage < 1 or stage > 4 or not BASIC_PATHS.has(weapon_id):
+	var motion_id: StringName = MOTION_ALIAS.get(weapon_id, weapon_id)
+	if stage < 1 or stage > 4 or not BASIC_PATHS.has(motion_id):
 		return
 	show_weapon(weapon_id)
 	_action_kind = &"basic"
-	_action_id = weapon_id
+	_action_id = motion_id
 	_action_stage = stage
 	_action_time = 0.0
 	_action_duration = maxf(duration, 0.05)
 	_settle = 0.0
+	_idle_blend = 0.0
 
 func play_skill(ability_id: StringName, duration: float) -> void:
 	if not SKILL_PATHS.has(ability_id):
@@ -173,17 +201,20 @@ func play_skill(ability_id: StringName, duration: float) -> void:
 	_action_time = 0.0
 	_action_duration = maxf(duration, 0.05)
 	_settle = 0.0
+	_idle_blend = 0.0
 
 func play_heavy(weapon_id: StringName, duration: float) -> void:
-	if not HEAVY_PATHS.has(weapon_id):
+	var motion_id: StringName = MOTION_ALIAS.get(weapon_id, weapon_id)
+	if not HEAVY_PATHS.has(motion_id):
 		return
 	show_weapon(weapon_id)
 	_action_kind = &"heavy"
-	_action_id = weapon_id
+	_action_id = motion_id
 	_action_stage = 0
 	_action_time = 0.0
 	_action_duration = maxf(duration, 0.05)
 	_settle = 0.0
+	_idle_blend = 0.0
 
 func resume_attack(weapon_id: StringName, stage: int, duration: float, elapsed: float, heavy: bool) -> void:
 	if heavy:
@@ -201,12 +232,57 @@ func _current_pose(delta: float) -> Dictionary:
 	if _action_kind != &"":
 		_last_pose = sample_motion(_action_kind, _action_id, _action_stage, clampf(_action_time / _action_duration, 0.0, 1.0))
 		return _last_pose
+	var idle_pose := sample_idle(_equipped, _idle_time)
+	for key in idle_pose:
+		idle_pose[key] *= _idle_blend
 	if _settle > 0.0:
 		_settle = maxf(0.0, _settle - delta)
 		var weight := _settle / SETTLE_TIME
-		return {"position": _last_pose.position * weight, "body": _last_pose.body * weight,
-			"lean": _last_pose.lean * weight, "tilt": _last_pose.tilt * weight, "pitch": _last_pose.pitch * weight}
-	return {"position": Vector3.ZERO, "body": Vector3.ZERO, "lean": 0.0, "tilt": 0.0, "pitch": 0.0}
+		for key in idle_pose:
+			idle_pose[key] = _last_pose[key] * weight + idle_pose[key] * (1.0 - weight)
+	return idle_pose
+
+## Ciclos periódicos por arma: início e fim têm a mesma pose e tangente.
+static func sample_idle(weapon_id: StringName, time: float) -> Dictionary:
+	var period: float = IDLE_PERIODS.get(weapon_id, 3.6)
+	var phase := TAU * fposmod(time, period) / period
+	var s := sin(phase)
+	var c := cos(phase)
+	var travel := Vector3.ZERO
+	var tilt := 0.0
+	var pitch := 0.0
+	match weapon_id:
+		&"staff":
+			# O cristal pulsa enquanto o cajado desenha um pequeno arco.
+			travel = Vector3(0.035 * s, 0.045 * (1.0 - c), 0.012 * sin(2.0 * phase))
+			tilt = -0.10 * s
+			pitch = 0.035 * (1.0 - c)
+		&"card_daggers":
+			# Alternância rápida, como duas cartas sendo embaralhadas.
+			travel = Vector3(0.045 * sin(2.0 * phase), 0.025 * s, 0.018 * (1.0 - c))
+			tilt = 0.10 * sin(2.0 * phase)
+			pitch = -0.06 * s
+		&"puppet_strings":
+			# Um comando lento de marionete, com as pontas suspensas.
+			travel = Vector3(0.055 * s, 0.065 * (1.0 - c), 0.022 * sin(phase + 0.5) - 0.022 * sin(0.5))
+			tilt = 0.085 * sin(phase + 0.35) - 0.085 * sin(0.35)
+			pitch = 0.075 * sin(2.0 * phase)
+		&"cane_blade":
+			# A bengala marca o compasso com uma inclinação contida.
+			travel = Vector3(0.02 * (1.0 - c), 0.022 * s, 0.035 * sin(phase + 0.3) - 0.035 * sin(0.3))
+			tilt = -0.12 * sin(phase + 0.2) + 0.12 * sin(0.2)
+			pitch = 0.035 * (1.0 - c)
+		&"living_grimoire":
+			# O livro flutua e vira levemente uma página imaginária.
+			travel = Vector3(0.04 * s, 0.075 * (1.0 - c), 0.035 * sin(2.0 * phase))
+			tilt = 0.07 * s
+			pitch = 0.10 * sin(phase + 0.45) - 0.10 * sin(0.45)
+		&"echo_blade":
+			# A lâmina oscila uma vez e responde com um eco mais curto.
+			travel = Vector3(0.035 * s + 0.015 * sin(2.0 * phase), 0.025 * (1.0 - c), 0.025 * sin(2.0 * phase))
+			tilt = -0.09 * s - 0.035 * sin(2.0 * phase)
+			pitch = 0.045 * sin(2.0 * phase)
+	return {"position": travel, "body": Vector3.ZERO, "lean": 0.0, "tilt": tilt, "pitch": pitch}
 
 ## Amostra determinística usada também pelo teste das 40 trajetórias.
 static func sample_motion(kind: StringName, id: StringName, stage: int, progress: float) -> Dictionary:
@@ -303,6 +379,17 @@ func _make_cane() -> Node3D:
 	_box(holder, Vector3(0.12, 0.68, 0.0), Vector3(0.33, 0.085, 0.085), gold)
 	_box(holder, Vector3(0.27, 0.55, 0.0), Vector3(0.075, 0.27, 0.075), gold)
 	_box(holder, Vector3(0.0, -0.68, 0.0), Vector3(0.1, 0.14, 0.1), gold)
+	return holder
+
+func _make_echo_blade() -> Node3D:
+	var holder := Node3D.new()
+	holder.name = "EquippedEchoBlade"
+	add_child(holder)
+	var steel := _material(Color(0.39, 0.43, 0.52), 0.16)
+	var wine := _material(Color(0.43, 0.09, 0.19), 0.3)
+	_box(holder, Vector3(0, 0.3, 0), Vector3(0.11, 1.13, 0.045), steel)
+	_box(holder, Vector3(0, -0.32, 0), Vector3(0.45, 0.08, 0.1), wine)
+	_box(holder, Vector3(0, -0.57, 0), Vector3(0.105, 0.47, 0.1), wine)
 	return holder
 
 func _make_grimoire() -> Node3D:

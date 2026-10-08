@@ -188,8 +188,10 @@ func _handle_equipment_input() -> void:
 		requested = &"staff"
 	elif Input.is_action_just_pressed("weapon_daggers"):
 		requested = &"card_daggers"
+	elif Input.is_action_just_pressed("weapon_echo_blade"):
+		requested = &"echo_blade"
 	if requested != &"" and equipment.request_weapon(requested):
-		_show_equipment_notice("CAJADO" if requested == &"staff" else "ADAGAS DE CARTAS", "O próximo compasso muda de forma." if equipment.has_pending_weapon() else "Uma nova forma entra em cena.")
+		_show_equipment_notice((equipment.WEAPONS[requested] as WeaponData).display_name.to_upper(), "O próximo compasso muda de forma." if equipment.has_pending_weapon() else "Uma nova forma entra em cena.")
 	if Input.is_action_just_pressed("mask_laugh"):
 		equipment.toggle_laugh_mask()
 		_show_equipment_notice("MÁSCARA DO RISO" if equipment.mask != null else "MÁSCARA RETIRADA", "A cadeia pode recomeçar." if equipment.mask != null else "O ritmo volta ao normal.")
@@ -393,7 +395,10 @@ func _update_dodge(delta: float) -> void:
 	velocity.x = _dodge_direction.x * dodge_speed
 	velocity.z = _dodge_direction.z * dodge_speed
 	if _dodge_elapsed >= dodge_duration:
-		state_machine.set_state(PlayerStateMachine.State.IDLE if is_on_floor() else PlayerStateMachine.State.FALL)
+		if combat.is_attacking():
+			state_machine.set_state(PlayerStateMachine.State.ATTACK if is_on_floor() else PlayerStateMachine.State.AIR_ATTACK)
+		else:
+			state_machine.set_state(PlayerStateMachine.State.IDLE if is_on_floor() else PlayerStateMachine.State.FALL)
 
 ## Recebe um golpe de uma hitbox.
 ## @param hitbox A hitbox que acertou o jogador.
