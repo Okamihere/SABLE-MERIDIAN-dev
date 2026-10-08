@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/gameplay-press-start.png" width="100%" alt="SABLE MERIDIAN — pressione para começar">
+  <img src="docs/gameplay-press-start.png" width="100%" alt="SABLE MERIDIAN — PRESS START TO PLAY">
 </p>
 
 <h1 align="center">SABLE MERIDIAN</h1>
@@ -48,9 +48,9 @@ Sob holofotes de névoa, o **Veyl** — bobo de corte em traje carmesim — acor
 
 ## Galeria
 
-| Tela press-start (nova) |
+| Tela press-start (atual) |
 | --- |
-| ![Tela press-start](docs/gameplay-press-start.png) |
+| ![Tela press-start — PRESS START TO PLAY](docs/gameplay-press-start.png) |
 
 | Pátio + HUD |
 | --- |
@@ -67,6 +67,18 @@ Sob holofotes de névoa, o **Veyl** — bobo de corte em traje carmesim — acor
 | Névoa de passagem | Vídeo |
 | --- | --- |
 | ![Portal de névoa](docs/training-fog-gate-preview.png) | [gameplay.mp4](docs/gameplay.mp4) (13 s, skills Q/E/R do grimório) |
+
+## Novidades
+
+Últimas atualizações do protótipo (ver histórico completo em [CHANGELOG](CHANGELOG.md)):
+
+- **08/10** — Mundos 01–08, fluxo do hub, kit graybox GridMap (32 peças), shaders de água/céu, áudio, combate, player e UI.
+- **07/10** — Página com banner press-start, sinopse, mundos e galeria.
+- **06/10** — Combate, medidor de estilo, UI, armas, magias, fases e testes.
+- **05/10** — Tela press-start cinematográfica (“PRESS START TO PLAY”) como cena inicial, com fade de 1 s sobre o voo da câmera; pipeline visual e Veyl.
+- **04/10** — Grimório Vivo 3D, opções comerciais, captura de mouse, HUD de vela e presets de exportação Linux + Windows.
+
+> Mantido automaticamente: após cada commit, `python3 tools/update_changelog.py` regenera o [CHANGELOG](CHANGELOG.md) a partir do `git log`.
 
 ## O que já funciona
 
@@ -103,14 +115,35 @@ Na tela inicial, use mouse ou setas e `Enter` para selecionar. A lista de atalho
 
 ## Executar
 
+### Requisitos
+
+- **Godot 4.7.x** (testado em 4.7.2) com renderizador **GL Compatibility**, resolução **1920×1080**.
+- Linux ou Windows (presets de exportação em `export_presets.cfg`).
+- Sem dependências externas: sem addons, sem pacotes — só abrir a pasta do projeto.
+
+### Passo a passo
+
 1. Abra esta pasta no **Godot 4.7.x** com o renderizador **GL Compatibility**.
-2. Execute o projeto com `F5`. A cena inicial é `scenes/ui/press_start.tscn` (cinemática → título → pátio).
+2. Execute o projeto com `F5`. A cena inicial é `scenes/ui/press_start.tscn`: tela **“PRESS START TO PLAY”** (voo de câmera) → título → pátio.
 3. Pegue o cajado no centro do pátio e atravesse a névoa sob o arco para chegar ao hub. O mouse é capturado ao entrar na fase; clique recaptura se preciso.
+4. No hub, cada porta abre um mundo; o mundo 01 rende a primeira **chave** e a **Lâmina do Eco** (tecla `3`).
+
+### Saves
+
+- Chaves e mundos concluídos: `user://hub_worlds.cfg` · orbes de salto em parede: `user://wall_orbs.cfg` · opções: persistentes via menu.
+- **Continuar** retorna ao pátio quando há progresso; posição e combate não são salvos. **Novo jogo** limpa tudo.
+
+## Desenvolvimento
+
+- Validação rápida: `python3 tools/validate_project.py` (checa referências `res://` e estrutura).
+- Testes headless (25 arquivos em `tools/test_*.gd`): `godot --headless --path . --rendering-method gl_compatibility --script res://tools/test_NOME.gd` — ex.: `test_hub_flow.gd`, `test_gridmap_library.gd`, `test_gameplay.gd`.
+- Mapa do projeto para IA/colaboradores: [AI_CONTEXT.md](AI_CONTEXT.md) · regras de edição: [AGENTS.md](AGENTS.md).
 
 ## Documentação
 
 - [Arquitetura](docs/architecture.md) · [Equipamento](docs/equipment.md) · [Habilidades](docs/combat_abilities.md)
 - [Contribuição](docs/contributing.md) · [Validação](docs/validation.md) · [Roadmap](docs/roadmap.md) · [Contexto p/ IA](AI_CONTEXT.md)
+- [Changelog / novidades](CHANGELOG.md) — atualizado a cada commit via `python3 tools/update_changelog.py`
 
 <details>
 <summary><b>Estrutura do projeto</b></summary>
@@ -122,7 +155,7 @@ scenes/ui       press_start → title_screen → hud / pause / diálogo
 scripts/player  movimento, sprite 8-dir, animação procedural, lock-on, parede
 scripts/combat  combos, hitboxes, input buffer
 resources/      6 armas · 24 ataques · 18 spells · máscaras · relíquia
-tools/          validate_project.py + 24 testes headless
+tools/          validate_project.py + update_changelog.py + 25 testes headless
 ```
 
 </details>

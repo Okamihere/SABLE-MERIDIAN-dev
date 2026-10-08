@@ -1,0 +1,69 @@
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="MeshLibrary" path="res://resources/gridmap/sable_graybox_mesh_library.tres" id="1_library"]
+[ext_resource type="PackedScene" path="res://scenes/player/player_rig.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://scenes/player/camera_rig.tscn" id="3_camera"]
+[ext_resource type="Material" path="res://materials/contemplative_sky.tres" id="4_sky_material"]
+[ext_resource type="Material" path="res://materials/stone.tres" id="5_platform_material"]
+
+[sub_resource type="Sky" id="Sky"]
+sky_material = ExtResource("4_sky_material")
+
+[sub_resource type="Environment" id="Environment"]
+background_mode = 2
+sky = SubResource("Sky")
+ambient_light_source = 2
+ambient_light_color = Color(0.7, 0.64, 0.75, 1)
+ambient_light_energy = 0.85
+fog_enabled = true
+fog_density = 0.002
+fog_sky_affect = 0.08
+
+[sub_resource type="BoxMesh" id="SpawnPlatformMesh"]
+size = Vector3(6, 1, 6)
+
+[sub_resource type="BoxShape3D" id="SpawnPlatformShape"]
+size = Vector3(6, 1, 6)
+
+[node name="World08" type="Node3D"]
+metadata/universe_name = "Torre do Silêncio"
+
+[node name="FloorsAndRamps" type="GridMap" parent="."]
+mesh_library = ExtResource("1_library")
+cell_size = Vector3(2, 1, 2)
+cell_center_y = false
+collision_layer = 1
+collision_mask = 1
+
+[node name="Walls" type="GridMap" parent="."]
+mesh_library = ExtResource("1_library")
+cell_size = Vector3(2, 1, 2)
+cell_center_y = false
+collision_layer = 1
+collision_mask = 1
+
+[node name="SpawnPlatform" type="StaticBody3D" parent="."]
+position = Vector3(0, -0.5, 0)
+collision_layer = 1
+collision_mask = 1
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="SpawnPlatform"]
+mesh = SubResource("SpawnPlatformMesh")
+surface_material_override/0 = ExtResource("5_platform_material")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="SpawnPlatform"]
+shape = SubResource("SpawnPlatformShape")
+
+[node name="Player" parent="." instance=ExtResource("2_player")]
+position = Vector3(0, 0.05, 0)
+starts_with_staff = true
+
+[node name="CameraRig" parent="." instance=ExtResource("3_camera")]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-45, -25, 0)
+light_energy = 1.1
+
