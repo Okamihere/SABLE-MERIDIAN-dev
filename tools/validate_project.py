@@ -61,7 +61,6 @@ required = [
     "scenes/ui/hud.tscn",
     "ROADMAP.md",
     "DEV_NOTES.md",
-    "TODO.md",
 ]
 for rel in required:
     if not (root / rel).exists():

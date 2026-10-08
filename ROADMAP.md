@@ -21,4 +21,4 @@ The phase overview also lives in [docs/roadmap.md](docs/roadmap.md).
 - [ ] Add checkpoints, a complete campaign save and remappable controls; orb progress and settings already persist
 - [ ] Profile performance on target hardware and improve the city art
 
-See [TODO.md](TODO.md) for actionable tasks and [docs/validation.md](docs/validation.md) for verification commands.
+See [docs/roadmap.md](docs/roadmap.md) for phase details and [docs/validation.md](docs/validation.md) for verification commands.
