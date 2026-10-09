@@ -248,6 +248,8 @@ func _populate_controls() -> void:
 	for entry in [["Golpe leve", &"light_attack"], ["Golpe pesado", &"heavy_attack"], ["Focar alvo", &"lock_on"], ["Alvo à esquerda", &"lock_target_left"], ["Alvo à direita", &"lock_target_right"], ["Baralho Maldito", &"spell_q"], ["Conversar / avançar", &"interact"]]:
 		_add_control_row(entry[0], _binding_text(entry[1]))
 	_add_controls_heading("EQUIPAMENTO")
+	_add_control_row("Roda de armas (segurar)", _binding_text(&"weapon_wheel"))
+	_add_control_row("Navegar na roda", "Mouse / setas / analógico direito")
 	for entry in [["Cajado", &"weapon_staff"], ["Adagas de Cartas", &"weapon_daggers"], ["Lâmina do Eco", &"weapon_echo_blade"], ["Máscara do Riso", &"mask_laugh"]]:
 		_add_control_row(entry[0], _binding_text(entry[1]))
 	_add_controls_heading("MENUS")

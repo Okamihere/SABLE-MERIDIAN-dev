@@ -1,7 +1,7 @@
 @tool
 extends Area3D
 
-## Expositor reutilizável: aproximação equipa a arma sem retirar a peça da sala.
+## Expositor visual; a aquisição real será concedida pelo chefe da sala.
 @export var weapon_id: StringName
 @export var title: String
 @export_multiline var description: String
@@ -59,13 +59,9 @@ func _process(delta: float) -> void:
 func _on_body_entered(body: Node3D) -> void:
 	if not body is PlayerController or not body.is_alive():
 		return
-	if body.equipment.weapon == null:
-		body.equip_staff()
-	if body.equipment.unlock_weapon(weapon_id):
-		body.equipment.request_weapon(weapon_id)
-		var hud := get_parent().get_node_or_null("HUD")
-		if hud != null:
-			hud.show_notice(title.to_upper(), description.replace("\n", "  •  "), 3.0)
+	var hud := get_parent().get_node_or_null("HUD")
+	if hud != null:
+		hud.show_notice(title.to_upper(), description.replace("\n", "  •  "), 3.0)
 
 func _material(color: Color) -> StandardMaterial3D:
 	var material := StandardMaterial3D.new()

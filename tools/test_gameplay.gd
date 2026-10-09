@@ -18,6 +18,9 @@ func frames(count: int) -> void:
 		await process_frame
 
 func _run() -> void:
+	var progress = root.get_node("Progression")
+	progress.weapon_save_path = "user://test_gameplay_weapons.cfg"
+	progress.owned_weapons.clear()
 	change_scene_to_file("res://scenes/levels/start_room.tscn")
 	await frames(90)
 	var middle_mouse_focus := false
@@ -111,6 +114,7 @@ func _run() -> void:
 	assert(player.is_on_floor(), "Combat floor must hold the player")
 	var enemies = get_nodes_in_group("enemies")
 	assert(not enemies.is_empty(), "Combat scene must contain enemies")
+	assert(player.equipment.unlock_weapon(&"cane_blade"), "Test boss reward must grant cane blade")
 	assert(player.equipment.request_weapon(&"cane_blade"), "Melee weapon must equip for the overlapping hit test")
 	for enemy in enemies:
 		enemy.set_physics_process(false)

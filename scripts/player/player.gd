@@ -143,7 +143,7 @@ func _ready() -> void:
 			_camera_controller = cam.get_parent().get_parent() as ThirdPersonCameraController
 	_last_safe_position = global_position
 	GameManager.register_player(self)
-	if starts_with_staff or GameManager.has_staff:
+	if starts_with_staff or GameManager.has_staff or Progression.has_weapon(&"staff"):
 		equip_staff()
 	health.died.connect(_on_died)
 
@@ -214,6 +214,13 @@ func _physics_process(delta: float) -> void:
 			_respawn_from_fall()
 			return
 	if _dead:
+		_apply_gravity(delta)
+		move_and_slide()
+		return
+	var hud := get_parent().get_node_or_null("HUD")
+	if hud != null and hud.weapon_wheel.is_open():
+		velocity.x = move_toward(velocity.x, 0.0, deceleration * delta)
+		velocity.z = move_toward(velocity.z, 0.0, deceleration * delta)
 		_apply_gravity(delta)
 		move_and_slide()
 		return

@@ -16,6 +16,8 @@ func _run() -> void:
 	var hits := [0]
 	dummy.struck.connect(func(_attack_id: StringName) -> void: hits[0] += 1)
 	var ids: Array[StringName] = [&"staff", &"card_daggers", &"puppet_strings", &"cane_blade", &"living_grimoire"]
+	for id in ids.slice(1):
+		player.equipment.unlock_weapon(id)
 	assert(current_scene.get_node("StaffPickup") != null)
 	for id in ids.slice(1):
 		var exhibit := current_scene.get_node({&"card_daggers":"DaggersExhibit", &"puppet_strings":"StringsExhibit", &"cane_blade":"CaneExhibit", &"living_grimoire":"GrimoireExhibit"}[id])
@@ -42,8 +44,9 @@ func _run() -> void:
 				assert(hits[0] > before_hits, "Skill must hit training target: " + spell.spell_name)
 	for id in ids.slice(1):
 		var exhibit := current_scene.get_node({&"card_daggers":"DaggersExhibit", &"puppet_strings":"StringsExhibit", &"cane_blade":"CaneExhibit", &"living_grimoire":"GrimoireExhibit"}[id])
+		var before_exhibit: StringName = player.equipment.weapon.weapon_id
 		exhibit._on_body_entered(player)
-		assert(player.equipment.weapon.weapon_id == id, "Exhibit must equip: " + id)
+		assert(player.equipment.weapon.weapon_id == before_exhibit, "Exhibit must not equip or grant: " + id)
 	current_scene.get_node("StaffPickup")._on_body_entered(player)
 	assert(player.equipment.weapon.weapon_id == &"staff", "Staff pedestal must remain reusable")
 	print("PASS: five weapons, four exhibits, 15 distinct Q/E/R skills and cooldowns")

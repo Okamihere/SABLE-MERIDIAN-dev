@@ -464,11 +464,18 @@ func _update_grimoire_open() -> void:
 	var progress := clampf(_action_time / maxf(_action_duration, 0.05), 0.0, 1.0)
 	var opening := sin(PI * progress) if not page_cast else smoothstep(0.0, 0.2, progress) * (1.0 - smoothstep(0.48, 0.93, progress))
 	if biting:
-		opening = smoothstep(0.0, 0.2, progress) * (1.0 - smoothstep(0.58, 0.95, progress))
+		var escape := smoothstep(0.0, 0.16, progress) * (1.0 - smoothstep(0.6, 0.95, progress))
+		opening = escape * (1.0 + 0.16 * sin(progress * TAU * 3.0) * (1.0 - progress))
+	elif air_cast:
+		var attack: AttackData = _player.combat._current_attack
+		var strike := attack.startup / _action_duration if attack != null else 0.3
+		opening = smoothstep(0.0, strike * 0.82, progress) * (1.0 - smoothstep(0.72, 1.0, progress))
+		if _action_stage == 2:
+			opening *= 1.0 + 0.22 * sin(PI * smoothstep(strike, strike + 0.28, progress))
 	var emphasis: float = [0.0, 0.9, 1.1, 1.2, 1.45][_action_stage] if striking else (1.8 if biting else (1.55 if page_cast else (1.55 if applause_cast else (1.5 if air_cast and _action_stage == 2 else 1.2))))
 	_grimoire_model.rotation.x = -0.24 * opening * emphasis
 	_grimoire_ritual.scale = Vector3.ONE * (0.55 + (0.61 if biting else 0.45) * opening)
-	_grimoire_ritual.rotation.z = ([-0.0, -0.12, 0.2, -0.24, 0.0][_action_stage] * opening) if striking else (0.34 * sin(progress * TAU * 3.0) * opening if biting else ((-0.24 + 0.1 * sin(progress * TAU * 2.0)) * opening if page_cast else (0.18 * sin(progress * TAU) if applause_cast else (-0.2 * opening if air_cast else 0.0))))
+	_grimoire_ritual.rotation.z = ([-0.0, -0.12, 0.2, -0.24, 0.0][_action_stage] * opening) if striking else (0.34 * sin(progress * TAU * 3.0) * opening if biting else ((-0.24 + 0.1 * sin(progress * TAU * 2.0)) * opening if page_cast else (0.18 * sin(progress * TAU) if applause_cast else ((-0.28 if _action_stage == 1 else 0.22) * opening if air_cast else 0.0))))
 	_grimoire_left_page.rotation.z = -1.25 * (1.0 - opening) - (0.38 * opening if biting else 0.0)
 	_grimoire_right_page.rotation.z = 1.25 * (1.0 - opening) + (0.38 * opening if biting else 0.0)
 

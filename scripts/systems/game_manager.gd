@@ -29,13 +29,13 @@ signal camera_sensitivity_changed(sensitivity: float)
 var player: Node
 ## Cajado adquirido nesta sessão; acompanha a troca de cenas.
 var has_staff: bool = false
-var equipped_weapon_id: StringName = &"staff"
+var equipped_weapon_id: StringName = &""
 var equipped_mask_id: StringName = &""
 var equipped_relic_ids: Array[StringName] = [&"encore_ticket"]
 
 func reset_equipment() -> void:
 	has_staff = false
-	equipped_weapon_id = &"staff"
+	equipped_weapon_id = &""
 	equipped_mask_id = &""
 	equipped_relic_ids = [&"encore_ticket"]
 ## Referência ao medidor de estilo.
@@ -200,7 +200,19 @@ func _ensure_inputs() -> void:
 	_bind_key("weapon_staff", KEY_1)
 	_bind_key("weapon_daggers", KEY_2)
 	_bind_key("weapon_echo_blade", KEY_3)
+	_bind_key("weapon_wheel", KEY_V)
+	_bind_joy_button("weapon_wheel", JOY_BUTTON_LEFT_SHOULDER)
 	_bind_key("mask_laugh", KEY_TAB)
+
+func _bind_joy_button(action: StringName, button: int) -> void:
+	if not InputMap.has_action(action):
+		InputMap.add_action(action)
+	for input_event in InputMap.action_get_events(action):
+		if input_event is InputEventJoypadButton and input_event.button_index == button:
+			return
+	var event := InputEventJoypadButton.new()
+	event.button_index = button
+	InputMap.action_add_event(action, event)
 
 ## Remove um vínculo antigo sem apagar os demais eventos da ação.
 func _unbind_key(action: StringName, physical_keycode: int) -> void:

@@ -17,6 +17,7 @@ var _upper: Node3D
 var _lower: Node3D
 var _burst: Node3D
 var _paper: Node3D
+var _escape_pages: Node3D
 var _materials: Dictionary = {}
 
 func configure(summoning: bool = false) -> void:
@@ -27,6 +28,7 @@ func configure(summoning: bool = false) -> void:
 	_lower = Node3D.new()
 	_lower.name = "LowerJaw"
 	add_child(_lower)
+	_box(self, "InkThroat", Vector3(0, 0, -0.22), Vector3(2.15, 1.16, 0.11), INK)
 	_box(_upper, "UpperInk", Vector3(0, 0.2, 0), Vector3(2.65, 0.4, 0.4), INK)
 	_box(_lower, "LowerInk", Vector3(0, -0.2, 0), Vector3(2.65, 0.4, 0.4), INK)
 	_box(_upper, "Brow", Vector3(0, 0.55, 0.05), Vector3(2.16, 0.15, 0.17), VIOLET)
@@ -34,6 +36,9 @@ func configure(summoning: bool = false) -> void:
 	for side in [-1.0, 1.0]:
 		_box(_upper, "InkHorn%s" % str(side), Vector3(side * 1.06, 0.61, 0.02), Vector3(0.19, 0.67, 0.18), INK).rotation.z = side * -0.36
 		_box(_lower, "TornPage%s" % str(side), Vector3(side * 1.04, -0.55, 0.02), Vector3(0.22, 0.34, 0.13), PAPER).rotation.z = side * 0.38
+		_box(_upper, "CheekBlade%s" % str(side), Vector3(side * 1.36, 0.02, 0.01), Vector3(0.23, 0.82, 0.19), INK).rotation.z = side * 0.53
+		_box(_lower, "LowerFang%s" % str(side), Vector3(side * 1.12, 0.15, 0.08), Vector3(0.23, 0.7, 0.16), PAPER).rotation.z = side * -0.18
+		_box(_upper, "Eye%s" % str(side), Vector3(side * 0.72, 0.4, 0.22), Vector3(0.25, 0.075, 0.035), GOLD).rotation.z = side * -0.35
 	for i in 7:
 		var x := -0.86 + float(i) * 0.285
 		_box(_upper, "UpperPageTooth%d" % i, Vector3(x, -0.19, 0.07), Vector3(0.17, 0.49 + 0.12 * float(i % 2), 0.17), PAPER).rotation.z = (0.14 if i % 2 == 0 else -0.14)
@@ -57,7 +62,13 @@ func configure(summoning: bool = false) -> void:
 		var angle := TAU * float(i) / 6.0
 		_box(_paper, "PageFragment%d" % i, Vector3(cos(angle) * 1.1, sin(angle) * 1.1, 0), Vector3(0.23, 0.3, 0.025), PAPER).rotation.z = angle + 0.3
 	if summoning:
-		scale = Vector3.ONE * 0.24
+		_escape_pages = Node3D.new()
+		_escape_pages.name = "EscapingPages"
+		add_child(_escape_pages)
+		for i in 4:
+			var angle := TAU * float(i) / 4.0
+			_box(_escape_pages, "Page%d" % i, Vector3(cos(angle) * 1.3, sin(angle) * 0.9, 0.32), Vector3(0.34, 0.45, 0.025), PAPER).rotation.z = angle + 0.25
+		scale = Vector3.ONE * 0.15
 		_play_sound("Omen", OMEN_SFX, -12.0)
 
 func mark_impact() -> void:
@@ -73,12 +84,14 @@ func _process(delta: float) -> void:
 		var t := clampf(_age / 0.38, 0.0, 1.0)
 		var recoil := smoothstep(0.04, 0.34, t) * (1.0 - smoothstep(0.66, 1.0, t))
 		var convulse := sin(t * TAU * 3.0) * recoil
-		scale = Vector3.ONE * (0.22 + 0.32 * recoil)
+		scale = Vector3.ONE * (0.15 + 0.22 * recoil)
 		rotation.z = 0.23 * convulse
 		_upper.position.y = 0.24 + 0.27 * recoil
 		_lower.position.y = -0.24 - 0.27 * recoil
 		_upper.rotation.z = -0.13 * convulse
 		_lower.rotation.z = 0.13 * convulse
+		_escape_pages.scale = Vector3.ONE * (0.6 + 0.8 * recoil)
+		_escape_pages.rotation.z += delta * 4.5
 		return
 	var opening := 1.0 - smoothstep(0.035, 0.085, _age)
 	var compression := smoothstep(0.08, 0.115, _age) * (1.0 - smoothstep(0.13, 0.2, _age))
@@ -90,8 +103,10 @@ func _process(delta: float) -> void:
 	_lower.rotation.z = 0.16 * opening - 0.08 * comic_recoil
 	var arrival := smoothstep(0.0, 0.055, _age)
 	var departure := 1.0 - smoothstep(0.24, 0.36, _age)
-	scale = Vector3.ONE * (0.35 + 0.65 * arrival) * (1.0 + 0.2 * compression) * departure
-	rotation.z = 0.07 * sin(_age * 45.0) * comic_recoil
+	var size := (0.35 + 0.65 * arrival) * departure
+	scale = Vector3(size * (1.0 + 0.17 * compression), size * (1.0 - 0.25 * compression), size)
+	rotation.z = 0.1 * sin(_age * 45.0) * comic_recoil
+	position.y = 0.65 + 0.22 * smoothstep(0.25, 0.36, _age)
 	if _age >= 0.085 and not _snapped:
 		_snapped = true
 		_play_sound("Snap", SNAP_SFX, -10.0)

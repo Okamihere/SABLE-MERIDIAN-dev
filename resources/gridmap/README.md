@@ -44,6 +44,27 @@ Nos mundos em `scenes/levels/worlds/`, selecione o GridMap `Water` para pintar a
 
 Os dois GridMaps da demonstração compartilham esta MeshLibrary: `FloorsAndRamps` e `Walls`. Ambos usam célula `(2, 1, 2)`, X/Z centralizados, Y não centralizado, escala 1 e camada de colisão 1 (`World`). Pinte pisos, rampas, plataformas, sacadas e escadarias no primeiro; paredes, cantos, arcos, vãos, colunas e parapeitos no segundo. Use a rotação de 90° da ferramenta GridMap para virar as peças direcionais. Empilhe paredes e colunas em células Y consecutivas. Parede e coluna terminam em Y=0,8 para encaixar na face inferior de um piso na célula Y=1; a face inferior aberta deve ficar coberta pelo piso de apoio.
 
+### Orientação de paredes no editor
+
+Selecione `Walls` e a peça `01_Parede`. A parede ocupa **uma borda da célula de 2 × 2 m**, não o centro: sua origem está no centro da célula, o comprimento de 2 m segue o eixo local X e a face fica na borda local −Z. O pincel nativo do GridMap encaixa a célula e usa a rotação escolhida tanto na prévia quanto na peça pintada; ele **não gira automaticamente** a peça conforme a direção do arrasto. Gire a peça na ferramenta GridMap *antes* de pintar uma sequência perpendicular, ou use o pincel alinhado descrito abaixo.
+
+| Rotação Y | Borda ocupada | Sequência de células |
+| --- | --- | --- |
+| 0° | −Z | ao longo de X |
+| 90° | −X | ao longo de Z |
+| 180° | +Z | ao longo de X |
+| 270° | +X | ao longo de Z |
+
+Para virar uma parede, termine a sequência reta, pinte `02_Canto` (bordas −Z e −X) ou `31_Canto_Externo` (bordas −Z e +X) na célula da curva com a rotação necessária e gire a próxima parede em 90°. `30_Canto_Interno` usa o mesmo encaixe de bordas do `02_Canto`. Confira a borda ocupada na prévia antes do clique. Arcos, portas e parapeitos seguem a mesma borda −Z em 0°. Plataformas e pisos permanecem em `FloorsAndRamps`; a rotação de uma peça não altera as demais células nem os outros mundos.
+
+### Pincel de paredes alinhadas
+
+No editor 3D, selecione o GridMap `Walls` do mundo e ligue **Autoalinhar paredes** na barra superior. Escolha `01 Parede` ou `05 Wall Jump`, o lado inicial (0°/90°/180°/270°) e a camada Y. Arraste com o botão esquerdo sobre o plano da camada: o pincel encaixa cada célula, gira a parede conforme o trecho em X ou Z e preenche células intermediárias puladas pelo mouse. Um clique isolado usa o ângulo inicial escolhido. Mudar esse ângulo não muda as peças já pintadas.
+
+A prévia verde mostra a posição e a rotação a gravar; o traço verde indica a direção da parede. O contorno é desenhado sobre a seleção nativa do GridMap. Vermelho com uma diagonal indica célula ocupada, que é preservada; vermelho com um X indica movimento inválido. Uma mudança de eixo reserva a célula da curva, marcada com X âmbar: depois pinte nela o canto apropriado com o GridMap nativo. Se o arrasto cruzar diagonalmente duas coordenadas de uma só vez ou retornar sobre a própria linha, solte o botão e recomece; esse traço não é gravado. `Esc` cancela o traço em curso. Cada arrasto válido é uma única ação de Desfazer/Refazer.
+
+Para evitar a prévia antiga da paleta aparecendo junto da prévia verde, selecione a ferramenta **Selecionar** (seta) do GridMap antes de usar o pincel alinhado. Ao desligar **Autoalinhar paredes**, a pintura e a rotação manuais do GridMap voltam ao comportamento normal. Portas, arcos, cantos, pisos e demais módulos continuam na ferramenta nativa. O pincel alinhado não altera a MeshLibrary nem as células de outros mundos.
+
 Arco e vão de porta ocupam visualmente três alturas: deixe livres as células Y+1 e Y+2 no mesmo X/Z. Um piso na célula Y+3 encaixa na face superior em Y=2,8. A porta interativa deve ser uma cena independente. O parapeito pode ser pintado sobre uma sacada no outro GridMap. A escadaria reutiliza uma única colisão convexa em rampa; os degraus são apenas visuais. Os suportes sob a sacada também são apenas visuais.
 
 Na demonstração, a galeria das peças novas fica a leste da arena inicial; contorne a parede de wall jump pelo lado sul para alcançá-la.

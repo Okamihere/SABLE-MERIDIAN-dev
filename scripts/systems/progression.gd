@@ -15,10 +15,12 @@ extends Node
 signal upgraded(maximum: int)
 signal world_completed(world_id: StringName, total_keys: int)
 signal world_progress_changed(total_keys: int)
+signal weapon_acquired(weapon_id: StringName)
 
 ## Caminho padrão do arquivo de save.
 const SAVE_PATH := "user://wall_orbs.cfg"
 const WORLD_SAVE_PATH := "user://hub_worlds.cfg"
+const WEAPON_SAVE_PATH := "user://owned_weapons.cfg"
 const WORLD_IDS := [&"world_01", &"world_02", &"world_03", &"world_04", &"world_05", &"world_06", &"world_07", &"world_08"]
 
 ## Dicionário de IDs de orbes coletados.
@@ -26,13 +28,43 @@ var collected: Dictionary = {}
 ## Caminho do arquivo de save (pode ser alterado para testes).
 var save_path: String = SAVE_PATH
 var world_save_path: String = WORLD_SAVE_PATH
+var weapon_save_path: String = WEAPON_SAVE_PATH
 var completed_worlds: Dictionary = {}
+var owned_weapons: Dictionary = {}
 var hub_return_world: StringName = &""
 
 ## Carrega o progresso salvo ao iniciar.
 func _ready() -> void:
 	load_progress()
 	load_world_progress()
+	load_weapon_progress()
+
+func has_weapon(id: StringName) -> bool:
+	return owned_weapons.has(id)
+
+## Chamado após validar o WeaponData no EquipmentComponent.
+func acquire_weapon(id: StringName) -> bool:
+	if id == &"" or has_weapon(id):
+		return false
+	owned_weapons[id] = true
+	var config := ConfigFile.new()
+	config.set_value("weapons", "owned", owned_weapons.keys())
+	if config.save(weapon_save_path) != OK:
+		push_warning("Não foi possível salvar as armas; aquisição mantida nesta sessão.")
+	weapon_acquired.emit(id)
+	return true
+
+func load_weapon_progress() -> void:
+	owned_weapons.clear()
+	var config := ConfigFile.new()
+	if config.load(weapon_save_path) != OK:
+		return
+	var ids = config.get_value("weapons", "owned", [])
+	if ids is Array:
+		for id in ids:
+			var weapon_id := StringName(str(id))
+			if weapon_id != &"":
+				owned_weapons[weapon_id] = true
 
 func is_world_complete(world_id: StringName) -> bool:
 	return completed_worlds.has(world_id)
@@ -100,6 +132,7 @@ func load_progress() -> void:
 func clear_progress() -> void:
 	collected.clear()
 	completed_worlds.clear()
+	owned_weapons.clear()
 	hub_return_world = &""
 	if FileAccess.file_exists(save_path):
 		var result := DirAccess.remove_absolute(save_path)
@@ -109,4 +142,8 @@ func clear_progress() -> void:
 		var result := DirAccess.remove_absolute(world_save_path)
 		if result != OK:
 			push_warning("Não foi possível apagar o progresso dos mundos: %s" % error_string(result))
+	if FileAccess.file_exists(weapon_save_path):
+		var result := DirAccess.remove_absolute(weapon_save_path)
+		if result != OK:
+			push_warning("Não foi possível apagar o progresso das armas: %s" % error_string(result))
 	world_progress_changed.emit(0)

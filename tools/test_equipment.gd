@@ -14,14 +14,19 @@ func _frames(count: int) -> void:
 		await physics_frame
 
 func _run() -> void:
+	var progress = root.get_node("Progression")
+	progress.weapon_save_path = "user://test_equipment_weapons.cfg"
+	progress.owned_weapons.clear()
 	change_scene_to_file("res://scenes/levels/start_room.tscn")
 	await _frames(50)
 	var player = current_scene.get_node("Player")
 	assert(player.equipment.weapon == null, "Training room must still require the staff pickup")
+	assert(root.get_node("GameManager").equipped_weapon_id == &"", "New game must start without an equipped weapon")
 	player.equip_staff()
 	var equipment = player.equipment
 	assert(equipment.WEAPONS.size() == 6 and equipment.MASKS.size() == 3, "All requested identities must be present in the catalog")
-	assert(equipment.weapon.weapon_id == &"staff" and equipment.has_weapon(&"card_daggers"), "Staff pickup must unlock two playable styles")
+	assert(equipment.weapon.weapon_id == &"staff" and not equipment.has_weapon(&"card_daggers"), "Staff pickup must not unlock other weapons")
+	assert(equipment.unlock_weapon(&"card_daggers") and equipment.unlock_weapon(&"puppet_strings"), "Boss rewards must grant weapons explicitly")
 	assert(equipment.request_weapon(&"puppet_strings"), "Completed puppet strings must equip")
 	assert(equipment.request_weapon(&"staff"), "Staff must remain available after switching")
 	assert(not equipment.equip_mask(&"mourning"), "An unfinished mask must never equip as a fake style")

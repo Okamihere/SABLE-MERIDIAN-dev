@@ -9,9 +9,10 @@ root = Path(__file__).resolve().parents[1]
 errors: list[str] = []
 references: list[tuple[Path, str]] = []
 def source_files():
-    """Ignora caches e histórico: somente fontes entram na validação."""
+    """Valida fontes do jogo, não exemplos das Agent Skills instaladas."""
     return [p for p in root.rglob("*") if p.is_file()
-            and not {".git", ".godot", "addons"}.intersection(p.relative_to(root).parts)]
+            and not {".git", ".godot", "addons"}.intersection(p.relative_to(root).parts)
+            and p.relative_to(root).parts[:2] != (".agents", "skills")]
 
 
 files = source_files()

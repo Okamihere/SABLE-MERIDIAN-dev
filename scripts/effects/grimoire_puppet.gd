@@ -41,6 +41,7 @@ const FINAL_TIME := FINAL_WINDUP + FINAL_ACTIVE + FINAL_RECOVERY + 0.08
 @onready var right_leg: Node3D = $Visual/RightLeg
 @onready var control_bar: Node3D = $Visual/ControlBar
 @onready var attack_hitbox: HitboxComponent = $AttackHitbox
+@onready var stage_vfx: Variant = $VFX
 @onready var summon_tome: Node3D = $VFX/SummonTome
 @onready var left_page_hinge: Node3D = $VFX/SummonTome/LeftPageHinge
 @onready var right_page_hinge: Node3D = $VFX/SummonTome/RightPageHinge
@@ -114,6 +115,7 @@ func activate(caster: Node3D, _spell: SpellResource) -> void:
 		page.visible = true
 	_emit_ink(Vector3(0, 0.35, 0.4), true)
 	_pulse_warp(1.25)
+	stage_vfx.play_summon()
 	sound_summon.play()
 
 func _process(delta: float) -> void:
@@ -249,6 +251,7 @@ func _start_attack(kind: AttackKind, victim: Node3D) -> void:
 	_configure_hitbox()
 	sound_cue.pitch_scale = 1.22 if kind == AttackKind.SLAP else (0.82 if kind == AttackKind.HEADBUTT else 0.68)
 	sound_cue.play()
+	stage_vfx.play_windup(kind, 0.16 if kind == AttackKind.SLAP else (0.38 if kind == AttackKind.HEADBUTT else FINAL_WINDUP))
 	if kind == AttackKind.FINAL:
 		_pulse_warp(1.6)
 	if kind != AttackKind.FINAL:
@@ -354,12 +357,14 @@ func _on_hit_landed(hurtbox: HurtboxComponent, box_hit: HitboxComponent) -> void
 		AttackKind.HEADBUTT: sound_head.play()
 		AttackKind.FINAL: sound_final.play()
 	_emit_violet(to_local(hurtbox.global_position))
+	stage_vfx.play_hit(_attack_kind, hurtbox.global_position)
 
 func _cue_farewell() -> void:
 	_farewell_cued = true
 	sound_farewell.play()
 	_emit_ink(Vector3(0, 0.35, 0.4), true)
 	_pulse_warp(1.55)
+	stage_vfx.play_farewell()
 
 func _update_ritual_visual() -> void:
 	var appearing := _elapsed < 0.55
@@ -421,6 +426,7 @@ func _pulse_warp(radius: float, height: float = 0.16) -> void:
 	_warp_tween.chain().tween_callback(func() -> void: warp_ring.visible = false)
 
 func _emit_attack_impact() -> void:
+	stage_vfx.play_release(_attack_kind)
 	match _attack_kind:
 		AttackKind.SLAP:
 			_emit_ink(Vector3(-0.42, 1.15, 1.65))
@@ -510,6 +516,7 @@ func _abort_attack() -> void:
 		_next_attack_at = _elapsed + 0.3
 
 func _clear_attack() -> void:
+	stage_vfx.clear_omen()
 	if _hitbox_live:
 		attack_hitbox.end_attack()
 		_hitbox_live = false
@@ -641,5 +648,7 @@ func despawn() -> void:
 		return
 	if is_instance_valid(attack_hitbox):
 		_clear_attack()
+	if is_instance_valid(stage_vfx):
+		stage_vfx.play_despawn()
 	state = State.DESPAWNING
 	queue_free()

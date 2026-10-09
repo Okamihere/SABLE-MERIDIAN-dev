@@ -19,6 +19,8 @@ func _run() -> void:
 	await _frames(20)
 	var player = current_scene.get_node("Player")
 	player.equip_staff()
+	for id in [&"card_daggers", &"puppet_strings", &"cane_blade", &"living_grimoire"]:
+		player.equipment.unlock_weapon(id)
 	var invalid_spell := SpellResource.new()
 	invalid_spell.ability_id = &"invalid_effect_test"
 	invalid_spell.mana_cost = 9.0

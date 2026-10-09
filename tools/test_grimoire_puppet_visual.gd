@@ -50,6 +50,7 @@ func _run() -> void:
 	puppet.set_physics_process(false)
 	puppet._next_attack_at = INF
 	assert(puppet.visual.scale.x < 1.0 and puppet.summon_tome.visible and puppet.pull_threads.visible)
+	assert(puppet.stage_vfx.find_children("SummonCurtain", "Node3D", true, false).size() == 1)
 	for name in ["Summon", "Movement", "Cue", "SlapImpact", "HeadImpact", "FinalImpact", "Farewell"]:
 		assert(puppet.get_node("Audio/" + name).stream != null, "Missing sound: " + name)
 	await _frames(8)
@@ -59,6 +60,7 @@ func _run() -> void:
 		assert(absf(puppet.left_page_hinge.rotation.z) < 1.3)
 	await create_timer(0.7).timeout
 	assert(not puppet.summon_tome.visible and not puppet.pull_threads.visible)
+	assert(puppet.stage_vfx.find_children("SummonCurtain", "Node3D", true, false).is_empty())
 	assert(not puppet.warp_ring.visible)
 	assert(not display._grimoire_ritual.visible)
 	if DisplayServer.get_name() != "headless":
@@ -72,6 +74,7 @@ func _run() -> void:
 	await _frames(2)
 	assert(puppet._can_strike(enemy, puppet.slap_range), "Visual test target is out of range")
 	puppet._start_attack(puppet.AttackKind.SLAP, enemy)
+	assert(puppet.stage_vfx.find_children("AttackOmen", "Node3D", true, false).size() == 1)
 	puppet._update_attack(0.08)
 	puppet._animate_attack()
 	assert(puppet._attack_phase == puppet.AttackPhase.WINDUP and puppet.left_arm.position.z < 0.0)
@@ -82,6 +85,7 @@ func _run() -> void:
 	puppet._update_attack(0.5)
 	assert(puppet._attack_kind == puppet.AttackKind.NONE and is_equal_approx(puppet.left_arm.scale.y, 1.0))
 	puppet._start_attack(puppet.AttackKind.HEADBUTT, enemy)
+	assert(puppet.stage_vfx.find_children("AttackOmen", "Node3D", true, false).size() == 1)
 	puppet._update_attack(0.25)
 	puppet._animate_attack()
 	assert(puppet._attack_phase == puppet.AttackPhase.WINDUP and puppet.visual.rotation.x < -0.15)
@@ -90,13 +94,23 @@ func _run() -> void:
 	assert(puppet._attack_phase == puppet.AttackPhase.ACTIVE and puppet.head.scale.x > 1.1)
 	puppet._clear_attack()
 	puppet._start_attack(puppet.AttackKind.FINAL, enemy)
+	assert(puppet.stage_vfx.find_children("AttackOmen", "Node3D", true, false).size() == 1)
 	puppet._update_attack(0.3)
 	puppet._animate_attack()
 	assert(puppet._attack_phase == puppet.AttackPhase.ACTIVE and puppet.left_arm.scale.y >= 2.0 and puppet.right_arm.scale.y >= 2.0)
 	assert(puppet.pull_threads.visible == false and puppet.warp_ring.visible)
+	for kind in [puppet.AttackKind.SLAP, puppet.AttackKind.HEADBUTT, puppet.AttackKind.FINAL]:
+		puppet.stage_vfx.play_hit(kind, enemy.global_position + Vector3.UP)
+		await _frames(1)
+		assert(arena.find_children("Puppet*Impact", "Node3D", true, false).size() == 1)
+		await _frames(18)
+		assert(arena.find_children("Puppet*Impact", "Node3D", true, false).is_empty(), "Impact VFX was retained")
 	puppet.despawn()
 	await _frames(2)
 	assert(get_nodes_in_group(&"grimoire_puppets").is_empty())
+	assert(arena.find_children("PuppetFarewellKnot", "Node3D", true, false).size() == 1)
+	await _frames(14)
+	assert(arena.find_children("PuppetFarewellKnot", "Node3D", true, false).is_empty(), "Farewell VFX was retained")
 	assert(arena.find_children("InkParticles", "CPUParticles3D").is_empty())
 	enemy.queue_free()
 	await _frames(2)
@@ -107,6 +121,7 @@ func _run() -> void:
 	await create_timer(0.85).timeout
 	assert(farewell._farewell_cued and farewell.sound_farewell.playing)
 	assert(farewell._bowing and farewell.pull_threads.visible and farewell.summon_tome.visible)
+	assert(farewell.stage_vfx.find_children("FarewellThreads", "Node3D", true, false).size() == 1)
 	await create_timer(0.6).timeout
 	await _frames(2)
 	assert(get_nodes_in_group(&"grimoire_puppets").is_empty())

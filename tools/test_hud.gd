@@ -16,6 +16,16 @@ func run() -> void:
 	await frames(45)
 	var player = current_scene.get_node("Player")
 	var hud = current_scene.get_node("HUD")
+	var camera := get_root().get_camera_3d()
+	var vitals_origin: Vector2 = hud.vitals.position
+	var wheel_origin: Vector2 = hud.weapon_wheel.position
+	camera.rotation.y += 0.04
+	hud._update_camera_sway(0.1)
+	assert(hud.vitals.position.distance_to(vitals_origin) > 0.5, "Camera turn must nudge corner HUD")
+	assert(hud.vitals.position.distance_to(vitals_origin) <= 8.1, "HUD sway must stay subtle")
+	assert(hud.weapon_wheel.position == wheel_origin, "Weapon wheel must remain centered")
+	await frames(30)
+	assert(hud._camera_sway.length() < 0.5, "HUD must settle after camera stops")
 	assert(is_equal_approx(hud.health_bar.value, 100))
 	assert(is_equal_approx(hud.mana_bar.value, 100))
 	player.health.damage(35)

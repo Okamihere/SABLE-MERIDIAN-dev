@@ -13,6 +13,7 @@ func _run() -> void:
 	var progress := root.get_node("Progression")
 	progress.save_path = "user://test_hub_orbs.cfg"
 	progress.world_save_path = "user://test_hub_worlds.cfg"
+	progress.weapon_save_path = "user://test_hub_weapons.cfg"
 	progress.clear_progress()
 	assert(progress.key_count() == 0)
 	assert(not progress.is_world_complete(&"world_01"))
@@ -26,7 +27,9 @@ func _run() -> void:
 	assert(progress.complete_world(&"world_01"))
 	assert(progress.key_count() == 1)
 	assert(not progress.complete_world(&"world_01"))
-	assert(player.equipment.has_weapon(&"echo_blade"))
+	assert(not player.equipment.has_weapon(&"echo_blade"), "World completion alone must not grant a weapon")
+	assert(player.equipment.unlock_weapon(&"echo_blade"), "Boss reward grants Echo Blade")
+	assert(player.equipment.request_weapon(&"echo_blade"))
 	assert(player.equipment.weapon.weapon_id == &"echo_blade")
 	assert(player.equipment.weapon.is_playable())
 	assert(player.weapon_display._props[&"echo_blade"].visible)
@@ -53,5 +56,5 @@ func _run() -> void:
 	assert(progress.key_count() == 8)
 	progress.clear_progress()
 	assert(progress.key_count() == 0)
-	print("PASS: world keys, persistence, weapon reward and restoration")
+	print("PASS: world keys, explicit boss weapon reward, persistence and restoration")
 	quit()

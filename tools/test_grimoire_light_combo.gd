@@ -51,6 +51,7 @@ func _run() -> void:
 	assert(is_equal_approx(player.mana.current_mana, mana_before))
 	assert(not player.combat.is_attacking() and player.combat.get_chain_index() == 0)
 	assert(scene.find_children("GrimoireComboImpact", "Node3D", true, false).is_empty())
+	assert(scene.find_children("GrimoireComboSound", "AudioStreamPlayer3D", true, false).is_empty(), "Combo SFX were retained")
 	for stage in range(1, 5):
 		var visual = VISUAL.new()
 		scene.add_child(visual)

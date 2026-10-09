@@ -29,25 +29,16 @@ const RELICS := {
 var weapon: WeaponData
 var mask: MaskData
 var relics: Array[RelicData] = []
-var _unlocked_weapons: Dictionary = {}
 var _pending_weapon: StringName = &""
-
-func _ready() -> void:
-	Progression.world_completed.connect(_on_world_completed)
-
-func _on_world_completed(world_id: StringName, _total_keys: int) -> void:
-	if world_id == &"world_01" and unlock_weapon(&"echo_blade"):
-		request_weapon(&"echo_blade")
 
 func unlock_weapon(id: StringName) -> bool:
 	var data := WEAPONS.get(id) as WeaponData
 	if data == null or not data.is_playable():
 		return false
-	_unlocked_weapons[id] = true
-	return true
+	return Progression.acquire_weapon(id)
 
 func has_weapon(id: StringName) -> bool:
-	return _unlocked_weapons.has(id)
+	return Progression.has_weapon(id) and WEAPONS.has(id)
 
 func request_weapon(id: StringName) -> bool:
 	if not has_weapon(id):
@@ -121,14 +112,6 @@ func unequip_relic(id: StringName) -> bool:
 
 func restore_from_manager() -> void:
 	unlock_weapon(&"staff")
-	unlock_weapon(&"card_daggers")
-	# Only unlock weapons that are actually playable
-	for id in [&"puppet_strings", &"cane_blade", &"living_grimoire"]:
-		var data := WEAPONS.get(id) as WeaponData
-		if data != null and data.is_playable():
-			unlock_weapon(id)
-	if Progression.is_world_complete(&"world_01"):
-		unlock_weapon(&"echo_blade")
 	var selected: StringName = GameManager.equipped_weapon_id
 	_equip_weapon(selected if has_weapon(selected) else &"staff")
 	equip_mask(GameManager.equipped_mask_id)

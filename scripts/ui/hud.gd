@@ -14,6 +14,9 @@ extends CanvasLayer
 @onready var notice_title: Label = %NoticeTitle
 @onready var notice_detail: Label = %NoticeDetail
 @onready var wall_hint: PanelContainer = $Root/WallHint
+@onready var weapon_wheel = $WeaponWheel
+@onready var vitals: Control = $Root/Vitals
+@onready var weapons_and_skills: Sprite2D = $WeaponsAndSkills
 
 var _player: PlayerController
 var _health_tween: Tween
@@ -28,6 +31,12 @@ var _wall_base_y: float = 0.0
 var _notice_queue: Array[Dictionary] = []
 var _notice_busy: bool = false
 var _style_debug: Label
+var _vitals_base_position := Vector2.ZERO
+var _weapons_base_position := Vector2.ZERO
+var _vitals_intro_offset := Vector2.ZERO
+var _camera_sway := Vector2.ZERO
+var _last_camera_rotation := Vector3.ZERO
+var _sampled_camera: Camera3D
 
 func _ready() -> void:
 	get_viewport().size_changed.connect(_apply_responsive_layout)
@@ -43,26 +52,50 @@ func _ready() -> void:
 	add_child(_style_debug)
 	_on_style_changed(GameManager.combo_count, GameManager.style_score, GameManager.style_rank)
 	_on_debug_changed(GameManager.DEBUG_COMBAT)
+	_weapons_base_position = weapons_and_skills.position
 	_apply_responsive_layout()
 	if GameManager.player is PlayerController:
 		_bind_player(GameManager.player)
-	var vitals := $Root/Vitals as Control
 	vitals.modulate.a = 0.0
-	var base_position := vitals.position
-	vitals.position.x -= 18.0
+	_vitals_intro_offset = Vector2(-18.0, 0.0)
+	_apply_sway_position()
 	var intro := create_tween().set_parallel(true)
-	intro.tween_property(vitals, "position", base_position, 0.45).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	intro.tween_property(self, "_vitals_intro_offset", Vector2.ZERO, 0.45).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	intro.tween_property(vitals, "modulate:a", 1.0, 0.35)
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	_update_camera_sway(delta)
 	_update_lock_indicator()
 	_update_wall_hint()
+
+func _update_camera_sway(delta: float) -> void:
+	var camera := get_viewport().get_camera_3d()
+	var target := Vector2.ZERO
+	if camera != null:
+		var rotation_now := camera.global_rotation
+		if camera == _sampled_camera:
+			var yaw_change := angle_difference(_last_camera_rotation.y, rotation_now.y)
+			var pitch_change := angle_difference(_last_camera_rotation.x, rotation_now.x)
+			# Ignore cortes bruscos de câmera; o HUD não deve saltar entre enquadramentos.
+			if absf(yaw_change) < 0.3 and absf(pitch_change) < 0.3:
+				target = (Vector2(-yaw_change * 4.3, pitch_change * 3.7) / maxf(delta, 0.001)).limit_length(8.0)
+		_sampled_camera = camera
+		_last_camera_rotation = rotation_now
+	else:
+		_sampled_camera = null
+	_camera_sway = _camera_sway.lerp(target, 1.0 - exp(-delta * 15.0))
+	_apply_sway_position()
+
+func _apply_sway_position() -> void:
+	vitals.position = _vitals_base_position + _vitals_intro_offset + _camera_sway
+	weapons_and_skills.position = _weapons_base_position + _camera_sway * 0.7
 
 func _bind_player(player: Node) -> void:
 	if not (player is PlayerController):
 		return
 	_unbind_player()
 	_player = player as PlayerController
+	weapon_wheel.bind_equipment(_player.equipment)
 	health_bar.max_value = _player.health.max_health
 	health_bar.value = _player.health.current_health
 	health_trail.max_value = health_bar.max_value
@@ -84,6 +117,8 @@ func _bind_player(player: Node) -> void:
 func _unbind_player() -> void:
 	if not is_instance_valid(_player):
 		return
+	if weapon_wheel.visible:
+		weapon_wheel.close_wheel(false)
 	if _player.health.damaged.is_connected(_on_player_damaged):
 		_player.health.damaged.disconnect(_on_player_damaged)
 	if _player.health.healed.is_connected(_on_player_healed):
@@ -147,6 +182,8 @@ func _on_mana_changed(current: float, maximum: float) -> void:
 	_last_mana = current
 
 func _on_player_died() -> void:
+	if weapon_wheel.visible:
+		weapon_wheel.close_wheel(false)
 	show_notice("VOCÊ CAIU", "Retornando ao início da área...", 1.7)
 
 func _on_orb_upgraded(maximum: int) -> void:
@@ -257,9 +294,11 @@ func _apply_responsive_layout() -> void:
 	var root_control := $Root as Control
 	root_control.position = Vector2.ZERO
 	root_control.size = area
-	var vitals := $Root/Vitals as Control
-	vitals.position = Vector2(margin, margin)
+	weapon_wheel.size = area
+	weapon_wheel.position = Vector2.ZERO
+	_vitals_base_position = Vector2(margin, margin)
 	vitals.size = Vector2(286.0, 110.0)
+	_apply_sway_position()
 	_layout_notice()
 	wall_hint.size = Vector2(260.0, 40.0)
 	wall_hint.position = Vector2((area.x - wall_hint.size.x) * 0.5, area.y - margin - wall_hint.size.y)

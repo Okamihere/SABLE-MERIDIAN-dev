@@ -1,6 +1,7 @@
-[gd_scene load_steps=27 format=3]
+[gd_scene load_steps=28 format=3]
 
 [ext_resource type="Script" path="res://scripts/effects/grimoire_puppet.gd" id="1_puppet"]
+[ext_resource type="Script" path="res://scripts/effects/grimoire_puppet_stage_vfx.gd" id="11_stage"]
 [ext_resource type="Script" path="res://scripts/components/hitbox_component.gd" id="2_hitbox"]
 [ext_resource type="Shader" path="res://shaders/grimoire_puppet_warp.gdshader" id="3_warp"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/spirit_smoke_1.mp3" id="4_summon"]
@@ -221,6 +222,7 @@ mesh = SubResource("Mesh_limb")
 material_override = SubResource("Mat_gold")
 
 [node name="VFX" type="Node3D" parent="."]
+script = ExtResource("11_stage")
 
 [node name="SummonTome" type="Node3D" parent="VFX"]
 position = Vector3(0, 0.19, 0.5)

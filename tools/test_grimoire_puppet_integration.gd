@@ -25,6 +25,7 @@ func _run() -> void:
 	player.global_position = Vector3(3, 0.05, -4)
 	await _frames(70)
 	assert(rig.get_active_fixed_zone() == zone and rig.camera.current)
+	player.equipment.unlock_weapon(&"living_grimoire")
 	assert(player.equipment.request_weapon(&"living_grimoire"))
 	var spell = load("res://resources/spells/living_grimoire_r.tres")
 	assert(player.spell_manager.cast_spell(spell, player))
@@ -34,6 +35,7 @@ func _run() -> void:
 	var puppet = puppets[0]
 	player.lock_on.acquire_target()
 	assert(player.lock_on.get_target() == dummy)
+	player.equipment.unlock_weapon(&"cane_blade")
 	assert(player.equipment.request_weapon(&"cane_blade"))
 	assert(player.equipment.weapon.weapon_id == &"cane_blade" and puppet.summoner == player)
 	player._start_dodge()
