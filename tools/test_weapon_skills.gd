@@ -36,7 +36,9 @@ func _run() -> void:
 			assert(player.weapon_display._action_kind == &"skill" and player.weapon_display._action_id == spell.ability_id, "Unique skill motion must start: " + spell.spell_name)
 			assert(not player.spell_manager.cast_spell(spell, player), "Cooldown must hold: " + spell.spell_name)
 			await _frames(18)
-			if spell.ability_id not in [&"cane_e", &"dagger_e"]:
+			if spell.ability_id == &"grimoire_r":
+				assert(get_nodes_in_group(&"grimoire_puppets").size() == 1, "Grimoire R must summon one puppet")
+			elif spell.ability_id not in [&"cane_e", &"dagger_e"]:
 				assert(hits[0] > before_hits, "Skill must hit training target: " + spell.spell_name)
 	for id in ids.slice(1):
 		var exhibit := current_scene.get_node({&"card_daggers":"DaggersExhibit", &"puppet_strings":"StringsExhibit", &"cane_blade":"CaneExhibit", &"living_grimoire":"GrimoireExhibit"}[id])

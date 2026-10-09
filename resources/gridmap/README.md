@@ -36,6 +36,11 @@ Biblioteca: `sable_graybox_mesh_library.tres`. Demonstração: `../../scenes/lev
 | 29 | Nicho/alcova | parede norte, laterais e teto; Y=-0,2 a 2,8; abertura sul |
 | 30 | Canto interno | bordas norte e oeste; Y=-0,2 a 0,8 |
 | 31 | Canto externo | bordas norte e leste; Y=-0,2 a 0,8 |
+| 32 | Água estilizada | lâmina visual de 2 × 2 m, sem colisão; usa o material da água existente |
+
+O módulo `00_Piso` usa uma superfície visual plana para não criar bordas entre células. A colisão continua como laje de 0,2 m, com topo em Y=0.
+
+Nos mundos em `scenes/levels/worlds/`, selecione o GridMap `Water` para pintar a peça 32 sem substituir as células de `FloorsAndRamps`. Pintar a água em `FloorsAndRamps` substitui o piso daquela célula. A água usa coordenadas contínuas entre peças e transparência para mostrar o chão. Ela fica 0,04 m acima da altura da célula e não sustenta o jogador; coloque um piso sob ela se a área deve ser atravessável. Ajuste a altura da célula no editor para criar lâminas em outros níveis. As células pintadas são salvas apenas na cena do mundo editado. A MeshLibrary e o material da água são compartilhados por todos os mundos.
 
 Os dois GridMaps da demonstração compartilham esta MeshLibrary: `FloorsAndRamps` e `Walls`. Ambos usam célula `(2, 1, 2)`, X/Z centralizados, Y não centralizado, escala 1 e camada de colisão 1 (`World`). Pinte pisos, rampas, plataformas, sacadas e escadarias no primeiro; paredes, cantos, arcos, vãos, colunas e parapeitos no segundo. Use a rotação de 90° da ferramenta GridMap para virar as peças direcionais. Empilhe paredes e colunas em células Y consecutivas. Parede e coluna terminam em Y=0,8 para encaixar na face inferior de um piso na célula Y=1; a face inferior aberta deve ficar coberta pelo piso de apoio.
 

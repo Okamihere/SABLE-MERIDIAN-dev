@@ -1,0 +1,71 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/player/player_rig.tscn" id="1_player"]
+[ext_resource type="PackedScene" path="res://scenes/player/camera_rig.tscn" id="2_camera"]
+[ext_resource type="PackedScene" path="res://scenes/player/fixed_camera_zone.tscn" id="3_zone"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/training_dummy.tscn" id="4_dummy"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="5_hud"]
+[ext_resource type="Material" path="res://materials/stone.tres" id="6_stone"]
+[ext_resource type="Material" path="res://materials/contemplative_sky.tres" id="7_sky_material"]
+
+[sub_resource type="Sky" id="Sky"]
+sky_material = ExtResource("7_sky_material")
+
+[sub_resource type="Environment" id="Environment"]
+background_mode = 2
+sky = SubResource("Sky")
+ambient_light_source = 2
+ambient_light_color = Color(0.7, 0.64, 0.75, 1)
+ambient_light_energy = 0.85
+
+[sub_resource type="BoxMesh" id="FloorMesh"]
+size = Vector3(28, 1, 28)
+
+[sub_resource type="BoxShape3D" id="FloorShape"]
+size = Vector3(28, 1, 28)
+
+[node name="FixedCameraDemo" type="Node3D"]
+
+[node name="Floor" type="StaticBody3D" parent="."]
+position = Vector3(0, -0.5, 0)
+collision_layer = 1
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Floor"]
+mesh = SubResource("FloorMesh")
+surface_material_override/0 = ExtResource("6_stone")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Floor"]
+shape = SubResource("FloorShape")
+
+[node name="Player" parent="." instance=ExtResource("1_player")]
+position = Vector3(0, 0.05, -4)
+starts_with_staff = true
+
+[node name="CameraRig" parent="." instance=ExtResource("2_camera")]
+
+[node name="HUD" parent="." instance=ExtResource("5_hud")]
+
+[node name="TrainingDummy" parent="." instance=ExtResource("4_dummy")]
+position = Vector3(0, 0, 4)
+
+[node name="ZoneNear" parent="." instance=ExtResource("3_zone")]
+position = Vector3(0, 0, -4)
+priority = 0
+
+[node name="ZonePriority" parent="." instance=ExtResource("3_zone")]
+position = Vector3(6, 0, -4)
+priority = 10
+transition_duration = 0.85
+
+[node name="ViewAnchor" parent="ZonePriority" index="1"]
+position = Vector3(0, 5, -7)
+rotation_degrees = Vector3(-25, 155, 0)
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-45, -25, 0)
+light_energy = 1.1
+
+[editable path="ZonePriority"]

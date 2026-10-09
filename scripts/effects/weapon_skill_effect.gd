@@ -3,6 +3,7 @@ extends Node3D
 ## Efeitos das skills de arma. Dano passa pelas hitboxes normais do combate.
 const CARD := preload("res://scenes/effects/cursed_card.tscn")
 const HITBOX_SCRIPT := preload("res://scripts/components/hitbox_component.gd")
+const GRIMOIRE_Q_CAST_SFX := preload("res://assets/audio/sfx/abs-popup-2-fast.wav")
 
 var _caster: PlayerController
 var _spell: SpellResource
@@ -63,14 +64,10 @@ func activate(caster: Node3D, spell: SpellResource) -> void:
 			_slash(Color(1.0, 0.67, 0.36), 0.85)
 			_hit(Vector3(2.6, 1.5, 3.4), 0.48, 10.0, 0.42, 0.0)
 		&"grimoire_q":
-			_cards(1, 0.0, 1.4)
-			_glyph(Color(0.52, 0.37, 1.0), 0.9, 0.4)
+			_play_grimoire_q_cast_sound()
+			_cards(1, 0.0, 1.4, true)
 		&"grimoire_e":
 			_trap(Color(0.47, 0.35, 1.0), 2.0, 3.4, 0.65)
-		&"grimoire_r":
-			global_position = caster.global_position + Vector3.UP * 0.25
-			_ring(Color(0.67, 0.38, 1.0), 3.4, 0.9)
-			_hit(Vector3(6.8, 2.0, 6.8), 0.65, 15.0, 0.65, 5.0)
 
 func _process(delta: float) -> void:
 	_age += delta
@@ -113,7 +110,7 @@ func _hit(size: Vector3, duration: float, knockback: float, stun: float, launch:
 	var hb := _hitbox
 	get_tree().create_timer(duration).timeout.connect(func() -> void: if is_instance_valid(hb): hb.end_attack())
 
-func _cards(count: int, spread: float, multiplier: float) -> void:
+func _cards(count: int, spread: float, multiplier: float, grimoire_q: bool = false) -> void:
 	for i in count:
 		var card := CARD.instantiate() as CursedCard
 		var scene := get_tree().current_scene
@@ -121,8 +118,20 @@ func _cards(count: int, spread: float, multiplier: float) -> void:
 			card.queue_free()
 			return
 		scene.add_child(card)
+		if grimoire_q:
+			card.use_grimoire_q_visual()
 		card.global_position = global_position + Vector3.UP * 0.2 + _caster.global_basis.x * (i - (count - 1) * 0.5) * 0.32
 		card.launch(_caster, _direction.rotated(Vector3.UP, (i - (count - 1) * 0.5) * spread), _spell.damage * multiplier)
+
+func _play_grimoire_q_cast_sound() -> void:
+	var sound := AudioStreamPlayer3D.new()
+	sound.name = "ErrantPageCastSound"
+	sound.stream = GRIMOIRE_Q_CAST_SFX
+	sound.bus = "SFX" if AudioServer.get_bus_index("SFX") >= 0 else "Master"
+	sound.volume_db = -10.0
+	sound.pitch_scale = 0.85
+	add_child(sound)
+	sound.play()
 
 func _material(color: Color) -> StandardMaterial3D:
 	var material := StandardMaterial3D.new()

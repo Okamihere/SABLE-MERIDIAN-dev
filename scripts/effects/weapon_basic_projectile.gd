@@ -2,6 +2,8 @@ extends Node3D
 
 ## Projétil/área dos ataques básicos; usa a mesma HitboxComponent dos golpes.
 const HITBOX_SCRIPT := preload("res://scripts/components/hitbox_component.gd")
+const GRIMOIRE_COMBO_VISUAL := preload("res://scripts/effects/grimoire_combo_visual.gd")
+const GRIMOIRE_BITE_VISUAL := preload("res://scripts/effects/grimoire_bite_visual.gd")
 
 var _caster: PlayerController
 var _target: Node3D
@@ -17,6 +19,7 @@ var _spent := false
 var _hitbox: HitboxComponent
 var _visual: Node3D
 var _color: Color
+var _bite_visual: Node3D
 
 func activate(caster: PlayerController, weapon_id: StringName, attack: AttackData, mode: String, range: float, speed: float, direction: Vector3) -> void:
 	_caster = caster
@@ -48,7 +51,8 @@ func _physics_process(delta: float) -> void:
 		return
 	_elapsed += delta
 	if _mode == "seal":
-		_visual.rotation.y += delta * 2.8
+		if not _is_grimoire_bite():
+			_visual.rotation.y += delta * 2.8
 		if _elapsed >= 0.36:
 			_hitbox.end_attack()
 			queue_free()
@@ -66,7 +70,8 @@ func _physics_process(delta: float) -> void:
 	global_position += step
 	_travelled += step.length()
 	look_at(global_position + _direction, Vector3.UP)
-	_visual.rotation.z += delta * (6.0 if _weapon_id == &"living_grimoire" else 3.0)
+	if _grimoire_combo_stage() == 0:
+		_visual.rotation.z += delta * (6.0 if _weapon_id == &"living_grimoire" else 3.0)
 	if _travelled >= _range:
 		_hitbox.end_attack()
 		queue_free()
@@ -98,7 +103,15 @@ func _build_visual() -> void:
 		&"puppet_strings": _color = Color(0.35, 0.89, 0.95)
 		&"living_grimoire": _color = Color(0.55, 0.42, 1.0)
 		_: _color = Color(0.66, 0.35, 1.0)
-	if _mode == "seal":
+	if _is_grimoire_bite():
+		_bite_visual = GRIMOIRE_BITE_VISUAL.new()
+		_bite_visual.name = "ManuscriptBite"
+		_visual.add_child(_bite_visual)
+		_bite_visual.configure()
+		var camera := get_viewport().get_camera_3d()
+		if camera != null:
+			_visual.look_at(camera.global_position, Vector3.UP, true)
+	elif _mode == "seal":
 		_add_ring(1.9, false)
 		_add_ring(1.35, false)
 		for index in 8:
@@ -109,6 +122,11 @@ func _build_visual() -> void:
 			_add_bar(Vector3(side * 0.1, 0, 0), Vector3(0.025, 0.025, 1.15), 0.0)
 		if _attack.knockback < 0.0:
 			_add_ring(0.26, true)
+	elif _grimoire_combo_stage() > 0:
+		var combo_visual := GRIMOIRE_COMBO_VISUAL.new()
+		combo_visual.name = "GrimoireComboVisual"
+		_visual.add_child(combo_visual)
+		combo_visual.configure(_grimoire_combo_stage())
 	elif _weapon_id == &"living_grimoire":
 		_add_bar(Vector3(-0.19, 0, 0), Vector3(0.31, 0.43, 0.035), -0.22)
 		_add_bar(Vector3(0.19, 0, 0), Vector3(0.31, 0.43, 0.035), 0.22)
@@ -153,17 +171,41 @@ func _add_ring(radius: float, vertical: bool) -> void:
 func _on_hit_landed(hurtbox: HurtboxComponent, box: HitboxComponent) -> void:
 	if is_instance_valid(_caster):
 		_caster.combat.register_magic_hit(hurtbox, box)
+	if is_instance_valid(_bite_visual):
+		_bite_visual.mark_impact()
 	if _mode != "seal":
 		_impact()
+
+func _is_grimoire_bite() -> bool:
+	return _weapon_id == &"living_grimoire" and _mode == "seal" and _attack != null and _attack.attack_id == &"grimoire_seal"
+
+func _grimoire_combo_stage() -> int:
+	if _weapon_id != &"living_grimoire" or _mode != "projectile" or _attack == null:
+		return 0
+	match _attack.attack_id:
+		&"grimoire_page": return 1
+		&"light_2": return 2
+		&"light_3": return 3
+		&"grimoire_light_4": return 4
+	return 0
 
 func _impact() -> void:
 	if _spent:
 		return
 	_spent = true
 	_hitbox.end_attack()
+	var scene := get_tree().current_scene
+	if _grimoire_combo_stage() > 0:
+		if scene != null:
+			var combo_impact := GRIMOIRE_COMBO_VISUAL.new()
+			combo_impact.name = "GrimoireComboImpact"
+			scene.add_child(combo_impact)
+			combo_impact.global_transform = global_transform
+			combo_impact.configure(_grimoire_combo_stage(), true)
+		queue_free()
+		return
 	var burst := Node3D.new()
 	burst.name = "BasicArcaneImpact"
-	var scene := get_tree().current_scene
 	if scene == null:
 		burst.queue_free()
 		return

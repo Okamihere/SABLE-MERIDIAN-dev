@@ -76,6 +76,9 @@ func cast_spell(spell: SpellResource, caster: Node3D = null) -> bool:
 			effect.free()
 			push_warning("SpellManager: magia '%s' sem método activate" % spell.spell_name)
 			return false
+		if effect.has_method("can_activate") and not effect.call("can_activate", caster):
+			effect.free()
+			return false
 	if not _mana.try_spend(spell.mana_cost):
 		if effect != null:
 			effect.free()

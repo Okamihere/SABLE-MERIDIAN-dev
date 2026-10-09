@@ -30,7 +30,9 @@ Histórico de novidades do protótipo. A página principal ([README](README.md),
 
 _Atualizado via `python3 tools/update_changelog.py`. Não edite este bloco manualmente._
 
-- `2026-10-08` `2709af3` — docs: pagina completa com novidades e CHANGELOG auto; inclui worlds GridMap e AI_CONTEXT
+- `2026-10-09` `da77f11` — feat: grimorio vivo completo, zonas de camera fixa, agua GridMap e mundos editaveis
+- `2026-10-08` `4e01820` — chore: remove TODO.md intencional; validador e ROADMAP sem referencia
+- `2026-10-08` `b87f88f` — docs: pagina completa com novidades e CHANGELOG auto; inclui worlds GridMap e AI_CONTEXT
 - `2026-10-08` `7e6bd0a` — feat: worlds 01-08, hub flow, gridmap graybox, water/sky shaders, audio, combat/player/ui updates
 - `2026-10-07` `3b2a2cc` — docs: nova pagina com banner press-start, sinopse, mundos e galeria
 - `2026-10-06` `97bd87d` — update: combat, style meter, ui, weapons, spells, levels e testes
@@ -48,7 +50,5 @@ _Atualizado via `python3 tools/update_changelog.py`. Não edite este bloco manua
 - `2026-10-04` `67417e8` — feat: grimorio 3D, settings comerciais, mouse capture e HUD
 - `2026-10-04` `1b2da75` — fix: prevent hud scaling above editor size
 - `2026-10-04` `62c91f0` — feat: adiciona moldura HP/MP na HUD e adapta barras ao novo design
-- `2026-10-03` `3f3b3ff` — fix: auditoria ampla de seguranca - null guards, lifecycle e cleanup
-- `2026-10-02` `05b9d50` — feat: add graphics quality settings
 
 <!-- AUTO-END -->

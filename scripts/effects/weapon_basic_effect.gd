@@ -1,10 +1,31 @@
 extends Node3D
 
 ## Assinatura visual curta dos golpes que já passam pelo CombatController.
+const GRIMOIRE_BITE_VISUAL := preload("res://scripts/effects/grimoire_bite_visual.gd")
+const GRIMOIRE_AIR_VISUAL := preload("res://scripts/effects/grimoire_air_visual.gd")
 var _material: StandardMaterial3D
 
 func activate(caster: Node3D, weapon_id: StringName, heavy: bool) -> void:
 	var forward := caster.global_basis.z.normalized()
+	var attack: AttackData = caster.combat._current_attack
+	if weapon_id == &"living_grimoire" and attack != null and attack.attack_id in [&"grimoire_air_light", &"grimoire_air_heavy"]:
+		var air_visual := GRIMOIRE_AIR_VISUAL.new()
+		air_visual.name = "GrimoireAirInvocation"
+		add_child(air_visual)
+		air_visual.configure(caster, attack)
+		get_tree().create_timer(attack.startup + attack.active + attack.recovery + 0.05).timeout.connect(queue_free)
+		return
+	if weapon_id == &"living_grimoire" and heavy and caster.combat._current_attack.attack_id == &"grimoire_seal":
+		global_position = caster.get_node("WeaponDisplay").global_position
+		var camera := get_viewport().get_camera_3d()
+		if camera != null:
+			look_at(camera.global_position, Vector3.UP, true)
+		var omen := GRIMOIRE_BITE_VISUAL.new()
+		omen.name = "ManuscriptBiteOmen"
+		add_child(omen)
+		omen.configure(true)
+		get_tree().create_timer(0.38).timeout.connect(queue_free)
+		return
 	global_position = caster.global_position + Vector3.UP * (0.28 if weapon_id == &"living_grimoire" and heavy else 1.25) + forward * (1.0 if heavy else 0.9)
 	look_at(global_position + forward, Vector3.UP, true)
 	var color := Color(0.58, 0.34, 1.0)

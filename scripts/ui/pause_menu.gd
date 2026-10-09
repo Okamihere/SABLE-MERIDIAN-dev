@@ -245,7 +245,7 @@ func _populate_controls() -> void:
 	_add_control_row("Aproximar câmera", "Roda para cima")
 	_add_control_row("Afastar câmera", "Roda para baixo")
 	_add_controls_heading("COMBATE E INTERAÇÃO")
-	for entry in [["Golpe leve", &"light_attack"], ["Golpe pesado", &"heavy_attack"], ["Focar alvo", &"lock_on"], ["Baralho Maldito", &"spell_q"], ["Conversar / avançar", &"interact"]]:
+	for entry in [["Golpe leve", &"light_attack"], ["Golpe pesado", &"heavy_attack"], ["Focar alvo", &"lock_on"], ["Alvo à esquerda", &"lock_target_left"], ["Alvo à direita", &"lock_target_right"], ["Baralho Maldito", &"spell_q"], ["Conversar / avançar", &"interact"]]:
 		_add_control_row(entry[0], _binding_text(entry[1]))
 	_add_controls_heading("EQUIPAMENTO")
 	for entry in [["Cajado", &"weapon_staff"], ["Adagas de Cartas", &"weapon_daggers"], ["Lâmina do Eco", &"weapon_echo_blade"], ["Máscara do Riso", &"mask_laugh"]]:

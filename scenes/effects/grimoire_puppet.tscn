@@ -1,0 +1,349 @@
+[gd_scene load_steps=27 format=3]
+
+[ext_resource type="Script" path="res://scripts/effects/grimoire_puppet.gd" id="1_puppet"]
+[ext_resource type="Script" path="res://scripts/components/hitbox_component.gd" id="2_hitbox"]
+[ext_resource type="Shader" path="res://shaders/grimoire_puppet_warp.gdshader" id="3_warp"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/spirit_smoke_1.mp3" id="4_summon"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/intro_bone_rattle.mp3" id="5_move"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/abs-popup-2-fast.wav" id="6_cue"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/sndMisc5.wav" id="7_slap"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/MI_SFX 11.wav" id="8_head"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/MI_SFX 15.wav" id="9_final"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/abs-popup-1-fast.wav" id="10_farewell"]
+
+[sub_resource type="StandardMaterial3D" id="Mat_cloth"]
+albedo_color = Color(0.18, 0.07, 0.23, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="Mat_mask"]
+albedo_color = Color(0.56, 0.48, 0.46, 1)
+roughness = 0.8
+
+[sub_resource type="StandardMaterial3D" id="Mat_gold"]
+albedo_color = Color(0.69, 0.45, 0.19, 1)
+emission_enabled = true
+emission = Color(0.22, 0.09, 0.025, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_body"]
+size = Vector3(0.48, 0.67, 0.3)
+
+[sub_resource type="SphereMesh" id="Mesh_head"]
+radius = 0.27
+height = 0.48
+radial_segments = 12
+rings = 6
+
+[sub_resource type="BoxMesh" id="Mesh_limb"]
+size = Vector3(0.13, 0.48, 0.13)
+
+[sub_resource type="BoxShape3D" id="AttackShape"]
+size = Vector3(1.2, 1.0, 1.8)
+
+[sub_resource type="StandardMaterial3D" id="Mat_ink"]
+albedo_color = Color(0.055, 0.025, 0.08, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="Mat_page"]
+albedo_color = Color(0.67, 0.62, 0.57, 1)
+roughness = 0.85
+
+[sub_resource type="StandardMaterial3D" id="Mat_particle_ink"]
+shading_mode = 0
+albedo_color = Color(0.08, 0.025, 0.12, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_particle_violet"]
+shading_mode = 0
+albedo_color = Color(0.49, 0.24, 0.77, 1)
+emission_enabled = true
+emission = Color(0.38, 0.14, 0.65, 1)
+emission_energy_multiplier = 1.4
+
+[sub_resource type="BoxMesh" id="Mesh_tome"]
+size = Vector3(0.52, 0.09, 0.43)
+
+[sub_resource type="BoxMesh" id="Mesh_page"]
+size = Vector3(0.35, 0.025, 0.38)
+
+[sub_resource type="BoxMesh" id="Mesh_thread"]
+size = Vector3(0.018, 2.15, 0.018)
+
+[sub_resource type="SphereMesh" id="Mesh_ink_speck"]
+radius = 0.035
+height = 0.07
+radial_segments = 6
+rings = 3
+material = SubResource("Mat_particle_ink")
+
+[sub_resource type="SphereMesh" id="Mesh_violet_speck"]
+radius = 0.028
+height = 0.056
+radial_segments = 6
+rings = 3
+material = SubResource("Mat_particle_violet")
+
+[sub_resource type="TorusMesh" id="Mesh_warp_ring"]
+inner_radius = 0.53
+outer_radius = 0.59
+ring_segments = 16
+rings = 8
+
+[sub_resource type="ShaderMaterial" id="Mat_warp"]
+shader = ExtResource("3_warp")
+
+[node name="GrimoirePuppet" type="Node3D"]
+script = ExtResource("1_puppet")
+
+[node name="AttackHitbox" type="Area3D" parent="."]
+position = Vector3(0, 1.15, 1.55)
+collision_layer = 8
+collision_mask = 32
+script = ExtResource("2_hitbox")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="AttackHitbox"]
+shape = SubResource("AttackShape")
+
+[node name="Visual" type="Node3D" parent="."]
+
+[node name="Collar" type="MeshInstance3D" parent="Visual"]
+position = Vector3(0, 1.28, 0)
+scale = Vector3(3.8, 0.28, 2.4)
+mesh = SubResource("Mesh_limb")
+material_override = SubResource("Mat_gold")
+
+[node name="Torso" type="MeshInstance3D" parent="Visual"]
+position = Vector3(0, 0.94, 0)
+mesh = SubResource("Mesh_body")
+material_override = SubResource("Mat_cloth")
+
+[node name="Head" type="MeshInstance3D" parent="Visual"]
+position = Vector3(0, 1.48, 0)
+mesh = SubResource("Mesh_head")
+material_override = SubResource("Mat_mask")
+
+[node name="LeftEye" type="MeshInstance3D" parent="Visual/Head"]
+position = Vector3(-0.1, 0.02, 0.24)
+scale = Vector3(0.43, 0.27, 0.11)
+mesh = SubResource("Mesh_limb")
+material_override = SubResource("Mat_ink")
+
+[node name="RightEye" type="MeshInstance3D" parent="Visual/Head"]
+position = Vector3(0.1, 0.02, 0.24)
+scale = Vector3(0.43, 0.27, 0.11)
+mesh = SubResource("Mesh_limb")
+material_override = SubResource("Mat_ink")
+
+[node name="Grin" type="MeshInstance3D" parent="Visual/Head"]
+position = Vector3(0, -0.105, 0.255)
+rotation = Vector3(0, 0, 0.08)
+scale = Vector3(1.8, 0.16, 0.18)
+mesh = SubResource("Mesh_limb")
+material_override = SubResource("Mat_ink")
+
+[node name="LeftHorn" type="MeshInstance3D" parent="Visual/Head"]
+position = Vector3(-0.2, 0.29, 0)
+rotation = Vector3(0, 0, 0.38)
+scale = Vector3(0.65, 0.55, 0.65)
+mesh = SubResource("Mesh_limb")
+material_override = SubResource("Mat_gold")
+
+[node name="RightHorn" type="MeshInstance3D" parent="Visual/Head"]
+position = Vector3(0.2, 0.29, 0)
+rotation = Vector3(0, 0, -0.38)
+scale = Vector3(0.65, 0.55, 0.65)
+mesh = SubResource("Mesh_limb")
+material_override = SubResource("Mat_gold")
+
+[node name="LeftArm" type="MeshInstance3D" parent="Visual"]
+position = Vector3(-0.37, 0.91, 0)
+rotation = Vector3(0, 0, -0.25)
+mesh = SubResource("Mesh_limb")
+material_override = SubResource("Mat_cloth")
+
+[node name="RightArm" type="MeshInstance3D" parent="Visual"]
+position = Vector3(0.37, 0.91, 0)
+rotation = Vector3(0, 0, 0.25)
+mesh = SubResource("Mesh_limb")
+material_override = SubResource("Mat_cloth")
+
+[node name="LeftJoint" type="MeshInstance3D" parent="Visual"]
+position = Vector3(-0.35, 1.2, 0)
+scale = Vector3(0.85, 0.32, 0.85)
+mesh = SubResource("Mesh_limb")
+material_override = SubResource("Mat_gold")
+
+[node name="RightJoint" type="MeshInstance3D" parent="Visual"]
+position = Vector3(0.35, 1.2, 0)
+scale = Vector3(0.85, 0.32, 0.85)
+mesh = SubResource("Mesh_limb")
+material_override = SubResource("Mat_gold")
+
+[node name="LeftLeg" type="MeshInstance3D" parent="Visual"]
+position = Vector3(-0.13, 0.37, 0)
+mesh = SubResource("Mesh_limb")
+material_override = SubResource("Mat_cloth")
+
+[node name="RightLeg" type="MeshInstance3D" parent="Visual"]
+position = Vector3(0.13, 0.37, 0)
+mesh = SubResource("Mesh_limb")
+material_override = SubResource("Mat_cloth")
+
+[node name="LeftCoatTail" type="MeshInstance3D" parent="Visual"]
+position = Vector3(-0.2, 0.46, -0.15)
+rotation = Vector3(-0.18, 0, -0.15)
+scale = Vector3(1.8, 1.2, 0.55)
+mesh = SubResource("Mesh_limb")
+material_override = SubResource("Mat_cloth")
+
+[node name="RightCoatTail" type="MeshInstance3D" parent="Visual"]
+position = Vector3(0.2, 0.46, -0.15)
+rotation = Vector3(-0.18, 0, 0.15)
+scale = Vector3(1.8, 1.2, 0.55)
+mesh = SubResource("Mesh_limb")
+material_override = SubResource("Mat_cloth")
+
+[node name="ControlBar" type="MeshInstance3D" parent="Visual"]
+position = Vector3(0, 2.18, 0)
+rotation = Vector3(0, 0, 1.5708)
+scale = Vector3(0.32, 1.6, 0.32)
+mesh = SubResource("Mesh_limb")
+material_override = SubResource("Mat_gold")
+
+[node name="LeftString" type="MeshInstance3D" parent="Visual"]
+position = Vector3(-0.38, 1.59, 0)
+scale = Vector3(0.07, 2.5, 0.07)
+mesh = SubResource("Mesh_limb")
+material_override = SubResource("Mat_gold")
+
+[node name="RightString" type="MeshInstance3D" parent="Visual"]
+position = Vector3(0.38, 1.59, 0)
+scale = Vector3(0.07, 2.5, 0.07)
+mesh = SubResource("Mesh_limb")
+material_override = SubResource("Mat_gold")
+
+[node name="VFX" type="Node3D" parent="."]
+
+[node name="SummonTome" type="Node3D" parent="VFX"]
+position = Vector3(0, 0.19, 0.5)
+
+[node name="Cover" type="MeshInstance3D" parent="VFX/SummonTome"]
+mesh = SubResource("Mesh_tome")
+material_override = SubResource("Mat_ink")
+
+[node name="Spine" type="MeshInstance3D" parent="VFX/SummonTome"]
+position = Vector3(0, 0.055, 0)
+scale = Vector3(0.5, 0.2, 1.4)
+mesh = SubResource("Mesh_limb")
+material_override = SubResource("Mat_gold")
+
+[node name="LeftPageHinge" type="Node3D" parent="VFX/SummonTome"]
+position = Vector3(0, 0.07, 0)
+
+[node name="Page" type="MeshInstance3D" parent="VFX/SummonTome/LeftPageHinge"]
+position = Vector3(-0.18, 0, 0)
+mesh = SubResource("Mesh_page")
+material_override = SubResource("Mat_page")
+
+[node name="RightPageHinge" type="Node3D" parent="VFX/SummonTome"]
+position = Vector3(0, 0.075, 0)
+
+[node name="Page" type="MeshInstance3D" parent="VFX/SummonTome/RightPageHinge"]
+position = Vector3(0.18, 0, 0)
+mesh = SubResource("Mesh_page")
+material_override = SubResource("Mat_page")
+
+[node name="LoosePageA" type="MeshInstance3D" parent="VFX"]
+mesh = SubResource("Mesh_page")
+material_override = SubResource("Mat_page")
+
+[node name="LoosePageB" type="MeshInstance3D" parent="VFX"]
+mesh = SubResource("Mesh_page")
+material_override = SubResource("Mat_page")
+
+[node name="LoosePageC" type="MeshInstance3D" parent="VFX"]
+mesh = SubResource("Mesh_page")
+material_override = SubResource("Mat_page")
+
+[node name="PullThreads" type="Node3D" parent="VFX"]
+
+[node name="LeftThread" type="MeshInstance3D" parent="VFX/PullThreads"]
+position = Vector3(-0.31, 1.16, 0.23)
+rotation = Vector3(0, 0, -0.08)
+mesh = SubResource("Mesh_thread")
+material_override = SubResource("Mat_gold")
+
+[node name="RightThread" type="MeshInstance3D" parent="VFX/PullThreads"]
+position = Vector3(0.31, 1.16, 0.23)
+rotation = Vector3(0, 0, 0.08)
+mesh = SubResource("Mesh_thread")
+material_override = SubResource("Mat_gold")
+
+[node name="InkParticles" type="CPUParticles3D" parent="VFX"]
+position = Vector3(0, 0.35, 0.4)
+emitting = false
+amount = 9
+lifetime = 0.42
+one_shot = true
+explosiveness = 1.0
+direction = Vector3(0, 1, 0)
+spread = 78.0
+gravity = Vector3(0, -1.7, 0)
+initial_velocity_min = 0.7
+initial_velocity_max = 2.0
+mesh = SubResource("Mesh_ink_speck")
+
+[node name="VioletParticles" type="CPUParticles3D" parent="VFX"]
+position = Vector3(0, 1.2, 0.8)
+emitting = false
+amount = 6
+lifetime = 0.36
+one_shot = true
+explosiveness = 1.0
+direction = Vector3(0, 1, 0)
+spread = 110.0
+gravity = Vector3(0, -1.1, 0)
+initial_velocity_min = 0.8
+initial_velocity_max = 2.3
+mesh = SubResource("Mesh_violet_speck")
+
+[node name="WarpRing" type="MeshInstance3D" parent="VFX"]
+visible = false
+position = Vector3(0, 0.16, 0)
+mesh = SubResource("Mesh_warp_ring")
+material_override = SubResource("Mat_warp")
+
+[node name="Audio" type="Node3D" parent="."]
+
+[node name="Summon" type="AudioStreamPlayer3D" parent="Audio"]
+stream = ExtResource("4_summon")
+volume_db = -13.0
+bus = &"SFX"
+
+[node name="Movement" type="AudioStreamPlayer3D" parent="Audio"]
+stream = ExtResource("5_move")
+volume_db = -26.0
+bus = &"SFX"
+
+[node name="Cue" type="AudioStreamPlayer3D" parent="Audio"]
+stream = ExtResource("6_cue")
+volume_db = -17.0
+bus = &"SFX"
+
+[node name="SlapImpact" type="AudioStreamPlayer3D" parent="Audio"]
+stream = ExtResource("7_slap")
+volume_db = -8.0
+bus = &"SFX"
+
+[node name="HeadImpact" type="AudioStreamPlayer3D" parent="Audio"]
+stream = ExtResource("8_head")
+volume_db = -12.0
+bus = &"SFX"
+
+[node name="FinalImpact" type="AudioStreamPlayer3D" parent="Audio"]
+stream = ExtResource("9_final")
+volume_db = -11.0
+bus = &"SFX"
+
+[node name="Farewell" type="AudioStreamPlayer3D" parent="Audio"]
+stream = ExtResource("10_farewell")
+volume_db = -16.0
+bus = &"SFX"

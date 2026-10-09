@@ -38,6 +38,8 @@ var style_weapon_id: StringName = &""
 var _attack_enabled: bool = false
 ## Referência ao nó fonte do golpe.
 var source: Node
+## Filtro opcional chamado antes de aplicar dano a uma hurtbox.
+var hit_filter: Callable
 ## Dicionário de IDs de instâncias já atingidas nesta ativação.
 var _already_hit: Dictionary = {}
 ## Malha de debug visual (visível apenas com DEBUG_COMBAT ativo).
@@ -88,6 +90,8 @@ func _on_area_entered(area: Area3D) -> void:
 	if _already_hit.has(instance_id):
 		return
 	if is_instance_valid(source) and source.is_ancestor_of(hurtbox):
+		return
+	if hit_filter.is_valid() and not hit_filter.call(hurtbox):
 		return
 	_already_hit[instance_id] = true
 	if hurtbox.receive_hit(self):

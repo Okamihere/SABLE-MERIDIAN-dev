@@ -186,6 +186,8 @@ func _ensure_inputs() -> void:
 	_bind_key("jump", KEY_SPACE)
 	_bind_key("dodge", KEY_SHIFT)
 	_bind_mouse("lock_on", MOUSE_BUTTON_MIDDLE)
+	_bind_key("lock_target_left", KEY_Z)
+	_bind_key("lock_target_right", KEY_C)
 	_bind_key("pause_menu", KEY_ESCAPE)
 	_bind_key("debug_toggle", KEY_F3)
 	_bind_mouse("light_attack", MOUSE_BUTTON_LEFT)

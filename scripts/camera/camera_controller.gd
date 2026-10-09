@@ -2,6 +2,10 @@ class_name ThirdPersonCameraController
 extends Node3D
 
 const TARGET_BLEND_DURATION := 0.22
+const FIXED_UNSAFE_DELAY := 0.18
+const FIXED_RETURN_DELAY := 0.35
+const FIXED_MIN_FREE_TIME := 1.0
+const FIXED_FRAME_MARGIN := 0.16
 
 ## Câmera em terceira pessoa com órbita, suavização e enquadramento do lock-on.
 ##
@@ -37,6 +41,9 @@ const TARGET_BLEND_DURATION := 0.22
 @export var zoom_smoothing: float = 9.0
 ## Bônus de distância máxima com lock-on.
 @export var lock_distance_bonus: float = 2.6
+## Correção vertical discreta durante o lock-on, sem substituir o pitch manual.
+@export var lock_pitch_limit_degrees: float = 14.0
+@export var lock_pitch_smoothing: float = 5.0
 ## FOV base da câmera.
 @export var base_fov: float = 72.0
 ## Deslocamento sutil do jogador para a esquerda da composição.
@@ -62,6 +69,7 @@ var _player: Node3D
 var _yaw: float = 0.0
 ## Pitch atual da câmera.
 var _pitch: float = deg_to_rad(-12.0)
+var _manual_pitch: float = deg_to_rad(-12.0)
 ## Força do tremor de câmera.
 var _shake_strength: float = 0.0
 ## Velocidade de decaimento do tremor.
@@ -78,6 +86,22 @@ var _focus_transition_duration: float = 0.0
 var _target_blend_elapsed: float = TARGET_BLEND_DURATION
 var _focus_material: ShaderMaterial
 var _focus_target: Node3D
+var _free_position: Vector3
+var _free_arm_length: float = 5.0
+var _fixed_zones: Array[Area3D] = []
+var _selected_zone: Area3D
+var _view_zone: Area3D
+var _fixed_fallback := false
+var _unsafe_time := 0.0
+var _safe_time := 0.0
+var _free_time := 0.0
+var _transition_from_transform: Transform3D
+var _transition_from_pitch := 0.0
+var _transition_from_length := 5.0
+var _transition_from_weight := 0.0
+var _transition_elapsed := 0.0
+var _transition_duration := 0.0
+var _fixed_weight := 0.0
 
 ## Inicializa a câmera: configura SpringArm, captura mouse e posiciona.
 func _ready() -> void:
@@ -86,6 +110,19 @@ func _ready() -> void:
 	GameManager.camera_sensitivity_changed.connect(_on_camera_sensitivity_changed)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	_player = get_node_or_null(player_path) as Node3D
+	_zoom_distance = clampf(base_distance, min_distance, max_distance)
+	_free_arm_length = _zoom_distance
+	spring_arm.spring_length = _free_arm_length
+	camera.fov = base_fov
+	_composition = composition_offset
+	camera.h_offset = _composition
+	camera.add_to_group("game_camera")
+	if is_instance_valid(_player):
+		global_position = _player.global_position + Vector3.UP * follow_height
+		_free_position = global_position
+		yaw_from_player()
+		rotation.y = _yaw
+		spring_arm.rotation.x = _pitch
 	
 	# Initialize shader parameters with current values
 	_focus_material = lock_focus.material_override as ShaderMaterial
@@ -97,27 +134,15 @@ func _ready() -> void:
 ## Callback quando a sensibilidade da câmera muda (via GameManager).
 func _on_camera_sensitivity_changed(value: float) -> void:
 	mouse_sensitivity = value
-	_zoom_distance = clampf(base_distance, min_distance, max_distance)
-	spring_arm.spring_length = _zoom_distance
-	camera.fov = base_fov
-	_composition = composition_offset
-	camera.h_offset = _composition
-	_focus_material = lock_focus.material_override as ShaderMaterial
-	camera.add_to_group("game_camera")
-	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-	if is_instance_valid(_player):
-		global_position = _player.global_position + Vector3.UP * follow_height
-		yaw_from_player()
 
 ## Processa input de mouse para órbita da câmera.
 func _unhandled_input(event: InputEvent) -> void:
 	if get_tree().paused:
 		return
-	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and _view_zone == null:
 		var motion := event as InputEventMouseMotion
 		_yaw -= motion.relative.x * mouse_sensitivity
-		_pitch -= motion.relative.y * mouse_sensitivity
-		_pitch = clampf(_pitch, deg_to_rad(min_pitch_degrees), deg_to_rad(max_pitch_degrees))
+		_manual_pitch = clampf(_manual_pitch - motion.relative.y * mouse_sensitivity, deg_to_rad(min_pitch_degrees), deg_to_rad(max_pitch_degrees))
 	elif event is InputEventMouseButton:
 		var button_event := event as InputEventMouseButton
 		if button_event.pressed and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
@@ -194,13 +219,26 @@ func _process(delta: float) -> void:
 		if direction.length_squared() > 0.01:
 			var desired_yaw := atan2(-direction.x, -direction.z)
 			_yaw = lerp_angle(_yaw, desired_yaw, 1.0 - exp(-rotation_lag * delta))
-		var target_distance := clampf(_zoom_distance + minf(lock_distance_bonus, _player.global_position.distance_to(lock_target.global_position) * 0.12), min_distance, max_distance)
-		spring_arm.spring_length = lerpf(spring_arm.spring_length, target_distance, 1.0 - exp(-zoom_smoothing * delta))
+		var target_size := LockOnController.get_target_size(lock_target)
+		var player_top := _player.global_position.y + 2.25
+		var target_top := lock_target.global_position.y + target_size.y
+		var vertical_span := maxf(player_top, target_top) - minf(_player.global_position.y, lock_target.global_position.y)
+		var fit_distance := vertical_span / (2.0 * tan(deg_to_rad(base_fov) * 0.5) * 0.72)
+		var base_lock_distance := _zoom_distance + minf(lock_distance_bonus, _player.global_position.distance_to(lock_target.global_position) * 0.12)
+		var target_distance := clampf(maxf(base_lock_distance, maxf(fit_distance, target_size.x * 2.0)), min_distance, max_distance)
+		_free_arm_length = lerpf(_free_arm_length, target_distance, 1.0 - exp(-zoom_smoothing * delta))
+		var player_center_y := _player.global_position.y + 1.1
+		var target_center_y := lock_target.global_position.y + target_size.y * 0.5
+		var focus_y := (player_center_y + target_center_y) * 0.5
+		var focus_distance := maxf(2.0, direction.length() + _free_arm_length)
+		var desired_pitch := atan2(focus_y - _free_position.y, focus_distance)
+		var correction := clampf(desired_pitch - _manual_pitch, -deg_to_rad(lock_pitch_limit_degrees), deg_to_rad(lock_pitch_limit_degrees))
+		_pitch = lerpf(_pitch, clampf(_manual_pitch + correction, deg_to_rad(min_pitch_degrees), deg_to_rad(max_pitch_degrees)), 1.0 - exp(-lock_pitch_smoothing * delta))
 	else:
-		spring_arm.spring_length = lerpf(spring_arm.spring_length, _zoom_distance, 1.0 - exp(-zoom_smoothing * delta))
-	rotation.y = _yaw
-	spring_arm.rotation.x = _pitch
+		_free_arm_length = lerpf(_free_arm_length, _zoom_distance, 1.0 - exp(-zoom_smoothing * delta))
+		_pitch = lerpf(_pitch, _manual_pitch, 1.0 - exp(-lock_pitch_smoothing * delta))
 	_composition = lerpf(_composition, lock_composition_offset if locked else composition_offset, 1.0 - exp(-composition_smoothing * delta))
+	_update_fixed_view(lock_target, delta)
 	_target_blend_elapsed = minf(_target_blend_elapsed + delta, TARGET_BLEND_DURATION)
 	_update_shake(delta)
 
@@ -209,18 +247,23 @@ func _physics_process(delta: float) -> void:
 	if not is_instance_valid(_player):
 		return
 	var follow_target := _player.global_position + Vector3.UP * follow_height
+	if _player is CharacterBody3D and not (_player as CharacterBody3D).is_on_floor():
+		follow_target.y += clampf((_player as CharacterBody3D).velocity.y * 0.04, -0.35, 0.35)
 	var lock_target: Node3D = _player.get_lock_target() if _player.has_method("get_lock_target") else null
 	if is_instance_valid(lock_target) and (not lock_target.has_method("is_alive") or lock_target.call("is_alive")):
 		var toward_target := lock_target.global_position - _player.global_position
 		toward_target.y = 0.0
 		follow_target += toward_target.limit_length(7.0) * 0.12
-	global_position = global_position.lerp(follow_target, 1.0 - exp(-camera_lag * delta))
+		var target_center_y := lock_target.global_position.y + LockOnController.get_target_size(lock_target).y * 0.5
+		follow_target.y += clampf((target_center_y - (_player.global_position.y + 1.1)) * 0.25, -1.0, 1.0)
+	_free_position = _free_position.lerp(follow_target, 1.0 - exp(-camera_lag * delta))
 
 ## Reposiciona a câmera imediatamente para a posição do jogador.
 func snap_to_player() -> void:
 	if not is_instance_valid(_player):
 		return
 	global_position = _player.global_position + Vector3.UP * follow_height
+	_free_position = global_position
 	_composition = composition_offset
 	camera.h_offset = _composition
 	camera.v_offset = 0.0
@@ -229,6 +272,125 @@ func snap_to_player() -> void:
 func yaw_from_player() -> void:
 	if is_instance_valid(_player):
 		_yaw = _player.rotation.y + PI
+
+## As zonas registram somente o jogador; a seleção ocorre no CameraRig.
+func register_fixed_zone(zone: Area3D) -> void:
+	if not _fixed_zones.has(zone):
+		_fixed_zones.append(zone)
+
+func unregister_fixed_zone(zone: Area3D) -> void:
+	_fixed_zones.erase(zone)
+
+func get_active_fixed_zone() -> Area3D:
+	return _view_zone
+
+func is_view_transitioning() -> bool:
+	return _transition_elapsed < _transition_duration
+
+func _highest_fixed_zone() -> Area3D:
+	var best: Area3D
+	for zone in _fixed_zones:
+		if is_instance_valid(zone) and (best == null or zone.priority > best.priority):
+			best = zone
+	return best
+
+func _set_fixed_view(zone: Area3D, duration: float) -> void:
+	if _view_zone == zone:
+		return
+	_transition_from_transform = global_transform
+	_transition_from_pitch = spring_arm.rotation.x
+	_transition_from_length = spring_arm.spring_length
+	_transition_from_weight = _fixed_weight
+	_transition_elapsed = 0.0
+	_transition_duration = maxf(0.1, duration)
+	_view_zone = zone
+
+func _zone_duration(zone: Area3D) -> float:
+	return float(zone.get("transition_duration"))
+
+func _update_fixed_view(lock_target: Node3D, delta: float) -> void:
+	var zone := _highest_fixed_zone()
+	if zone != _selected_zone:
+		var previous_zone := _selected_zone
+		_selected_zone = zone
+		_fixed_fallback = zone != null and not _fixed_view_safe(zone, lock_target)
+		_unsafe_time = 0.0
+		_safe_time = 0.0
+		_free_time = 0.0
+		_set_fixed_view(null if _fixed_fallback else zone, _zone_duration(zone) if zone != null else (_zone_duration(previous_zone) if is_instance_valid(previous_zone) else 0.65))
+	elif zone != null:
+		var safe := _fixed_view_safe(zone, lock_target)
+		if _fixed_fallback:
+			_free_time += delta
+			_safe_time = _safe_time + delta if safe else 0.0
+			if _free_time >= FIXED_MIN_FREE_TIME and _safe_time >= FIXED_RETURN_DELAY:
+				_fixed_fallback = false
+				_unsafe_time = 0.0
+				_set_fixed_view(zone, _zone_duration(zone))
+		else:
+			_unsafe_time = 0.0 if safe else _unsafe_time + delta
+			if _unsafe_time >= FIXED_UNSAFE_DELAY:
+				_fixed_fallback = true
+				_free_time = 0.0
+				_safe_time = 0.0
+				_set_fixed_view(null, _zone_duration(zone))
+
+	var destination := Transform3D(Basis(Vector3.UP, _yaw), _free_position)
+	if is_instance_valid(_view_zone):
+		destination = (_view_zone.get_node("ViewAnchor") as Marker3D).global_transform
+	var desired_pitch := 0.0 if _view_zone != null else _pitch
+	var desired_length := 0.0 if _view_zone != null else _free_arm_length
+	var desired_weight := 1.0 if _view_zone != null else 0.0
+	var blend := 1.0
+	if is_view_transitioning():
+		_transition_elapsed = minf(_transition_elapsed + delta, _transition_duration)
+		blend = smoothstep(0.0, 1.0, _transition_elapsed / _transition_duration)
+		global_transform = _transition_from_transform.interpolate_with(destination, blend)
+		spring_arm.rotation.x = lerpf(_transition_from_pitch, desired_pitch, blend)
+		spring_arm.spring_length = lerpf(_transition_from_length, desired_length, blend)
+		_fixed_weight = lerpf(_transition_from_weight, desired_weight, blend)
+	else:
+		global_transform = destination
+		spring_arm.rotation.x = desired_pitch
+		spring_arm.spring_length = desired_length
+		_fixed_weight = desired_weight
+
+func _fixed_view_safe(zone: Area3D, lock_target: Node3D) -> bool:
+	var anchor := zone.get_node("ViewAnchor") as Marker3D
+	var viewport_size := get_viewport().get_visible_rect().size
+	var aspect := viewport_size.x / maxf(1.0, viewport_size.y)
+	if not _point_in_fixed_frame(anchor, _player.global_position + Vector3.UP * 0.15, aspect) or not _point_in_fixed_frame(anchor, _player.global_position + Vector3.UP * 2.25, aspect):
+		return false
+	if not _fixed_line_clear(anchor.global_position, _player.global_position + Vector3.UP * 1.1):
+		return false
+	var subject := lock_target
+	if subject == null and _player is PlayerController and (_player as PlayerController).combat.is_attacking():
+		var nearest := 12.0
+		for candidate in get_tree().get_nodes_in_group("enemies"):
+			if candidate is Node3D and (not candidate.has_method("is_alive") or candidate.call("is_alive")):
+				var distance := _player.global_position.distance_to((candidate as Node3D).global_position)
+				if distance < nearest:
+					nearest = distance
+					subject = candidate as Node3D
+	if subject != null:
+		var height := LockOnController.get_target_size(subject).y
+		if not _point_in_fixed_frame(anchor, subject.global_position + Vector3.UP * 0.15, aspect) or not _point_in_fixed_frame(anchor, subject.global_position + Vector3.UP * height, aspect):
+			return false
+		if not _fixed_line_clear(anchor.global_position, subject.global_position + Vector3.UP * height * 0.5):
+			return false
+	return true
+
+func _point_in_fixed_frame(anchor: Marker3D, point: Vector3, aspect: float) -> bool:
+	var local := anchor.global_transform.affine_inverse() * point
+	var depth := -local.z
+	if depth <= camera.near:
+		return false
+	var half_height := depth * tan(deg_to_rad(base_fov) * 0.5) * (1.0 - FIXED_FRAME_MARGIN)
+	return absf(local.y) <= half_height and absf(local.x) <= half_height * aspect
+
+func _fixed_line_clear(from: Vector3, to: Vector3) -> bool:
+	var query := PhysicsRayQueryParameters3D.create(from, to, 1)
+	return _player.get_world_3d().direct_space_state.intersect_ray(query).is_empty()
 
 ## Aplica tremor de câmera.
 ## @param strength Força do tremor.
@@ -258,10 +420,10 @@ func kick_fov(amount: float, duration: float) -> void:
 ## Atualiza o tremor de câmera.
 func _update_shake(delta: float) -> void:
 	if _shake_strength <= 0.001:
-		camera.h_offset = lerpf(camera.h_offset, _composition, clampf(delta * 18.0, 0.0, 1.0))
+		camera.h_offset = lerpf(camera.h_offset, _composition * (1.0 - _fixed_weight), clampf(delta * 18.0, 0.0, 1.0))
 		camera.v_offset = lerpf(camera.v_offset, 0.0, clampf(delta * 18.0, 0.0, 1.0))
 		return
-	camera.h_offset = _composition + randf_range(-_shake_strength, _shake_strength)
+	camera.h_offset = _composition * (1.0 - _fixed_weight) + randf_range(-_shake_strength, _shake_strength)
 	camera.v_offset = randf_range(-_shake_strength, _shake_strength)
 	_shake_strength = maxf(0.0, _shake_strength - _shake_decay * delta)
 
@@ -294,7 +456,7 @@ func _update_lock_focus(target: Node3D) -> void:
 		return
 	_set_focus_subject("player", _player.global_position, 2.25, viewport_size)
 	if is_instance_valid(target):
-		_set_focus_subject("target", target.global_position, 2.1, viewport_size)
+		_set_focus_subject("target", target.global_position, LockOnController.get_target_size(target).y, viewport_size)
 	else:
 		# Target lost/dead: ensure target_uv/radius are set to defaults
 		# so the shader doesn't use stale data

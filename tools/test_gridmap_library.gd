@@ -21,20 +21,28 @@ func world_ray(from: Vector3, to: Vector3) -> Dictionary:
 
 func run() -> void:
 	var expected_ids := PackedInt32Array()
-	for id in range(32):
+	for id in range(33):
 		expected_ids.append(id)
 	assert(LIBRARY.get_item_list() == expected_ids)
 	for id in range(32):
 		assert(LIBRARY.get_item_mesh(id) != null)
 		assert(LIBRARY.get_item_shapes(id).size() >= 2)
+	assert(LIBRARY.get_item_name(32) == "32_Agua_Estilizada")
+	assert(LIBRARY.get_item_mesh(32) != null)
+	assert(LIBRARY.get_item_shapes(32).is_empty())
 	for id in range(12, 32):
 		assert(LIBRARY.get_item_name(id).begins_with("%02d_" % id))
 	var floor_bounds := LIBRARY.get_item_mesh(0).get_aabb()
+	assert(is_zero_approx(floor_bounds.position.y) and is_zero_approx(floor_bounds.size.y), "Floor visual should be flat")
+	var floor_shapes := LIBRARY.get_item_shapes(0)
+	var floor_collision := floor_shapes[0] as BoxShape3D
+	var floor_collision_transform := floor_shapes[1] as Transform3D
+	var floor_underside := floor_collision_transform.origin.y - floor_collision.size.y * 0.5
 	for id in [1, 2, 5]:
 		var bounds := LIBRARY.get_item_mesh(id).get_aabb()
 		assert(is_equal_approx(bounds.position.y, -0.2))
 		assert(is_equal_approx(bounds.end.y, 0.8))
-		assert(is_equal_approx(bounds.end.y, floor_bounds.position.y + 1.0), "Wall must meet the underside of the next floor")
+		assert(is_equal_approx(bounds.end.y, floor_underside + 1.0), "Wall must meet the underside of the next floor")
 
 	change_scene_to_file("res://scenes/levels/gridmap_graybox_demo.tscn")
 	await frames(10)
@@ -77,7 +85,7 @@ func run() -> void:
 	for id in [6, 7]:
 		assert(LIBRARY.get_item_shapes(id).size() == 6)
 		assert(is_equal_approx(LIBRARY.get_item_mesh(id).get_aabb().end.y, 2.8))
-		assert(is_equal_approx(LIBRARY.get_item_mesh(id).get_aabb().end.y, floor_bounds.position.y + 3.0))
+		assert(is_equal_approx(LIBRARY.get_item_mesh(id).get_aabb().end.y, floor_underside + 3.0))
 	assert(LIBRARY.get_item_shapes(8).size() == 2)
 	assert(LIBRARY.get_item_shapes(9).size() == 2)
 	assert(LIBRARY.get_item_shapes(10).size() == 2)
@@ -246,5 +254,5 @@ func run() -> void:
 		player.move_and_slide()
 		await physics_frame
 	assert(player.global_position.y > 1.8 and player.is_on_floor(), "Player must climb the monumental stairs onto the elevated platform")
-	print("PASS: 32 IDs, pivots, four rotations, portals, collisions, two floors, ramp, stairs, balcony, camera, wall jump")
+	print("PASS: 33 IDs, pivots, four rotations, portals, collisions, two floors, ramp, stairs, balcony, camera, wall jump")
 	quit()

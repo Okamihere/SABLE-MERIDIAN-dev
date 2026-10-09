@@ -21,6 +21,8 @@ signal target_changed(target: Node3D)
 @export var center_weight: float = 10.0
 ## Peso da distância do jogador no cálculo de score.
 @export var distance_weight: float = 0.35
+## Margem da tela usada na troca de alvos.
+@export_range(0.0, 0.25, 0.01) var screen_margin: float = 0.06
 
 ## Alvo atual de lock-on (null se não há alvo).
 var current_target: Node3D
@@ -49,10 +51,10 @@ func acquire_target() -> Node3D:
 		var enemy := candidate as Node3D
 		if enemy.has_method("is_alive") and not enemy.call("is_alive"):
 			continue
-		var distance := origin.global_position.distance_to(enemy.global_position)
-		if distance > max_distance or camera.is_position_behind(enemy.global_position):
+		if not _can_select(enemy, camera, viewport_size, origin):
 			continue
-		var screen_pos := camera.unproject_position(enemy.global_position + Vector3.UP * 1.2)
+		var distance := origin.global_position.distance_to(enemy.global_position)
+		var screen_pos := camera.unproject_position(_target_center(enemy))
 		var center_distance := screen_pos.distance_to(screen_center) / maxf(1.0, viewport_size.length())
 		var score := center_distance * center_weight + distance * distance_weight
 		if score < best_score:
@@ -61,6 +63,72 @@ func acquire_target() -> Node3D:
 	current_target = best_target
 	target_changed.emit(current_target)
 	return current_target
+
+## Troca para o alvo visível mais próximo à esquerda (-1) ou à direita (1).
+func switch_target(direction: int) -> Node3D:
+	var previous := get_target()
+	var camera := get_viewport().get_camera_3d()
+	if previous == null or camera == null or direction == 0:
+		return previous
+	var viewport_size := get_viewport().get_visible_rect().size
+	var origin := get_parent() as Node3D
+	var previous_screen := camera.unproject_position(_target_center(previous))
+	var best_score := INF
+	var best_target: Node3D
+	for candidate in get_tree().get_nodes_in_group("enemies"):
+		if not (candidate is Node3D) or candidate == previous:
+			continue
+		var enemy := candidate as Node3D
+		if not _can_select(enemy, camera, viewport_size, origin, true):
+			continue
+		var screen := camera.unproject_position(_target_center(enemy))
+		var horizontal := (screen.x - previous_screen.x) * direction
+		if horizontal <= 12.0:
+			continue
+		var score := horizontal + absf(screen.y - previous_screen.y) * 0.45
+		if score < best_score:
+			best_score = score
+			best_target = enemy
+	if best_target != null:
+		current_target = best_target
+		target_changed.emit(current_target)
+	return current_target
+
+func _can_select(enemy: Node3D, camera: Camera3D, viewport_size: Vector2, origin: Node3D, require_on_screen: bool = false) -> bool:
+	if enemy.has_method("is_alive") and not enemy.call("is_alive"):
+		return false
+	if origin.global_position.distance_to(enemy.global_position) > max_distance:
+		return false
+	var center := _target_center(enemy)
+	if camera.is_position_behind(center):
+		return false
+	if require_on_screen:
+		var screen := camera.unproject_position(center)
+		if screen.x < viewport_size.x * screen_margin or screen.x > viewport_size.x * (1.0 - screen_margin) or screen.y < viewport_size.y * screen_margin or screen.y > viewport_size.y * (1.0 - screen_margin):
+			return false
+	var query := PhysicsRayQueryParameters3D.create(camera.global_position, center, 1)
+	return origin.get_world_3d().direct_space_state.intersect_ray(query).is_empty()
+
+func _target_center(target: Node3D) -> Vector3:
+	return target.global_position + Vector3.UP * get_target_size(target).y * 0.5
+
+## Estima as dimensões visuais com a colisão e a escala do visual do inimigo.
+static func get_target_size(target: Node3D) -> Vector2:
+	var size := Vector2(1.4, 2.25)
+	var collider := target.get_node_or_null("CollisionShape3D") as CollisionShape3D
+	if collider != null and collider.shape != null:
+		if collider.shape is CapsuleShape3D:
+			var capsule := collider.shape as CapsuleShape3D
+			size.x = maxf(size.x, capsule.radius * 2.0)
+			size.y = maxf(size.y, collider.position.y + capsule.height * 0.5 + 0.3)
+		elif collider.shape is BoxShape3D:
+			var box := collider.shape as BoxShape3D
+			size.x = maxf(size.x, box.size.x)
+			size.y = maxf(size.y, collider.position.y + box.size.y * 0.5 + 0.3)
+	var visual := target.get_node_or_null("Visual") as Node3D
+	if visual != null:
+		size *= Vector2(maxf(1.0, visual.scale.x), maxf(1.0, visual.scale.y))
+	return size
 
 ## Libera o alvo atual.
 func clear_target() -> void:

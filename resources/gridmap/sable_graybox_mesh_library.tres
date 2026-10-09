@@ -1,19 +1,13 @@
-[gd_resource type="MeshLibrary" format=4]
+[gd_resource type="MeshLibrary" format=4 uid="uid://bixwfquk8qmgy"]
+
+[ext_resource type="Material" path="res://materials/stylized_water_gridmap.tres" id="water_material"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_x1yys"]
 albedo_color = Color(0.2784314, 0.2627451, 0.30980393, 1)
 roughness = 0.85
 
-[sub_resource type="ArrayMesh" id="ArrayMesh_wp7nb"]
-_surfaces = [{
-"aabb": AABB(-1, -0.2, -1, 2, 0.2, 2),
-"format": 34359738375,
-"material": SubResource("StandardMaterial3D_x1yys"),
-"primitive": 3,
-"uv_scale": Vector4(0, 0, 0, 0),
-"vertex_count": 36,
-"vertex_data": PackedByteArray("AACAv83MTL4AAIA/AACAP83MTL4AAIA/AACAPwAAAAAAAIA/AACAv83MTL4AAIA/AACAPwAAAAAAAIA/AACAvwAAAAAAAIA/AACAP83MTL4AAIC/AACAv83MTL4AAIC/AACAvwAAAAAAAIC/AACAP83MTL4AAIC/AACAvwAAAAAAAIC/AACAPwAAAAAAAIC/AACAv83MTL4AAIC/AACAv83MTL4AAIA/AACAvwAAAAAAAIA/AACAv83MTL4AAIC/AACAvwAAAAAAAIA/AACAvwAAAAAAAIC/AACAP83MTL4AAIA/AACAP83MTL4AAIC/AACAPwAAAAAAAIC/AACAP83MTL4AAIA/AACAPwAAAAAAAIC/AACAPwAAAAAAAIA/AACAvwAAAAAAAIA/AACAPwAAAAAAAIA/AACAPwAAAAAAAIC/AACAvwAAAAAAAIA/AACAPwAAAAAAAIC/AACAvwAAAAAAAIC/AACAv83MTL4AAIC/AACAP83MTL4AAIC/AACAP83MTL4AAIA/AACAv83MTL4AAIC/AACAP83MTL4AAIA/AACAv83MTL4AAIA//3//f/9/AID/f/9//38AgP9//3//fwCA/3//f/9/AID/f/9//38AgP9//3//fwCA//////9/AID//////38AgP//////fwCA//////9/AID//////38AgP//////fwCAAAD/f/9//78AAP9//3//vwAA/3//f/+/AAD/f/9//78AAP9//3//vwAA/3//f/+/////f/9//7////9//3//v////3//f/+/////f/9//7////9//3//v////3//f/+//3///wAA/7//f///AAD/v/9///8AAP+//3///wAA/7//f///AAD/v/9///8AAP+//38AAAAA/7//fwAAAAD/v/9/AAAAAP+//38AAAAA/7//fwAAAAD/v/9/AAAAAP+/")
-}]
+[sub_resource type="PlaneMesh" id="PlaneMesh_floor_flat"]
+material = SubResource("StandardMaterial3D_x1yys")
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_6r1gu"]
 size = Vector3(2, 0.2, 2)
@@ -534,6 +528,11 @@ size = Vector3(0.25, 1, 1.75)
 [sub_resource type="BoxShape3D" id="BoxShape3D_pam71"]
 size = Vector3(0.2, 1, 0.2)
 
+[sub_resource type="PlaneMesh" id="PlaneMesh_water_tile"]
+material = ExtResource("water_material")
+subdivide_width = 2
+subdivide_depth = 2
+
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_167ck"]
 albedo_color = Color(0.41960785, 0.35686275, 0.4392157, 1)
 roughness = 0.85
@@ -644,7 +643,7 @@ size = Vector3(2, 0.9, 0.25)
 
 [resource]
 item/0/name = "00_Piso"
-item/0/mesh = SubResource("ArrayMesh_wp7nb")
+item/0/mesh = SubResource("PlaneMesh_floor_flat")
 item/0/mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
 item/0/mesh_cast_shadow = 1
 item/0/shapes = [SubResource("BoxShape3D_6r1gu"), Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)]
@@ -867,3 +866,10 @@ item/31/mesh_cast_shadow = 1
 item/31/shapes = [SubResource("BoxShape3D_sx518"), Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, -0.875), SubResource("BoxShape3D_dsykk"), Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.875, 0.3, 0.125), SubResource("BoxShape3D_pam71"), Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.65, 0.3, -0.65)]
 item/31/navigation_mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
 item/31/navigation_layers = 1
+item/32/name = "32_Agua_Estilizada"
+item/32/mesh = SubResource("PlaneMesh_water_tile")
+item/32/mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0)
+item/32/mesh_cast_shadow = 0
+item/32/shapes = []
+item/32/navigation_mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+item/32/navigation_layers = 1

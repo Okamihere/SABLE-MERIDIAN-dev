@@ -76,6 +76,7 @@ var _active_hitbox: HitboxComponent
 var _hitbox_live: bool = false
 var _current_delivery: String = "melee"
 var _finisher_visual_pending: bool = false
+var _grimoire_air_count: int = 0
 var _last_unarmed_notice_ms: int = -5000
 
 ## Inicializa referências e conecta sinais.
@@ -94,6 +95,8 @@ func _ready() -> void:
 
 ## Processa lógica de combate: input, buffer, janelas de hitbox e combo.
 func _physics_process(delta: float) -> void:
+	if _owner_body.is_on_floor():
+		_grimoire_air_count = 0
 	_capture_attack_input()
 	if _current_attack == null:
 		if _chain_index > 0 and Time.get_ticks_msec() / 1000.0 > _combo_expires_at:
@@ -231,7 +234,9 @@ func _try_start_buffered() -> void:
 	_buffered_action = &""
 	var weapon := _equipped_weapon()
 	if not _owner_body.is_on_floor():
-		_start_attack((weapon.air_light if action == &"light" else weapon.air_heavy) if weapon != null else (AIR_LIGHT if action == &"light" else AIR_HEAVY), 0)
+		var air_attack := _air_attack_for_action(weapon, action)
+		if air_attack != null:
+			_start_attack(air_attack, 0)
 	elif action == &"light":
 		_start_attack(weapon.light_chain[0] if weapon != null else LIGHT_1, 1)
 	else:
@@ -256,7 +261,9 @@ func _continue_from_buffer() -> void:
 		player.equipment.commit_pending_weapon()
 	var weapon := _equipped_weapon()
 	if not _owner_body.is_on_floor():
-		_start_attack((weapon.air_light if action == &"light" else weapon.air_heavy) if weapon != null else (AIR_LIGHT if action == &"light" else AIR_HEAVY), 0)
+		var air_attack := _air_attack_for_action(weapon, action)
+		if air_attack != null:
+			_start_attack(air_attack, 0)
 		return
 	if action == &"heavy":
 		if _chain_index == 2 and (weapon == null or weapon.launcher != null):
@@ -281,6 +288,8 @@ func _start_attack(data: AttackData, chain_index: int) -> void:
 	if _active_hitbox != null:
 		_active_hitbox.end_attack()
 	_current_attack = data
+	if _is_grimoire_air_attack(data):
+		_grimoire_air_count = 3 if data.attack_id == &"grimoire_air_heavy" else _grimoire_air_count + 1
 	_attack_elapsed = 0.0
 	_chain_index = chain_index
 	_chain_weapon = _equipped_weapon()
@@ -295,6 +304,7 @@ func _start_attack(data: AttackData, chain_index: int) -> void:
 		_configure_hitbox_geometry(weapon)
 	_active_hitbox.configure_from_attack(data)
 	_active_hitbox.style_weapon_id = weapon.weapon_id if weapon != null else &""
+	_active_hitbox.hit_filter = Callable(self, "_grimoire_air_can_hit") if _is_grimoire_air_attack(data) else Callable()
 	var attacking_during_dodge := _state_machine.state == PlayerStateMachine.State.DODGE
 	if not attacking_during_dodge:
 		_state_machine.set_state(PlayerStateMachine.State.ATTACK if _owner_body.is_on_floor() else PlayerStateMachine.State.AIR_ATTACK)
@@ -310,12 +320,32 @@ func _start_attack(data: AttackData, chain_index: int) -> void:
 		_animation_controller.notify_attack_started(data)
 	if player != null and is_instance_valid(player.weapon_display) and weapon != null:
 		var duration := data.startup + data.active + data.recovery
-		if chain_index > 0:
+		if _is_grimoire_air_attack(data):
+			player.weapon_display.call("play_air", weapon.weapon_id, data == weapon.air_heavy, duration)
+		elif chain_index > 0:
 			player.weapon_display.call("play_basic", weapon.weapon_id, chain_index, duration)
 		elif data == weapon.heavy or data == weapon.launcher or data == weapon.air_heavy:
 			player.weapon_display.call("play_heavy", weapon.weapon_id, duration)
 		else:
 			player.weapon_display.call("play_basic", weapon.weapon_id, 1, duration)
+
+func _is_grimoire_air_attack(data: AttackData) -> bool:
+	var weapon := _equipped_weapon()
+	return weapon != null and weapon.weapon_id == &"living_grimoire" and (data == weapon.air_light or data == weapon.air_heavy)
+
+func _air_attack_for_action(weapon: WeaponData, action: StringName) -> AttackData:
+	if weapon == null:
+		return AIR_LIGHT if action == &"light" else AIR_HEAVY
+	if weapon.weapon_id == &"living_grimoire":
+		if _grimoire_air_count >= 3 or (action == &"light" and _grimoire_air_count >= 2):
+			return null
+	return weapon.air_light if action == &"light" else weapon.air_heavy
+
+func _grimoire_air_can_hit(hurtbox: HurtboxComponent) -> bool:
+	var from := _owner_body.global_position + Vector3.UP * 1.25
+	var query := PhysicsRayQueryParameters3D.create(from, hurtbox.global_position, 1)
+	query.exclude = [_owner_body.get_rid()]
+	return _owner_body.get_world_3d().direct_space_state.intersect_ray(query).is_empty()
 
 ## Finaliza o ataque atual.
 func _finish_attack(reset_chain: bool = false) -> void:

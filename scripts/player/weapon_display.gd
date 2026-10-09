@@ -6,6 +6,10 @@ const BLADE := preload("res://scenes/player/card_blade.tscn")
 const GRIMOIRE_MODEL := preload("res://assets/3d model/grimorio.glb")
 
 var _props: Dictionary = {}
+var _grimoire_model: Node3D
+var _grimoire_ritual: Node3D
+var _grimoire_left_page: Node3D
+var _grimoire_right_page: Node3D
 var _equipped: StringName = &""
 var _player: PlayerController
 var _sprite: AnimatedSprite3D
@@ -88,6 +92,10 @@ const HEAVY_PATHS := {
 	&"cane_blade": [Vector3(0.72, 0.79, -0.52), Vector3(-0.57, -0.77, 1.2), Vector3(-0.4, 0.34, -0.31)],
 	&"living_grimoire": [Vector3(-0.66, -0.45, -0.49), Vector3(0.69, 1.03, 1.07), Vector3(0.24, 0.52, -0.38)],
 }
+const GRIMOIRE_AIR_PATHS := [
+	[Vector3(-0.44, 0.27, -0.31), Vector3(0.48, 0.82, 0.72), Vector3(-0.18, 0.19, -0.23)],
+	[Vector3(0.52, 0.7, -0.39), Vector3(-0.14, -0.68, 0.83), Vector3(0.31, 0.11, -0.28)],
+]
 
 func _ready() -> void:
 	_player = get_parent() as PlayerController
@@ -178,6 +186,8 @@ func _process(delta: float) -> void:
 			idle_tilt = -0.18
 	prop.rotation.z = lerp_angle(prop.rotation.z, (attack_tilt if attacking else idle_tilt) + pose.tilt, clampf(delta * 24.0, 0.0, 1.0))
 	prop.rotation.x = lerp_angle(prop.rotation.x, pose.pitch, clampf(delta * 24.0, 0.0, 1.0))
+	if _equipped == &"living_grimoire":
+		_update_grimoire_open()
 
 func play_basic(weapon_id: StringName, stage: int, duration: float) -> void:
 	var motion_id: StringName = MOTION_ALIAS.get(weapon_id, weapon_id)
@@ -216,8 +226,23 @@ func play_heavy(weapon_id: StringName, duration: float) -> void:
 	_settle = 0.0
 	_idle_blend = 0.0
 
+func play_air(weapon_id: StringName, heavy: bool, duration: float) -> void:
+	if weapon_id != &"living_grimoire":
+		return
+	show_weapon(weapon_id)
+	_action_kind = &"air"
+	_action_id = weapon_id
+	_action_stage = 2 if heavy else 1
+	_action_time = 0.0
+	_action_duration = maxf(duration, 0.05)
+	_settle = 0.0
+	_idle_blend = 0.0
+
 func resume_attack(weapon_id: StringName, stage: int, duration: float, elapsed: float, heavy: bool) -> void:
-	if heavy:
+	var air_attack := weapon_id == &"living_grimoire" and _player.combat._current_attack != null and _player.equipment.weapon != null and _player.combat._current_attack in [_player.equipment.weapon.air_light, _player.equipment.weapon.air_heavy]
+	if air_attack:
+		play_air(weapon_id, heavy, duration)
+	elif heavy:
 		play_heavy(weapon_id, duration)
 	else:
 		play_basic(weapon_id, stage, duration)
@@ -317,6 +342,8 @@ static func sample_motion(kind: StringName, id: StringName, stage: int, progress
 		travel = _sample_track(SKILL_PATHS[id], t)
 	elif kind == &"heavy" and HEAVY_PATHS.has(id):
 		travel = _sample_track(HEAVY_PATHS[id], t)
+	elif kind == &"air" and id == &"living_grimoire" and stage in [1, 2]:
+		travel = _sample_track(GRIMOIRE_AIR_PATHS[stage - 1], t)
 	var body := Vector3(travel.x * 0.19, travel.y * 0.17 - 0.055 * sin(PI * t), travel.z * 0.13)
 	var lean := clampf(-travel.x * 0.29 + sweep * 0.11, -0.32, 0.32)
 	var tilt := clampf(-travel.x * 0.82 + travel.y * 0.45 + sweep * 0.31, -1.8, 1.8)
@@ -397,11 +424,53 @@ func _make_grimoire() -> Node3D:
 	holder.name = "EquippedLivingGrimoire"
 	add_child(holder)
 	var book := GRIMOIRE_MODEL.instantiate() as Node3D
+	book.name = "BookModel"
 	book.scale = Vector3.ONE * 0.2
 	book.position = Vector3(0.046, 0.003, 0.031)
 	holder.add_child(book)
+	_grimoire_model = book
+	var ritual := Node3D.new()
+	ritual.name = "RitualPages"
+	ritual.position = Vector3(0.046, 0.05, 0.08)
+	ritual.visible = false
+	holder.add_child(ritual)
+	_grimoire_ritual = ritual
+	var ivory := _material(Color(0.75, 0.68, 0.59), 0.12)
+	var left := Node3D.new()
+	left.name = "LeftPage"
+	ritual.add_child(left)
+	_box(left, Vector3(-0.105, 0, 0), Vector3(0.2, 0.012, 0.24), ivory)
+	_grimoire_left_page = left
+	var right := Node3D.new()
+	right.name = "RightPage"
+	ritual.add_child(right)
+	_box(right, Vector3(0.105, 0, 0), Vector3(0.2, 0.012, 0.24), ivory)
+	_grimoire_right_page = right
 	holder.rotation_degrees.z = -10.0
 	return holder
+
+func _update_grimoire_open() -> void:
+	var casting := _action_kind == &"skill" and _action_id == &"grimoire_r"
+	var page_cast := _action_kind == &"skill" and _action_id == &"grimoire_q"
+	var applause_cast := _action_kind == &"skill" and _action_id == &"grimoire_e"
+	var air_cast := _action_kind == &"air" and _action_id == &"living_grimoire"
+	var striking := _action_kind == &"basic" and _action_id == &"living_grimoire" and _action_stage in [1, 2, 3, 4]
+	var biting := _action_kind == &"heavy" and _action_id == &"living_grimoire" and _player.combat._current_attack == _player.equipment.weapon.heavy
+	_grimoire_ritual.visible = casting or page_cast or applause_cast or air_cast or striking or biting
+	if not casting and not page_cast and not applause_cast and not air_cast and not striking and not biting:
+		_grimoire_model.rotation.x = 0.0
+		_grimoire_ritual.rotation.z = 0.0
+		return
+	var progress := clampf(_action_time / maxf(_action_duration, 0.05), 0.0, 1.0)
+	var opening := sin(PI * progress) if not page_cast else smoothstep(0.0, 0.2, progress) * (1.0 - smoothstep(0.48, 0.93, progress))
+	if biting:
+		opening = smoothstep(0.0, 0.2, progress) * (1.0 - smoothstep(0.58, 0.95, progress))
+	var emphasis: float = [0.0, 0.9, 1.1, 1.2, 1.45][_action_stage] if striking else (1.8 if biting else (1.55 if page_cast else (1.55 if applause_cast else (1.5 if air_cast and _action_stage == 2 else 1.2))))
+	_grimoire_model.rotation.x = -0.24 * opening * emphasis
+	_grimoire_ritual.scale = Vector3.ONE * (0.55 + (0.61 if biting else 0.45) * opening)
+	_grimoire_ritual.rotation.z = ([-0.0, -0.12, 0.2, -0.24, 0.0][_action_stage] * opening) if striking else (0.34 * sin(progress * TAU * 3.0) * opening if biting else ((-0.24 + 0.1 * sin(progress * TAU * 2.0)) * opening if page_cast else (0.18 * sin(progress * TAU) if applause_cast else (-0.2 * opening if air_cast else 0.0))))
+	_grimoire_left_page.rotation.z = -1.25 * (1.0 - opening) - (0.38 * opening if biting else 0.0)
+	_grimoire_right_page.rotation.z = 1.25 * (1.0 - opening) + (0.38 * opening if biting else 0.0)
 
 func _material(color: Color, emission: float) -> StandardMaterial3D:
 	var material := StandardMaterial3D.new()

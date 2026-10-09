@@ -111,6 +111,10 @@ var _move_hold_time: float = 0.0
 var _last_safe_position: Vector3
 ## Tempo acumulado no chão em estado seguro (em segundos).
 var _safe_grounded_time: float = 0.0
+var _movement_reference_forward := Vector3.ZERO
+var _movement_reference_right := Vector3.ZERO
+var _movement_input_active := false
+var _movement_reference_latched := false
 
 ## Inicializa componentes dinâmicos e conecta sinais.
 func _ready() -> void:
@@ -218,8 +222,13 @@ func _physics_process(delta: float) -> void:
 		_apply_gravity(delta)
 	else:
 		_air_dodge_used = false
-	if _hit_stun_left <= 0.0 and not _dead and not NpcInteraction.is_dialogue_active() and Input.is_action_just_pressed("lock_on"):
-		lock_on.toggle_lock()
+	if _hit_stun_left <= 0.0 and not _dead and not NpcInteraction.is_dialogue_active():
+		if Input.is_action_just_pressed("lock_on"):
+			lock_on.toggle_lock()
+		elif Input.is_action_just_pressed("lock_target_left"):
+			lock_on.switch_target(-1)
+		elif Input.is_action_just_pressed("lock_target_right"):
+			lock_on.switch_target(1)
 	if _hit_stun_left > 0.0:
 		_hit_stun_left -= delta
 		if _hit_stun_left <= 0.0:
@@ -342,17 +351,30 @@ func _update_locomotion(delta: float) -> void:
 ## @return Direção 3D normalizada no plano XZ.
 func _camera_relative_direction(input_vec: Vector2) -> Vector3:
 	if input_vec.length_squared() <= 0.001:
+		_movement_input_active = false
+		_movement_reference_latched = false
 		return Vector3.ZERO
 	var camera := get_viewport().get_camera_3d()
 	if camera == null:
 		return Vector3(input_vec.x, 0.0, input_vec.y).normalized()
+	if not is_instance_valid(_camera_controller):
+		_camera_controller = camera.get_parent().get_parent() as ThirdPersonCameraController
 	var forward := -camera.global_transform.basis.z
 	var right := camera.global_transform.basis.x
 	forward.y = 0.0
 	right.y = 0.0
 	forward = forward.normalized()
 	right = right.normalized()
-	return (right * input_vec.x + forward * -input_vec.y).normalized()
+	if is_instance_valid(_camera_controller) and _camera_controller.is_view_transitioning() and not _movement_reference_latched:
+		if not _movement_input_active:
+			_movement_reference_forward = forward
+			_movement_reference_right = right
+		_movement_reference_latched = true
+	elif not _movement_reference_latched:
+		_movement_reference_forward = forward
+		_movement_reference_right = right
+	_movement_input_active = true
+	return (_movement_reference_right * input_vec.x + _movement_reference_forward * -input_vec.y).normalized()
 
 ## Verifica se a esquiva pode ser iniciada.
 ## @return true se a esquiva está disponível, false caso contrário.

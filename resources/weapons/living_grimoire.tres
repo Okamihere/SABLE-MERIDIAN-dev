@@ -9,8 +9,8 @@
 [ext_resource type="Resource" path="res://resources/attacks/grimoire_light_4.tres" id="atk_7"]
 [ext_resource type="Resource" path="res://resources/attacks/grimoire_heavy.tres" id="atk_3"]
 [ext_resource type="Resource" path="res://resources/attacks/launcher.tres" id="atk_4"]
-[ext_resource type="Resource" path="res://resources/attacks/air_light.tres" id="atk_5"]
-[ext_resource type="Resource" path="res://resources/attacks/air_heavy.tres" id="atk_6"]
+[ext_resource type="Resource" path="res://resources/attacks/grimoire_air_light.tres" id="atk_5"]
+[ext_resource type="Resource" path="res://resources/attacks/grimoire_air_heavy.tres" id="atk_6"]
 [resource]
 script = ExtResource("weapon")
 weapon_id = &"living_grimoire"

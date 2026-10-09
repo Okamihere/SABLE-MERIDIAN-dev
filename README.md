@@ -72,6 +72,7 @@ Sob holofotes de névoa, o **Veyl** — bobo de corte em traje carmesim — acor
 
 Últimas atualizações do protótipo (ver histórico completo em [CHANGELOG](CHANGELOG.md)):
 
+- **09/10** — Grimório Vivo com combate completo: combo visual de 4 golpes, Mordida do Manuscrito, Página Errante (Q), Aplausos Obrigatórios (E), marionete O Último Ato (R) e ataques aéreos; zonas de câmera fixa com demo; água como módulo 33 do GridMap; 38 testes headless.
 - **08/10** — Mundos 01–08, fluxo do hub, kit graybox GridMap (32 peças), shaders de água/céu, áudio, combate, player e UI.
 - **07/10** — Página com banner press-start, sinopse, mundos e galeria.
 - **06/10** — Combate, medidor de estilo, UI, armas, magias, fases e testes.
@@ -155,7 +156,7 @@ scenes/ui       press_start → title_screen → hud / pause / diálogo
 scripts/player  movimento, sprite 8-dir, animação procedural, lock-on, parede
 scripts/combat  combos, hitboxes, input buffer
 resources/      6 armas · 24 ataques · 18 spells · máscaras · relíquia
-tools/          validate_project.py + update_changelog.py + 25 testes headless
+tools/          validate_project.py + update_changelog.py + 38 testes headless
 ```
 
 </details>

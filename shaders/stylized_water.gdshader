@@ -23,19 +23,25 @@ uniform float caustic_sharpness : hint_range(1.0, 12.0) = 5.0;
 uniform float caustic_intensity : hint_range(0.0, 2.0) = 0.7;
 uniform float alpha : hint_range(0.0, 1.0) = 0.92;
 uniform float band_steps : hint_range(2.0, 16.0) = 6.0;
+uniform bool use_world_coordinates = false;
+
+varying vec2 water_uv;
 
 void vertex() {
+	vec2 world_xz = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xz;
+	vec2 wave_xz = use_world_coordinates ? world_xz : VERTEX.xz;
+	water_uv = use_world_coordinates ? world_xz * 0.5 : UV;
 	// Ondulacao lenta e irregular no vertice (relevo baixo, estilo low-poly).
 	float t = TIME * wobble_speed;
-	float bob = sin(VERTEX.x * 0.8 + t * 1.7) * 0.5
-		+ sin(VERTEX.z * 1.1 - t * 1.2) * 0.3
-		+ sin((VERTEX.x + VERTEX.z) * 0.45 + t * 0.6) * 0.2;
+	float bob = sin(wave_xz.x * 0.8 + t * 1.7) * 0.5
+		+ sin(wave_xz.y * 1.1 - t * 1.2) * 0.3
+		+ sin((wave_xz.x + wave_xz.y) * 0.45 + t * 0.6) * 0.2;
 	VERTEX.y += bob * 0.035;
 }
 
 void fragment() {
 	vec2 flow = normalize(flow_direction) * flow_speed * TIME;
-	vec2 wobble_uv = UV * texture_scale + flow;
+	vec2 wobble_uv = water_uv * texture_scale + flow;
 
 	// 1) TEXTURA: duas amostras low-res em scroll cruzado para movimento irregular.
 	float grain_a = texture(noise_tex, wobble_uv).r;
@@ -43,7 +49,7 @@ void fragment() {
 	float grain = grain_a * 0.6 + grain_b * 0.4;
 
 	// 2) DISTORCAO: o grao desloca os UVs das etapas seguintes (sutil).
-	vec2 distorted_uv = UV + (vec2(grain_a, grain_b) - 0.5) * distortion_strength * 2.0;
+	vec2 distorted_uv = water_uv + (vec2(grain_a, grain_b) - 0.5) * distortion_strength * 2.0;
 
 	// 3) FRESNEL: destaca as bordas vistas de raspao.
 	float facing = clamp(dot(normalize(NORMAL), normalize(VIEW)), 0.0, 1.0);
