@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SABLE MERIDIAN</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0d0a1a;
+            color: #e0d8f0;
+            line-height: 1.6;
+        }
+        .hero {
+            text-align: center;
+            padding: 100px 20px;
+            background: linear-gradient(135deg, #1a0a2e 0%, #2d1b4e 50%, #1a0a2e 100%);
+            border-bottom: 2px solid #6b3fa0;
+        }
+        .hero h1 {
+            font-size: 3.5rem;
+            color: #d4af37;
+            text-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+            margin-bottom: 10px;
+            letter-spacing: 3px;
+        }
+        .hero .subtitle {
+            font-size: 1.3rem;
+            color: #b8a0d8;
+            margin-bottom: 30px;
+        }
+        .hero .tagline {
+            font-size: 1rem;
+            color: #8a7ba8;
+            font-style: italic;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin: 40px 0;
+        }
+        .feature-card {
+            background: #1a1030;
+            border: 1px solid #3d2a5c;
+            border-radius: 8px;
+            padding: 25px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(107, 63, 160, 0.3);
+        }
+        .feature-card h3 {
+            color: #d4af37;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+        .feature-card p {
+            color: #b0a0c8;
+            font-size: 0.95rem;
+        }
+        .screenshots {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin: 40px 0;
+        }
+        .screenshot {
+            border: 2px solid #3d2a5c;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #1a1030;
+        }
+        .screenshot img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        .screenshot .caption {
+            padding: 12px;
+            text-align: center;
+            color: #b8a0d8;
+            font-size: 0.9rem;
+            background: #12091f;
+        }
+        .info-section {
+            background: #1a1030;
+            border: 1px solid #3d2a5c;
+            border-radius: 8px;
+            padding: 30px;
+            margin: 30px 0;
+        }
+        .info-section h2 {
+            color: #d4af37;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+        .info-section p {
+            color: #b0a0c8;
+            margin-bottom: 10px;
+        }
+        .info-section ul {
+            color: #b0a0c8;
+            margin-left: 20px;
+        }
+        .info-section li {
+            margin-bottom: 8px;
+        }
+        .tech-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .tech-tag {
+            background: #2d1b4e;
+            color: #d4af37;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            border: 1px solid #6b3fa0;
+        }
+        footer {
+            text-align: center;
+            padding: 30px;
+            border-top: 2px solid #3d2a5c;
+            color: #8a7ba8;
+            font-size: 0.9rem;
+        }
+        footer a {
+            color: #d4af37;
+            text-decoration: none;
+        }
+        footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <section class="hero">
+        <h1>SABLE MERIDIAN</h1>
+        <p class="subtitle">Action Game 3D de Dark Fantasy</p>
+        <p class="tagline">Um jester. Um grimório vivo. Um mundo que muda.</p>
+    </section>
+
+    <div class="container">
+        <div class="info-section">
+            <h2>Sobre o Jogo</h2>
+            <p>SABLE MERIDIAN é um action game 3D estilizado de dark fantasy com um protagonista jester. Explore um mundo gótico e surreal, domine combos de combate e descubra os segredos do grimório vivo.</p>
+            <div class="tech-list">
+                <span class="tech-tag">Godot 4.7</span>
+                <span class="tech-tag">GDScript</span>
+                <span class="tech-tag">Low-Poly PS1/PS2</span>
+                <span class="tech-tag">Dark Fantasy</span>
+                <span class="tech-tag">3D Action</span>
+            </div>
+        </div>
+
+        <div class="features">
+            <div class="feature-card">
+                <h3>Combate Fluido</h3>
+                <p>Sistema de combos com hitboxes precisas, armas equipáveis e habilidades únicas. Cada arma tem seu próprio estilo de jogo.</p>
+            </div>
+            <div class="feature-card">
+                <h3>Grimório Vivo</h3>
+                <p>Um grimório que morde, voa e luta ao seu lado. Desbloqueie páginas novas e powers arcanos conforme avança.</p>
+            </div>
+            <div class="feature-card">
+                <h3>Mundo Aberto</h3>
+                <p>Explore o pátio da cidade e as regiões além do portão de neblina. Cada área segredos e inimigos.</p>
+            </div>
+            <div class="feature-card">
+                <h3>Estilo Gótico</h3>
+                <p>Visual low-poly inspirado em PS1/PS2 com uma estética gótica surreal. Roxo, vinho e dourado dominam o mundo.</p>
+            </div>
+            <div class="feature-card">
+                <h3>Progressão</h3>
+                <p>Colete orbes para aumentar seu limite de wall jump. Desbloqueie armas e habilidades conforme avança.</p>
+            </div>
+            <div class="feature-card">
+                <h3>NPCs e Diálogos</h3>
+                <p>Interaja com personagens no mundo. Cada NPC tem sua própria história e personalidade.</p>
+            </div>
+        </div>
+
+        <h2 style="color: #d4af37; margin: 40px 0 20px;">Screenshots</h2>
+        <div class="screenshots">
+            <div class="screenshot">
+                <img src="gameplay-title.png" alt="Tela Título">
+                <div class="caption">Tela Título</div>
+            </div>
+            <div class="screenshot">
+                <img src="gameplay-hud.png" alt="HUD">
+                <div class="caption">HUD em Jogo</div>
+            </div>
+            <div class="screenshot">
+                <img src="gameplay-grimoire-exhibit.png" alt="Grimório">
+                <div class="caption">Grimório Vivo</div>
+            </div>
+            <div class="screenshot">
+                <img src="gameplay-grimoire-skill.png" alt="Skill do Grimório">
+                <div class="caption">Skill do Grimório</div>
+            </div>
+        </div>
+
+        <div class="info-section">
+            <h2>Status do Projeto</h2>
+            <ul>
+                <li><strong>Motor:</strong> Godot 4.7.2 (GDScript)</li>
+                <li><strong>Plataforma:</strong> Linux/CachyOS, Windows</li>
+                <li><strong>Renderizador:</strong> GL Compatibility</li>
+                <li><strong>Estilo:</strong> Low-poly PS1/PS2, gótico surreal</li>
+                <li><strong>Desenvolvimento:</strong> Em progresso</li>
+            </ul>
+        </div>
+
+        <div class="info-section">
+            <h2>Links</h2>
+            <p><a href="https://github.com/Okamihere/SABLE-MERIDIAN-dev" target="_blank" style="color: #d4af37;">Repositório GitHub</a></p>
+            <p><a href="architecture.md" style="color: #d4af37;">Documentação Técnica</a></p>
+            <p><a href="combat_abilities.md" style="color: #d4af37;">Habilidades de Combate</a></p>
+            <p><a href="equipment.md" style="color: #d4af37;">Equipamentos</a></p>
+        </div>
+    </div>
+
+    <footer>
+        <p>SABLE MERIDIAN — Dark Fantasy Action Game 3D</p>
+        <p>Desenvolvido com Godot Engine 4.7</p>
+    </footer>
+</body>
+</html>
