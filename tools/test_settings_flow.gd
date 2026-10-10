@@ -18,6 +18,8 @@ func _run() -> void:
 	menu._load_settings()
 	assert(is_equal_approx(db_to_linear(AudioServer.get_bus_volume_db(AudioServer.get_bus_index("Master"))) * 100.0, 75.0), "Master padrao 75%")
 	progress.save_path = "user://settings_flow_orbs_test.cfg"
+	progress.world_save_path = "user://settings_flow_worlds_test.cfg"
+	progress.weapon_save_path = "user://settings_flow_weapons_test.cfg"
 	change_scene_to_file("res://scenes/ui/title_screen.tscn")
 	await _frames(5)
 	current_scene._on_choice("new_game")

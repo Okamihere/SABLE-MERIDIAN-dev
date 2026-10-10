@@ -1,8 +1,8 @@
 extends SceneTree
 
 const LEVELS := [
-	"start_room", "main", "vertical_pilot", "world_01", "world_02", "world_03",
-	"world_04", "world_05", "world_06", "world_07", "world_08",
+	"start_room", "main", "vertical_pilot", "worlds/world_01", "worlds/world_02", "worlds/world_03",
+	"worlds/world_04", "worlds/world_05", "worlds/world_06", "worlds/world_07", "worlds/world_08",
 ]
 
 func _initialize() -> void:

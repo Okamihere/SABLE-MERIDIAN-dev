@@ -43,6 +43,8 @@ func run() -> void:
 		assert(is_equal_approx(bounds.position.y, -0.2))
 		assert(is_equal_approx(bounds.end.y, 0.8))
 		assert(is_equal_approx(bounds.end.y, floor_underside + 1.0), "Wall must meet the underside of the next floor")
+	assert(LIBRARY.get_item_mesh(5) == LIBRARY.get_item_mesh(1), "Former jump wall must use the normal wall appearance")
+	assert(LIBRARY.get_item_shapes(5) == LIBRARY.get_item_shapes(1), "Both wall tiles must share collision")
 
 	change_scene_to_file("res://scenes/levels/gridmap_graybox_demo.tscn")
 	await frames(10)

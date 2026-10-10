@@ -50,7 +50,7 @@ func _ready() -> void:
 	_build_living_room()
 	ui.choice_selected.connect(_on_choice)
 	ui.selection_changed.connect(_on_selection_changed)
-	ui.set_continue_available(not Progression.collected.is_empty())
+	ui.set_continue_available(not Progression.collected.is_empty() or not Progression.completed_worlds.is_empty() or not Progression.owned_weapons.is_empty())
 
 func _process(delta: float) -> void:
 	_time += delta

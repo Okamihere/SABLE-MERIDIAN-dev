@@ -1,11 +1,12 @@
 @tool
 extends Area3D
 
-## Expositor visual; a aquisição real será concedida pelo chefe da sala.
+## Expositor visual por padrão. A área inicial pode usá-lo como pickup de teste.
 @export var weapon_id: StringName
 @export var title: String
 @export_multiline var description: String
 @export var accent: Color = Color(0.72, 0.38, 1.0)
+@export var dev_pickup := false
 
 const GRIMOIRE_MODEL := preload("res://assets/3d model/grimorio.glb")
 
@@ -45,7 +46,7 @@ func _ready() -> void:
 	_light.light_energy = 1.4
 	_light.omni_range = 3.5
 	add_child(_light)
-	_label(title.to_upper(), 2.6, 38)
+	_label("%s  •  DEV" % title.to_upper() if dev_pickup else title.to_upper(), 2.6, 38)
 	_label(description, 2.17, 23)
 	if not Engine.is_editor_hint():
 		body_entered.connect(_on_body_entered)
@@ -59,9 +60,21 @@ func _process(delta: float) -> void:
 func _on_body_entered(body: Node3D) -> void:
 	if not body is PlayerController or not body.is_alive():
 		return
+	var detail := description.replace("\n", "  •  ")
+	if dev_pickup:
+		var acquired: bool = body.equipment.unlock_weapon(weapon_id)
+		if body.equipment.has_weapon(weapon_id):
+			if body.equipment.weapon != null:
+				body.equipment.request_weapon(weapon_id)
+			elif acquired:
+				detail = "ARMA DE TESTE LIBERADA  •  Pegue o cajado para usar."
+			if acquired and body.equipment.weapon != null:
+				detail = "ARMA DE TESTE LIBERADA  •  " + detail
+	else:
+		detail = "Arma ainda não adquirida. Recompensa de chefe." if not body.equipment.has_weapon(weapon_id) else detail
 	var hud := get_parent().get_node_or_null("HUD")
 	if hud != null:
-		hud.show_notice(title.to_upper(), description.replace("\n", "  •  "), 3.0)
+		hud.show_notice("%s  •  DEV" % title.to_upper() if dev_pickup else title.to_upper(), detail, 3.0)
 
 func _material(color: Color) -> StandardMaterial3D:
 	var material := StandardMaterial3D.new()

@@ -20,6 +20,7 @@ func _run() -> void:
 	var scene := current_scene
 	var player = scene.get_node("Player")
 	player.equip_staff()
+	player.equipment.unlock_weapon(&"living_grimoire")
 	assert(player.equipment.request_weapon(&"living_grimoire"))
 	var weapon = player.equipment.weapon
 	player.global_position = Vector3(0, 1.8, -4)

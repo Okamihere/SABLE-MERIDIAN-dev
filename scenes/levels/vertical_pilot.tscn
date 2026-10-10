@@ -1349,49 +1349,49 @@ outline_size = 9
 [node name="world_01" parent="HubDoors" unique_id=401565411 instance=ExtResource("7_door")]
 transform = Transform3D(-3.6199901e-06, 0, 1, 0, 1, 0, -1, 0, -3.6199901e-06, -10.5, 0, 22.540386)
 world_title = "01  •  CORO AFUNDADO"
-destination_scene = "res://scenes/levels/world_01.tscn"
+destination_scene = "res://scenes/levels/worlds/world_01.tscn"
 
 [node name="world_02" parent="HubDoors" unique_id=260937031 instance=ExtResource("7_door")]
 transform = Transform3D(-3.6199901e-06, 0, -1, 0, 1, 0, 1, 0, -3.6199901e-06, 10.5, 0, 22.540386)
 world_id = &"world_02"
 world_title = "02  •  GALERIA DOS ESPELHOS"
-destination_scene = "res://scenes/levels/world_02.tscn"
+destination_scene = "res://scenes/levels/worlds/world_02.tscn"
 
 [node name="world_03" parent="HubDoors" unique_id=782547193 instance=ExtResource("7_door")]
 transform = Transform3D(-3.6199901e-06, 0, 1, 0, 1, 0, -1, 0, -3.6199901e-06, -10.5, 0, 12.852632)
 world_id = &"world_03"
 world_title = "03  •  POÇO DAS CORDAS"
-destination_scene = "res://scenes/levels/world_03.tscn"
+destination_scene = "res://scenes/levels/worlds/world_03.tscn"
 
 [node name="world_04" parent="HubDoors" unique_id=1784442571 instance=ExtResource("7_door")]
 transform = Transform3D(-3.6199901e-06, 0, -1, 0, 1, 0, 1, 0, -3.6199901e-06, 10.5, 0, 12.852632)
 world_id = &"world_04"
 world_title = "04  •  NAVE PARTIDA"
-destination_scene = "res://scenes/levels/world_04.tscn"
+destination_scene = "res://scenes/levels/worlds/world_04.tscn"
 
 [node name="world_05" parent="HubDoors" unique_id=1787783231 instance=ExtResource("7_door")]
 transform = Transform3D(-3.6199901e-06, 0, 1, 0, 1, 0, -1, 0, -3.6199901e-06, -10.5, 0, -15)
 world_id = &"world_05"
 world_title = "05  •  ARQUIVO SUSPENSO"
-destination_scene = "res://scenes/levels/world_05.tscn"
+destination_scene = "res://scenes/levels/worlds/world_05.tscn"
 
 [node name="world_06" parent="HubDoors" unique_id=944771472 instance=ExtResource("7_door")]
 transform = Transform3D(-3.6199901e-06, 0, -1, 0, 1, 0, 1, 0, -3.6199901e-06, 10.5, 0, -15)
 world_id = &"world_06"
 world_title = "06  •  PONTE DOS ECOS"
-destination_scene = "res://scenes/levels/world_06.tscn"
+destination_scene = "res://scenes/levels/worlds/world_06.tscn"
 
 [node name="world_07" parent="HubDoors" unique_id=809276265 instance=ExtResource("7_door")]
 transform = Transform3D(-3.6199901e-06, 0, 1, 0, 1, 0, -1, 0, -3.6199901e-06, -10.5, 0, -38)
 world_id = &"world_07"
 world_title = "07  •  CAMAROTES VAZIOS"
-destination_scene = "res://scenes/levels/world_07.tscn"
+destination_scene = "res://scenes/levels/worlds/world_07.tscn"
 
 [node name="world_08" parent="HubDoors" unique_id=81359024 instance=ExtResource("7_door")]
 transform = Transform3D(-3.6199901e-06, 0, -1, 0, 1, 0, 1, 0, -3.6199901e-06, 10.5, 0, -38)
 world_id = &"world_08"
 world_title = "08  •  TORRE DO SILÊNCIO"
-destination_scene = "res://scenes/levels/world_08.tscn"
+destination_scene = "res://scenes/levels/worlds/world_08.tscn"
 
 [node name="ReturnToStartRoom" parent="." unique_id=107075788 instance=ExtResource("9_return")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 43.5)

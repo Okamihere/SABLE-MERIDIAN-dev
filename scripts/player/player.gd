@@ -18,18 +18,32 @@ extends CharacterBody3D
 
 ## Velocidade de movimento padrão.
 @export var move_speed: float = 6.5
-## Velocidade de corrida (ao segurar movimento por 0.34s sem lock-on).
+## Velocidade de corrida após run_start_delay sem lock-on.
 @export var run_speed: float = 9.5
+## Tempo de movimento contínuo até entrar em corrida.
+@export var run_start_delay: float = 0.28
 ## Aceleração do movimento.
-@export var acceleration: float = 34.0
+@export var acceleration: float = 38.0
 ## Desaceleração do movimento.
-@export var deceleration: float = 40.0
+@export var deceleration: float = 44.0
 ## Velocidade de rotação do personagem.
 @export var rotation_speed: float = 14.0
+## Fração do controle horizontal mantida durante golpes no chão.
+@export_range(0.0, 1.0, 0.05) var attack_ground_control: float = 0.72
+## Fração do controle horizontal mantida durante golpes no ar.
+@export_range(0.0, 1.0, 0.05) var attack_air_control: float = 0.82
+## Fração da velocidade de giro mantida enquanto um golpe está ativo.
+@export_range(0.0, 1.0, 0.05) var attack_turn_control: float = 0.65
 ## Velocidade vertical do salto.
 @export var jump_velocity: float = 9.2
+## Janela para saltar logo após sair de uma plataforma, sem conceder salto extra.
+@export var coyote_time: float = 0.10
+## Guarda um comando de salto pouco antes do pouso.
+@export var jump_buffer_time: float = 0.12
+## Multiplicador da velocidade ascendente quando o botão de salto é solto cedo.
+@export_range(0.0, 1.0, 0.05) var jump_release_multiplier: float = 0.62
 ## Controle de movimento no ar (0.0 a 1.0).
-@export var air_control: float = 0.50
+@export var air_control: float = 0.65
 ## Força da gravidade.
 @export var gravity: float = 30.0
 ## Acelera a descida sem encurtar o impulso inicial do salto.
@@ -39,10 +53,14 @@ extends CharacterBody3D
 @export var dodge_speed: float = 15.5
 ## Duração da esquiva (em segundos).
 @export var dodge_duration: float = 0.29
+## Tempo em que o salto iniciado no dash conserva o impulso horizontal.
+@export var dash_jump_momentum_duration: float = 0.30
+## Correção direcional limitada durante o impulso preservado do dash jump.
+@export var dash_jump_steer_acceleration: float = 7.0
 ## Tempo de recarga da esquiva (em segundos).
 @export var dodge_cooldown: float = 0.36
 ## Guarda um comando de esquiva dado pouco antes do fim de um golpe.
-@export var dodge_input_buffer: float = 0.14
+@export var dodge_input_buffer: float = 0.24
 ## Início da janela de invulnerabilidade na esquiva (em segundos).
 @export var invulnerability_start: float = 0.04
 ## Fim da janela de invulnerabilidade na esquiva (em segundos).
@@ -97,6 +115,11 @@ var _dodge_cooldown_left: float = 0.0
 var _dodge_buffer_until: float = 0.0
 ## Direção da esquiva atual.
 var _dodge_direction: Vector3 = Vector3.ZERO
+var _dash_jump_momentum_left: float = 0.0
+var _coyote_left: float = 0.0
+var _jump_buffer_left: float = 0.0
+var _ground_jump_consumed: bool = false
+var _jump_rise_active: bool = false
 ## Indica se a esquiva aérea já foi usada.
 var _air_dodge_used: bool = false
 ## Tempo restante de hit stun (em segundos).
@@ -217,18 +240,32 @@ func _physics_process(delta: float) -> void:
 		_apply_gravity(delta)
 		move_and_slide()
 		return
-	var hud := get_parent().get_node_or_null("HUD")
-	if hud != null and hud.weapon_wheel.is_open():
-		velocity.x = move_toward(velocity.x, 0.0, deceleration * delta)
-		velocity.z = move_toward(velocity.z, 0.0, deceleration * delta)
-		_apply_gravity(delta)
-		move_and_slide()
-		return
+	var wheel_open := is_weapon_wheel_open()
+	_update_jump_intent(delta, not wheel_open)
 	_dodge_cooldown_left = maxf(0.0, _dodge_cooldown_left - delta)
 	if not is_on_floor():
 		_apply_gravity(delta)
 	else:
 		_air_dodge_used = false
+	if _jump_rise_active and Input.is_action_just_released("jump"):
+		velocity.y = maxf(0.0, velocity.y * jump_release_multiplier)
+		_jump_rise_active = false
+	elif velocity.y <= 0.0:
+		_jump_rise_active = false
+	if _hit_stun_left > 0.0:
+		_hit_stun_left -= delta
+		if _hit_stun_left <= 0.0:
+			state_machine.set_state(PlayerStateMachine.State.IDLE if is_on_floor() else (PlayerStateMachine.State.JUMP if velocity.y > 0.0 else PlayerStateMachine.State.FALL))
+		move_and_slide()
+		return
+	if wheel_open:
+		if state_machine.state == PlayerStateMachine.State.DODGE:
+			_update_dodge(delta)
+		var horizontal := Vector3(velocity.x, 0.0, velocity.z).move_toward(Vector3.ZERO, deceleration * delta)
+		velocity.x = horizontal.x
+		velocity.z = horizontal.z
+		move_and_slide()
+		return
 	if _hit_stun_left <= 0.0 and not _dead and not NpcInteraction.is_dialogue_active():
 		if Input.is_action_just_pressed("lock_on"):
 			lock_on.toggle_lock()
@@ -236,12 +273,6 @@ func _physics_process(delta: float) -> void:
 			lock_on.switch_target(-1)
 		elif Input.is_action_just_pressed("lock_target_right"):
 			lock_on.switch_target(1)
-	if _hit_stun_left > 0.0:
-		_hit_stun_left -= delta
-		if _hit_stun_left <= 0.0:
-			state_machine.set_state(PlayerStateMachine.State.IDLE if is_on_floor() else PlayerStateMachine.State.FALL)
-		move_and_slide()
-		return
 	_handle_equipment_input()
 	if Input.is_action_just_pressed("dodge"):
 		_dodge_buffer_until = Time.get_ticks_msec() / 1000.0 + dodge_input_buffer
@@ -249,20 +280,64 @@ func _physics_process(delta: float) -> void:
 		_dodge_buffer_until = 0.0
 		_start_dodge()
 	if state_machine.state == PlayerStateMachine.State.DODGE:
-		_update_dodge(delta)
-		move_and_slide()
-		return
+		if _try_dash_jump():
+			move_and_slide()
+			_update_air_state()
+			return
+		else:
+			_update_dodge(delta)
+			move_and_slide()
+			return
 	if state_machine.allows_locomotion():
 		_update_locomotion(delta)
-	_handle_spell_input()
 	var wall_direction := _camera_relative_direction(Input.get_vector("move_left", "move_right", "move_forward", "move_back"))
-	wall_movement.update_motion(self, wall_direction, delta, state_machine.allows_locomotion())
+	if wall_movement.update_motion(self, wall_direction, delta, state_machine.allows_locomotion()):
+		_consume_jump()
+		_dash_jump_momentum_left = 0.0
+		_jump_rise_active = Input.is_action_pressed("jump")
+	else:
+		_try_ground_jump()
+	_handle_spell_input()
 	move_and_slide()
 	_update_air_state()
 
 func _apply_gravity(delta: float) -> void:
 	var scale := fall_gravity_multiplier if velocity.y < 0.0 else 1.0
 	velocity.y = maxf(velocity.y - gravity * scale * delta, -max_fall_speed)
+
+## Mantém janelas de salto em tempo físico; a roda não aceita comandos armazenados.
+func _update_jump_intent(delta: float, accept_input: bool) -> void:
+	if is_on_floor() and velocity.y <= 0.0:
+		_coyote_left = coyote_time
+		_ground_jump_consumed = false
+	else:
+		_coyote_left = maxf(0.0, _coyote_left - delta)
+	_jump_buffer_left = maxf(0.0, _jump_buffer_left - delta)
+	if not accept_input or combat.is_attacking() or not spell_manager.can_cancel_cast():
+		_jump_buffer_left = 0.0
+	elif Input.is_action_just_pressed("jump") and _hit_stun_left <= 0.0:
+		_jump_buffer_left = maxf(jump_buffer_time, delta)
+
+func _can_ground_jump() -> bool:
+	return not _ground_jump_consumed and (is_on_floor() or _coyote_left > 0.0)
+
+func is_weapon_wheel_open() -> bool:
+	var hud := get_parent().get_node_or_null("HUD")
+	return hud != null and hud.weapon_wheel.is_open()
+
+func _consume_jump() -> void:
+	_jump_buffer_left = 0.0
+	_coyote_left = 0.0
+	_ground_jump_consumed = true
+
+func _try_ground_jump() -> void:
+	if _jump_buffer_left <= 0.0 or not _can_ground_jump() or combat.is_attacking() or not spell_manager.can_cancel_cast():
+		return
+	spell_manager.cancel_cast()
+	velocity.y = jump_velocity if Input.is_action_pressed("jump") else jump_velocity * jump_release_multiplier
+	_jump_rise_active = Input.is_action_pressed("jump")
+	_consume_jump()
+	state_machine.set_state(PlayerStateMachine.State.JUMP)
 
 ## Processa input de magias: seleção e conjuração.
 ## O primeiro espaço do repertório está ativo; outros efeitos entram sem alterar o input base.
@@ -286,7 +361,7 @@ func _cast_spell(spell: SpellResource) -> void:
 		return
 	if combat.is_attacking() and not spell.weave_during_attack:
 		return
-	if spell.startup_time > 0.0 and not combat.can_cancel_to_skill():
+	if combat.is_attacking() and not combat.can_cancel_to_skill():
 		return
 	spell_manager.cast_spell(spell, self)
 
@@ -311,6 +386,11 @@ func _respawn_from_fall() -> void:
 	_dodge_elapsed = 0.0
 	_dodge_cooldown_left = 0.0
 	_dodge_buffer_until = 0.0
+	_dash_jump_momentum_left = 0.0
+	_coyote_left = 0.0
+	_jump_buffer_left = 0.0
+	_ground_jump_consumed = false
+	_jump_rise_active = false
 	_hit_stun_left = 0.0
 	_air_dodge_used = false
 	_perfect_dodge_consumed = false
@@ -327,29 +407,39 @@ func _respawn_from_fall() -> void:
 ## Atualiza locomoção: movimento, salto, rotação e transições de estado.
 func _update_locomotion(delta: float) -> void:
 	var attacking := combat.is_attacking()
-	if not attacking and Input.is_action_just_pressed("jump") and is_on_floor() and spell_manager.can_cancel_cast():
-		spell_manager.cancel_cast()
-		velocity.y = jump_velocity
-		state_machine.set_state(PlayerStateMachine.State.JUMP)
 	var input_vec := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	var direction := _camera_relative_direction(input_vec)
 	var grounded := is_on_floor()
+	if grounded and velocity.y <= 0.0:
+		_dash_jump_momentum_left = 0.0
+	else:
+		_dash_jump_momentum_left = maxf(0.0, _dash_jump_momentum_left - delta)
 	if input_vec.length_squared() > 0.01:
 		_move_hold_time += delta
 	else:
 		_move_hold_time = 0.0
-	var desired_speed := run_speed if _move_hold_time >= 0.34 and lock_on.get_target() == null else move_speed
+	var desired_speed := run_speed if _move_hold_time >= run_start_delay and lock_on.get_target() == null else move_speed
 	var control := 1.0 if grounded else air_control
+	if attacking:
+		control *= attack_ground_control if grounded else attack_air_control
 	var desired_velocity := direction * desired_speed
 	var rate := acceleration if direction.length_squared() > 0.0 else deceleration
-	velocity.x = move_toward(velocity.x, desired_velocity.x, rate * control * delta)
-	velocity.z = move_toward(velocity.z, desired_velocity.z, rate * control * delta)
+	var horizontal := Vector3(velocity.x, 0.0, velocity.z)
+	if _dash_jump_momentum_left > 0.0:
+		if direction.length_squared() > 0.0:
+			horizontal = horizontal.move_toward(direction * horizontal.length(), dash_jump_steer_acceleration * delta)
+		horizontal = horizontal.limit_length(dodge_speed)
+	else:
+		horizontal = horizontal.move_toward(desired_velocity, rate * control * delta)
+	velocity.x = horizontal.x
+	velocity.z = horizontal.z
 	var target := lock_on.get_target()
+	var turn_rate := rotation_speed * (attack_turn_control if attacking else 1.0)
 	if is_instance_valid(target) and grounded:
-		lock_on.face_target(self, delta, rotation_speed)
+		lock_on.face_target(self, delta, turn_rate)
 	elif direction.length_squared() > 0.01:
 		var target_yaw := atan2(direction.x, direction.z)
-		rotation.y = lerp_angle(rotation.y, target_yaw, clampf(rotation_speed * delta, 0.0, 1.0))
+		rotation.y = lerp_angle(rotation.y, target_yaw, clampf(turn_rate * delta, 0.0, 1.0))
 	if not attacking and grounded and velocity.y <= 0.0:
 		state_machine.set_state(PlayerStateMachine.State.MOVE if direction.length_squared() > 0.01 else PlayerStateMachine.State.IDLE)
 
@@ -408,6 +498,8 @@ func _start_dodge() -> void:
 	if _dodge_direction.length_squared() <= 0.001:
 		_dodge_direction = global_transform.basis.z.normalized()
 	_dodge_elapsed = 0.0
+	_dash_jump_momentum_left = 0.0
+	_jump_rise_active = false
 	_dodge_cooldown_left = dodge_cooldown
 	_perfect_dodge_consumed = false
 	if not is_on_floor():
@@ -418,6 +510,20 @@ func _start_dodge() -> void:
 	if animation_controller != null:
 		animation_controller.notify_dodge_started(dodge_duration)
 
+## Converte uma esquiva no chão em salto e preserva sua velocidade por um instante.
+func _try_dash_jump() -> bool:
+	if _jump_buffer_left <= 0.0 or not _can_ground_jump() or combat.is_attacking() or not spell_manager.can_cancel_cast():
+		return false
+	spell_manager.cancel_cast()
+	velocity.x = _dodge_direction.x * dodge_speed
+	velocity.z = _dodge_direction.z * dodge_speed
+	velocity.y = jump_velocity if Input.is_action_pressed("jump") else jump_velocity * jump_release_multiplier
+	_dash_jump_momentum_left = dash_jump_momentum_duration
+	_jump_rise_active = Input.is_action_pressed("jump")
+	_consume_jump()
+	state_machine.set_state(PlayerStateMachine.State.JUMP)
+	return true
+
 ## Atualiza a esquiva em andamento.
 func _update_dodge(delta: float) -> void:
 	_dodge_elapsed += delta
@@ -427,7 +533,7 @@ func _update_dodge(delta: float) -> void:
 		if combat.is_attacking():
 			state_machine.set_state(PlayerStateMachine.State.ATTACK if is_on_floor() else PlayerStateMachine.State.AIR_ATTACK)
 		else:
-			state_machine.set_state(PlayerStateMachine.State.IDLE if is_on_floor() else PlayerStateMachine.State.FALL)
+			state_machine.set_state(PlayerStateMachine.State.IDLE if is_on_floor() else (PlayerStateMachine.State.JUMP if velocity.y > 0.0 else PlayerStateMachine.State.FALL))
 
 ## Recebe um golpe de uma hitbox.
 ## @param hitbox A hitbox que acertou o jogador.
@@ -460,6 +566,10 @@ func receive_hitbox(hitbox: HitboxComponent) -> bool:
 	velocity.x = direction.x * hitbox.knockback
 	velocity.z = direction.z * hitbox.knockback
 	velocity.y = maxf(velocity.y, hitbox.launch_force)
+	_dash_jump_momentum_left = 0.0
+	_jump_buffer_left = 0.0
+	_coyote_left = 0.0
+	_jump_rise_active = false
 	_hit_stun_left = hitbox.hit_stun
 	state_machine.set_state(PlayerStateMachine.State.HIT)
 	if animation_controller != null:
@@ -513,6 +623,9 @@ func _update_air_state() -> void:
 ## A morte reinicia a cena atual; ainda não existe sistema de checkpoints.
 func _on_died() -> void:
 	_dead = true
+	_jump_buffer_left = 0.0
+	_coyote_left = 0.0
+	_jump_rise_active = false
 	mana.regeneration_enabled = false
 	combat.cancel_attack()
 	spell_manager.cancel_cast()

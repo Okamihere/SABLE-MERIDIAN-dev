@@ -44,8 +44,7 @@ func _ready() -> void:
 	_player.finished.connect(_on_track_finished)
 	if get_tree().has_signal("scene_changed"):
 		get_tree().scene_changed.connect(_on_scene_changed)
-	# Boot cai na tela inicial: tema do título, com fade-in discreto.
-	_switch_to(TITLE_TRACK, Context.TITLE, true)
+	# A cena inicial ainda não está definida; scene_changed escolhe a faixa.
 
 
 func _ensure_music_bus() -> void:
@@ -56,6 +55,8 @@ func _ensure_music_bus() -> void:
 
 ## Tema do título (chamado na entrada da tela inicial / retorno a ela).
 func play_title_music() -> void:
+	if not _is_title_scene(get_tree().current_scene):
+		return
 	_switch_to(TITLE_TRACK, Context.TITLE)
 
 
@@ -67,6 +68,8 @@ func play_gameplay_music() -> void:
 ## Toca uma faixa avulsa sem contexto (compatibilidade/futuro).
 func play_music(stream: AudioStream, fade_in: bool = true) -> void:
 	if stream == null or _player == null:
+		return
+	if stream == TITLE_TRACK and not _is_title_scene(get_tree().current_scene):
 		return
 	_transition_gen += 1
 	_transitioning = false
@@ -87,6 +90,8 @@ func play_music(stream: AudioStream, fade_in: bool = true) -> void:
 ## Chamadas concorrentes ou cena trocada no meio: só a última vale.
 func _switch_to(stream: AudioStream, context: Context, fade_in: bool = true) -> void:
 	if stream == null or _player == null:
+		return
+	if stream == TITLE_TRACK and not _is_title_scene(get_tree().current_scene):
 		return
 	if _player.stream == stream and _player.playing and not _transitioning:
 		current_context = context
@@ -131,22 +136,36 @@ func _kill_fade() -> void:
 func _on_track_finished() -> void:
 	if _transitioning or not is_instance_valid(_player):
 		return
+	if _player.stream == TITLE_TRACK and not _is_title_scene(get_tree().current_scene):
+		_player.stop()
+		return
 	_player.play()
 
 
-## Contexto pela cena atual (grupo "title_screen", já usado no projeto).
-## Fase -> fase mantém a faixa (guard em _switch_to evita restart).
+## Usa a cena raiz: o preview do título dentro de press_start não define
+## a trilha de outra cena. Fase -> fase mantém a faixa atual.
 func _on_scene_changed() -> void:
-	_apply_context_for_current_scene.call_deferred()
+	_apply_context_for_current_scene()
 
 
 func _apply_context_for_current_scene() -> void:
 	if get_tree() == null or get_tree().current_scene == null:
 		return
-	if get_tree().current_scene.is_in_group("title_screen"):
+	if _is_title_scene(get_tree().current_scene):
 		play_title_music()
 	else:
+		# A música do título não pode permanecer audível durante o fade de saída.
+		if _player.stream == TITLE_TRACK:
+			_transition_gen += 1
+			_kill_fade()
+			_transitioning = false
+			_player.stop()
+			_player.stream = null
 		play_gameplay_music()
+
+
+func _is_title_scene(scene: Node) -> bool:
+	return is_instance_valid(scene) and scene.scene_file_path in ["res://scenes/ui/press_start.tscn", "res://scenes/ui/title_screen.tscn"]
 
 
 ## Apenas o player global conta como música (checagem de sanidade).

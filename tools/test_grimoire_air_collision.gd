@@ -14,6 +14,7 @@ func _run() -> void:
 	var scene := current_scene
 	var player = scene.get_node("Player")
 	player.equip_staff()
+	player.equipment.unlock_weapon(&"living_grimoire")
 	player.equipment.request_weapon(&"living_grimoire")
 	scene.get_node("TrainingDummy").queue_free()
 	var enemy = load("res://scenes/enemies/basic_enemy.tscn").instantiate()

@@ -14,6 +14,20 @@ var _equipped: StringName = &""
 var _player: PlayerController
 var _sprite: AnimatedSprite3D
 var _sprite_rest := Vector3.ZERO
+var _sprite_rest_scale := Vector3.ONE
+## Inclinações em tela; não rotacionam o plano do billboard no espaço 3D.
+@export_range(0.0, 6.0, 0.25) var run_lean_degrees: float = 2.5
+@export_range(0.0, 8.0, 0.25) var dash_lean_degrees: float = 4.0
+@export_range(0.0, 0.08, 0.005) var landing_squash: float = 0.045
+var _motion_time := 0.0
+var _motion_offset := Vector3.ZERO
+var _motion_roll := 0.0
+var _motion_scale := Vector3.ONE
+var _landing_time := 0.0
+var _landing_weight := 0.0
+var _last_fall_speed := 0.0
+var _was_grounded := false
+var _ground_state_seen := false
 var _action_kind: StringName = &""
 var _action_id: StringName = &""
 var _action_stage := 0
@@ -102,6 +116,7 @@ func _ready() -> void:
 	_sprite = get_node_or_null("../DirectionalSprite") as AnimatedSprite3D
 	if _sprite != null:
 		_sprite_rest = _sprite.position
+		_sprite_rest_scale = _sprite.scale
 	_props[&"staff"] = _make_staff()
 	_props[&"card_daggers"] = _make_daggers()
 	_props[&"puppet_strings"] = _make_strings()
@@ -121,7 +136,7 @@ func show_weapon(id: StringName) -> void:
 		(_props[key] as Node3D).visible = key == id
 
 func _process(delta: float) -> void:
-	if _equipped == &"" or not is_instance_valid(_player):
+	if not is_instance_valid(_player):
 		return
 	var state := _player.state_machine.state
 	if state in [PlayerStateMachine.State.HIT, PlayerStateMachine.State.DEAD] or (state == PlayerStateMachine.State.DODGE and not _player.combat.is_attacking()):
@@ -150,13 +165,14 @@ func _process(delta: float) -> void:
 	var toward_camera := camera.global_position - _player.global_position
 	toward_camera.y = 0.0
 	toward_camera = toward_camera.normalized()
+	_update_sprite_motion(delta, state, right)
 	var attacking := _player.combat != null and _player.combat.is_attacking()
 	var offset := right * (0.57 if attacking else 0.68) + toward_camera * (0.32 if attacking else 0.43)
 	if attacking:
 		offset += _player.global_basis.z * 0.28
 	var travel: Vector3 = pose.position
 	offset += right * travel.x + toward_camera * travel.z
-	var height := 1.02 if attacking else 0.92
+	var height := (1.02 if attacking else 0.92) + _motion_offset.y
 	var speed := Vector2(_player.velocity.x, _player.velocity.z).length()
 	var bob := 0.025 * sin(Time.get_ticks_msec() * 0.012) * clampf(speed / 7.0, 0.0, 1.0)
 	var target := _player.to_local(_player.global_position + offset + Vector3.UP * (height + bob + travel.y))
@@ -164,8 +180,9 @@ func _process(delta: float) -> void:
 	if _sprite != null:
 		var body: Vector3 = pose.body
 		var body_world := right * body.x + toward_camera * body.z + Vector3.UP * body.y
-		_sprite.position = _sprite_rest + _player.global_basis.inverse() * body_world
-		_sprite.rotation.z = pose.lean
+		_sprite.position = _sprite_rest + _player.global_basis.inverse() * body_world + _motion_offset
+		_sprite.rotation.z = pose.lean + _motion_roll
+		_sprite.scale = _sprite_rest_scale * _motion_scale
 	look_at(camera.global_position, Vector3.UP)
 	rotate_y(PI)
 	var prop := _props.get(_equipped) as Node3D
@@ -188,6 +205,52 @@ func _process(delta: float) -> void:
 	prop.rotation.x = lerp_angle(prop.rotation.x, pose.pitch, clampf(delta * 24.0, 0.0, 1.0))
 	if _equipped == &"living_grimoire":
 		_update_grimoire_open()
+
+## O sprite e os adereços compartilham o deslocamento vertical. WeaponDisplay é
+## pausado junto com DirectionalSprite durante o hitstop visual.
+func _update_sprite_motion(delta: float, state: PlayerStateMachine.State, camera_right: Vector3) -> void:
+	_motion_time += delta
+	var grounded := _player.is_on_floor()
+	if not grounded and _player.velocity.y < 0.0:
+		_last_fall_speed = maxf(_last_fall_speed, -_player.velocity.y)
+	if _ground_state_seen and grounded and not _was_grounded:
+		_landing_time = 0.14
+		_landing_weight = clampf(_last_fall_speed / 11.0, 0.35, 1.0)
+		_last_fall_speed = 0.0
+	_ground_state_seen = true
+	_was_grounded = grounded
+	_landing_time = maxf(0.0, _landing_time - delta)
+	var target_offset := Vector3.ZERO
+	var target_roll := 0.0
+	var target_scale := Vector3.ONE
+	var horizontal := Vector3(_player.velocity.x, 0.0, _player.velocity.z)
+	var speed_ratio := clampf(horizontal.length() / maxf(_player.move_speed, 0.01), 0.0, 1.0)
+	var side := horizontal.dot(camera_right) / maxf(horizontal.length(), 0.01)
+	var combat_visual := (_player.combat != null and _player.combat.is_attacking()) or _player.spell_manager.is_cast_committed() or _action_kind != &""
+	# Prioridade: ataque/skill e dano > dash > ar > aterrissagem > corrida > idle.
+	if state in [PlayerStateMachine.State.HIT, PlayerStateMachine.State.DEAD] or combat_visual:
+		_landing_time = 0.0
+	elif state == PlayerStateMachine.State.DODGE:
+		target_roll = -deg_to_rad(dash_lean_degrees) * side
+		target_offset.y = -0.018
+		target_scale = Vector3(1.025, 0.98, 1.0)
+	elif not grounded or state in [PlayerStateMachine.State.JUMP, PlayerStateMachine.State.FALL]:
+		var rise := clampf(_player.velocity.y / 8.0, -1.0, 1.0)
+		target_offset.y = 0.018 * rise
+		target_scale = Vector3(1.0 - 0.012 * rise, 1.0 + 0.018 * rise, 1.0)
+	elif _landing_time > 0.0:
+		var compression := _landing_weight * pow(_landing_time / 0.14, 2.0)
+		target_offset.y = -landing_squash * compression
+		target_scale = Vector3(1.0 + landing_squash * compression, 1.0 - landing_squash * compression, 1.0)
+	elif state == PlayerStateMachine.State.MOVE and speed_ratio > 0.05:
+		target_roll = -deg_to_rad(run_lean_degrees) * side * speed_ratio
+		target_offset.y = 0.008 * sin(_motion_time * 13.0) * speed_ratio
+	else:
+		target_offset.y = 0.004 * sin(_motion_time * 2.1)
+	var blend := 1.0 - exp(-24.0 * delta)
+	_motion_offset = _motion_offset.lerp(target_offset, blend)
+	_motion_roll = lerpf(_motion_roll, target_roll, blend)
+	_motion_scale = _motion_scale.lerp(target_scale, blend)
 
 func play_basic(weapon_id: StringName, stage: int, duration: float) -> void:
 	var motion_id: StringName = MOTION_ALIAS.get(weapon_id, weapon_id)

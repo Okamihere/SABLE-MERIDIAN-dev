@@ -24,6 +24,17 @@ Action game 3D estilizado de dark fantasy com protagonista jester. Godot 4.7 (in
 - Use o menor número de agentes necessário. Bug conhecido: especialista → revisão quando relevante. Causa desconhecida: explorer → especialista → revisão. Mudança cruzada: especialistas necessários → integration_tester → revisão. Arquitetura e performance só entram quando a tarefa exigir; paralelize apenas trabalhos independentes e nunca edição concorrente do mesmo arquivo.
 - Subagents deste repo (`.opencode/agents/`, todos só-leitura): `godot-scout` = explorer; `reviewer` = revisão; `tester` = roda `validate_project.py` + `tools/test_*.gd` headless e reporta PASS/FAIL.
 
+## AI DOCUMENTATION & SKILLS
+
+- **Index:** [`docs/ai/INDEX.md`](docs/ai/INDEX.md) — roteamento rápido para documentação e skills.
+- **Skills:** `.agents/skills/` — carregue apenas a skill relevante para a tarefa:
+  - `scenario-godot-expert` — desenvolvimento Godot 4.7, cenas, scripts, arquitetura
+  - `scenario-godot-vfx` — efeitos visuais, GPUParticles, shaders
+  - `game-feel` — screen shake, hit-stop, game feel, feedback
+  - `code-review` — revisão de código, bugs, regressões
+  - `godot-testing` — testes headless, validação, regressões
+- **Documentação:** [`docs/`](docs/) — architecture, combat_abilities, equipment, contributing, validation.
+
 ## TESTING / SAFETY
 
 - Antes de editar: `git status --short`; nunca reverta trabalho alheio. Após editar: teste o fluxo alterado, use testes pertinentes em `tools/test_*.gd` com Godot headless e `python3 tools/validate_project.py` quando apropriado; relate falhas preexistentes separadamente.

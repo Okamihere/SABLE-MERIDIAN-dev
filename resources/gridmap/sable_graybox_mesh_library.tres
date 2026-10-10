@@ -548,24 +548,6 @@ _surfaces = [{
 "vertex_data": PackedByteArray("AACAvwAAAAAAAIA/AACAPwAAAAAAAIA/AACAPwAAgD8AAIC/AACAvwAAAAAAAIA/AACAPwAAgD8AAIC/AACAvwAAgD8AAIC/AACAv83MTL4AAIC/AACAP83MTL4AAIC/AACAP83MTL4AAIA/AACAv83MTL4AAIC/AACAP83MTL4AAIA/AACAv83MTL4AAIA/AACAv83MTL4AAIA/AACAP83MTL4AAIA/AACAPwAAAAAAAIA/AACAv83MTL4AAIA/AACAPwAAAAAAAIA/AACAvwAAAAAAAIA/AACAP83MTL4AAIC/AACAv83MTL4AAIC/AACAvwAAgD8AAIC/AACAP83MTL4AAIC/AACAvwAAgD8AAIC/AACAPwAAgD8AAIC/AACAv83MTL4AAIA/AACAvwAAAAAAAIA/AACAvwAAgD8AAIC/AACAv83MTL4AAIA/AACAvwAAgD8AAIC/AACAv83MTL4AAIC/AACAPwAAAAAAAIA/AACAP83MTL4AAIA/AACAP83MTL4AAIC/AACAPwAAAAAAAIA/AACAP83MTL4AAIC/AACAPwAAgD8AAIC//39U1ds22rb/f1TV2zbatv9/VNXbNtq2/39U1ds22rb/f1TV2zbatv9/VNXbNtq2/38AAAAA/7//fwAAAAD/v/9/AAAAAP+//38AAAAA/7//fwAAAAD/v/9/AAAAAP+//3//f/9/AID/f/9//38AgP9//3//fwCA/3//f/9/AID/f/9//38AgP9//3//fwCA//////9/AID//////38AgP//////fwCA//////9/AID//////38AgP//////fwCAAAD/f/9//78AAP9//3//vwAA/3//f/+/AAD/f/9//78AAP9//3//vwAA/3//f/+/////f/9//7////9//3//v////3//f/+/////f/9//7////9//3//v////3//f/+/")
 }]
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4ewfm"]
-albedo_color = Color(0.34901962, 0.2509804, 0.37254903, 1)
-roughness = 0.85
-
-[sub_resource type="ArrayMesh" id="ArrayMesh_202ci"]
-_surfaces = [{
-"aabb": AABB(-1, -0.2, -1, 2, 1, 0.25),
-"format": 34359738375,
-"material": SubResource("StandardMaterial3D_4ewfm"),
-"primitive": 3,
-"uv_scale": Vector4(0, 0, 0, 0),
-"vertex_count": 30,
-"vertex_data": PackedByteArray("AACAv83MTL4AAEC/AACAP83MTL4AAEC/AACAP83MTD8AAEC/AACAv83MTL4AAEC/AACAP83MTD8AAEC/AACAv83MTD8AAEC/AACAP83MTL4AAIC/AACAv83MTL4AAIC/AACAv83MTD8AAIC/AACAP83MTL4AAIC/AACAv83MTD8AAIC/AACAP83MTD8AAIC/AACAv83MTL4AAIC/AACAv83MTL4AAEC/AACAv83MTD8AAEC/AACAv83MTL4AAIC/AACAv83MTD8AAEC/AACAv83MTD8AAIC/AACAP83MTL4AAEC/AACAP83MTL4AAIC/AACAP83MTD8AAIC/AACAP83MTL4AAEC/AACAP83MTD8AAIC/AACAP83MTD8AAEC/AACAv83MTD8AAEC/AACAP83MTD8AAEC/AACAP83MTD8AAIC/AACAv83MTD8AAEC/AACAP83MTD8AAIC/AACAv83MTD8AAIC//3//fwCAAID/f/9/AIAAgP9//38AgACA/3//fwCAAID/f/9/AIAAgP9//38AgACA//////9/AID//////38AgP//////fwCA//////9/AID//////38AgP//////fwCAAAAAgP9//78AAACA/3//vwAAAID/f/+/AAAAgP9//78AAACA/3//vwAAAID/f/+///8AgACA/7///wCAAID/v///AIAAgP+///8AgACA/7///wCAAID/v///AIAAgP+/AID//wAA/78AgP//AAD/vwCA//8AAP+/AID//wAA/78AgP//AAD/vwCA//8AAP+/")
-}]
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_xcm41"]
-size = Vector3(2, 1, 0.25)
-
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wbm2q"]
 albedo_color = Color(0.30588236, 0.23137255, 0.34509805, 1)
 roughness = 0.85
@@ -677,11 +659,11 @@ item/4/mesh_cast_shadow = 1
 item/4/shapes = [SubResource("ConvexPolygonShape3D_35lqr"), Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)]
 item/4/navigation_mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
 item/4/navigation_layers = 1
-item/5/name = "05_Parede_Wall_Jump"
-item/5/mesh = SubResource("ArrayMesh_202ci")
+item/5/name = "05_Parede"
+item/5/mesh = SubResource("ArrayMesh_x1yys")
 item/5/mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
 item/5/mesh_cast_shadow = 1
-item/5/shapes = [SubResource("BoxShape3D_xcm41"), Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, -0.875)]
+item/5/shapes = [SubResource("BoxShape3D_q6s6p"), Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, -0.875)]
 item/5/navigation_mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
 item/5/navigation_layers = 1
 item/6/name = "06_Arco_Gotico"

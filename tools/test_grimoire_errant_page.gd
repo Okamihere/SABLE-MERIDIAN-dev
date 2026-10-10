@@ -28,6 +28,7 @@ func _run() -> void:
 	var scene := current_scene
 	var player = scene.get_node("Player")
 	player.equip_staff()
+	player.equipment.unlock_weapon(&"living_grimoire")
 	assert(player.equipment.request_weapon(&"living_grimoire"))
 	var spell: SpellResource = player.equipment.weapon.skills[0]
 	assert(spell.ability_id == &"grimoire_q" and spell.mana_cost == 14.0 and spell.cooldown == 0.9)
@@ -85,7 +86,8 @@ func _run() -> void:
 	assert(player.spell_manager.can_cancel_cast())
 	player._start_dodge()
 	assert(not player.spell_manager.is_cast_committed())
-	await _frames(45)
+	await _frames(65)
+	assert(player.spell_manager.is_ready(spell), "Cooldown did not finish before aerial cast")
 	player.global_position = Vector3(0, 1.8, -4)
 	player.velocity.y = 3.0
 	await _frames(2)

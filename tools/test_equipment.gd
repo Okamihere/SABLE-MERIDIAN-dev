@@ -26,7 +26,15 @@ func _run() -> void:
 	var equipment = player.equipment
 	assert(equipment.WEAPONS.size() == 6 and equipment.MASKS.size() == 3, "All requested identities must be present in the catalog")
 	assert(equipment.weapon.weapon_id == &"staff" and not equipment.has_weapon(&"card_daggers"), "Staff pickup must not unlock other weapons")
-	assert(equipment.unlock_weapon(&"card_daggers") and equipment.unlock_weapon(&"puppet_strings"), "Boss rewards must grant weapons explicitly")
+	var daggers_exhibit = current_scene.get_node("DaggersExhibit")
+	daggers_exhibit.dev_pickup = false
+	daggers_exhibit._on_body_entered(player)
+	assert(not equipment.has_weapon(&"card_daggers"), "Normal exhibit must not grant a boss weapon")
+	daggers_exhibit.dev_pickup = true
+	daggers_exhibit._on_body_entered(player)
+	assert(equipment.has_weapon(&"card_daggers") and equipment.weapon.weapon_id == &"card_daggers", "Dev exhibit must unlock and equip the actual weapon")
+	assert(current_scene.get_node("HUD").weapon_wheel.get_displayed_weapon_ids().has(&"card_daggers"), "Dev weapon must appear in the wheel")
+	assert(equipment.unlock_weapon(&"puppet_strings"), "Boss rewards must grant weapons explicitly")
 	assert(equipment.request_weapon(&"puppet_strings"), "Completed puppet strings must equip")
 	assert(equipment.request_weapon(&"staff"), "Staff must remain available after switching")
 	assert(not equipment.equip_mask(&"mourning"), "An unfinished mask must never equip as a fake style")

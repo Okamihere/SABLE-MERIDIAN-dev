@@ -29,6 +29,8 @@ func run() -> void:
 	p.velocity.y = -10
 	w.update_motion(p, Vector3.LEFT, 0.016, true)
 	assert(w.gripping and p.velocity.y == 0, "Wall must briefly hold falling player")
+	var grip_bell := w.get_node("GripBell") as AudioStreamPlayer3D
+	assert(grip_bell.volume_db == -10.0 and grip_bell.unit_size == 3.0, "Wall grip volume must stay consistent")
 	w.update_motion(p, Vector3.LEFT, 0.5, true)
 	assert(p.velocity.y >= -w.slide_speed)
 	Input.action_press("jump")

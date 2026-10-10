@@ -1,6 +1,6 @@
 extends Node
 
-## Persistência exclusiva das orbes. Não substitui o futuro save completo do jogo.
+## Persistência leve de orbes, chaves de mundo e armas adquiridas.
 ##
 ## Cada orbe tem ID estável; o mesmo ID só concede uma melhoria.
 ## O progresso é salvo em um arquivo ConfigFile no diretório user://.

@@ -320,6 +320,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.5, 0, -7.7)
 collision_layer = 0
 collision_mask = 2
 weapon_id = &"card_daggers"
+dev_pickup = true
 title = "Adagas de Cartas"
 description = "Q leque cortante
 E dobra veloz  •  R armadilha"
@@ -330,6 +331,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.5, 0, 4.4)
 collision_layer = 0
 collision_mask = 2
 weapon_id = &"puppet_strings"
+dev_pickup = true
 title = "Fios de Marionete"
 description = "Q puxa  •  E suspende
 R prende em área"
@@ -340,6 +342,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.5, 0, -4.7)
 collision_layer = 0
 collision_mask = 2
 weapon_id = &"cane_blade"
+dev_pickup = true
 title = "Bengala-Lâmina"
 description = "Q estocada  •  E defesa
 R avanço cortante"
@@ -350,6 +353,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.5, 0, 4.4)
 collision_layer = 0
 collision_mask = 2
 weapon_id = &"living_grimoire"
+dev_pickup = true
 title = "Grimório Vivo"
 description = "Q página arcana  •  E selo
 R explosão em área"

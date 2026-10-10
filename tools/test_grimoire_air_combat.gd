@@ -20,6 +20,7 @@ func _run() -> void:
 	var scene := current_scene
 	var player = scene.get_node("Player")
 	player.equip_staff()
+	player.equipment.unlock_weapon(&"living_grimoire")
 	assert(player.equipment.request_weapon(&"living_grimoire"))
 	var weapon = player.equipment.weapon
 	assert(weapon.air_light.damage == 10.0 and weapon.air_heavy.damage == 24.0)

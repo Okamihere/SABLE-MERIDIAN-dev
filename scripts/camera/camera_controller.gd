@@ -46,6 +46,8 @@ const FIXED_FRAME_MARGIN := 0.16
 @export var lock_pitch_smoothing: float = 5.0
 ## FOV base da câmera.
 @export var base_fov: float = 72.0
+## Escala do feedback de impacto; zero desativa tremor e kick de FOV de golpes.
+@export_range(0.0, 2.0, 0.05) var hit_feedback_strength: float = 0.65
 ## Deslocamento sutil do jogador para a esquerda da composição.
 @export var composition_offset: float = 0.3
 @export var lock_composition_offset: float = 0.23
@@ -403,8 +405,10 @@ func shake(strength: float = 0.10, duration: float = 0.12) -> void:
 ## @param strength Força do impacto.
 ## @param heavy Indica se é um golpe pesado.
 func hit_impulse(strength: float, heavy: bool = false) -> void:
-	shake(strength, 0.10 if not heavy else 0.16)
-	kick_fov(2.0 if not heavy else 4.0, 0.12 if not heavy else 0.18)
+	if hit_feedback_strength <= 0.0:
+		return
+	shake(strength * hit_feedback_strength, 0.10 if not heavy else 0.14)
+	kick_fov((1.2 if not heavy else 2.4) * hit_feedback_strength, 0.12 if not heavy else 0.16)
 
 ## Aplica kick de FOV com tween.
 ## @param amount Quantidade de FOV a adicionar.
@@ -423,8 +427,9 @@ func _update_shake(delta: float) -> void:
 		camera.h_offset = lerpf(camera.h_offset, _composition * (1.0 - _fixed_weight), clampf(delta * 18.0, 0.0, 1.0))
 		camera.v_offset = lerpf(camera.v_offset, 0.0, clampf(delta * 18.0, 0.0, 1.0))
 		return
-	camera.h_offset = _composition * (1.0 - _fixed_weight) + randf_range(-_shake_strength, _shake_strength)
-	camera.v_offset = randf_range(-_shake_strength, _shake_strength)
+	var phase := float(Time.get_ticks_msec()) * 0.001
+	camera.h_offset = _composition * (1.0 - _fixed_weight) + sin(phase * 49.0) * _shake_strength
+	camera.v_offset = sin(phase * 37.0 + 1.1) * _shake_strength * 0.65
 	_shake_strength = maxf(0.0, _shake_strength - _shake_decay * delta)
 
 func _advance_lock_focus(locked: bool, delta: float) -> void:

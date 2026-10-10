@@ -20,6 +20,7 @@ func _run() -> void:
 	var scene := current_scene
 	var player = scene.get_node("Player")
 	player.equip_staff()
+	player.equipment.unlock_weapon(&"living_grimoire")
 	assert(player.equipment.request_weapon(&"living_grimoire"))
 	var spell: SpellResource = player.equipment.weapon.skills[1]
 	assert(spell.ability_id == &"grimoire_e" and spell.spell_name == "Aplausos Obrigatórios")

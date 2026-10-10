@@ -1,10 +1,12 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="MeshLibrary" path="res://resources/gridmap/sable_graybox_mesh_library.tres" id="1_library"]
 [ext_resource type="PackedScene" path="res://scenes/player/player_rig.tscn" id="2_player"]
 [ext_resource type="PackedScene" path="res://scenes/player/camera_rig.tscn" id="3_camera"]
 [ext_resource type="Material" path="res://materials/contemplative_sky.tres" id="4_sky_material"]
 [ext_resource type="Material" path="res://materials/stone.tres" id="5_platform_material"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="6_hud"]
+[ext_resource type="PackedScene" path="res://scenes/levels/room_return_portal.tscn" id="7_return"]
 
 [sub_resource type="Sky" id="Sky"]
 sky_material = ExtResource("4_sky_material")
@@ -66,6 +68,14 @@ position = Vector3(0, 0.05, 0)
 starts_with_staff = true
 
 [node name="CameraRig" parent="." instance=ExtResource("3_camera")]
+
+[node name="HUD" parent="." instance=ExtResource("6_hud")]
+
+[node name="ReturnToHub" parent="." instance=ExtResource("7_return")]
+position = Vector3(0, 0, 2)
+destination_scene = "res://scenes/levels/vertical_pilot.tscn"
+destination_name = "HUB"
+return_world_id = &"world_06"
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment")

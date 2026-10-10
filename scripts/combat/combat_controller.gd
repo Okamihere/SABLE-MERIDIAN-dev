@@ -20,6 +20,9 @@ extends Node
 @export var combo_window: float = 0.18
 ## Janela para cancelar ataque com esquiva (em segundos).
 @export var attack_cancel_window: float = 0.10
+## Pausa apenas a apresentação do jogador após acerto confirmado; física e inputs continuam.
+@export var visual_hitstop_enabled: bool = true
+@export_range(0.0, 0.08, 0.001) var visual_hitstop_max_duration: float = 0.055
 ## Caminho para a hitbox de ataque leve.
 @export var light_hitbox_path: NodePath = NodePath("../Hitboxes/LightHitbox")
 ## Caminho para a hitbox de ataque pesado.
@@ -64,6 +67,7 @@ var _current_attack: AttackData
 var _attack_elapsed: float = 0.0
 ## Índice do combo atual (0 = primeiro golpe).
 var _chain_index: int = 0
+var _attack_started_in_air: bool = false
 var _chain_weapon: WeaponData
 var _combo_expires_at: float = 0.0
 ## Ação bufferizada (light/heavy).
@@ -78,6 +82,8 @@ var _current_delivery: String = "melee"
 var _finisher_visual_pending: bool = false
 var _grimoire_air_count: int = 0
 var _last_unarmed_notice_ms: int = -5000
+var _visual_hold_until_usec: int = 0
+var _visual_hold_active: bool = false
 
 ## Inicializa referências e conecta sinais.
 func _ready() -> void:
@@ -128,7 +134,7 @@ func _physics_process(delta: float) -> void:
 	var player := _owner_body as PlayerController
 	var casting := player != null and player.spell_manager != null and player.spell_manager.is_cast_committed()
 	var next_hit_at := maxf(maxf(_current_attack.combo_window_start, combo_window), active_end)
-	if not casting and _buffered_action != &"" and _attack_elapsed >= next_hit_at and _attack_elapsed <= combo_end:
+	if not casting and _buffered_action != &"" and _can_chain_during_attack() and _attack_elapsed >= next_hit_at and _attack_elapsed <= combo_end:
 		_continue_from_buffer()
 		return
 	var total_duration := _current_attack.startup + _current_attack.active + _current_attack.recovery
@@ -162,11 +168,24 @@ func can_cancel_to_dodge() -> bool:
 func can_cancel_to_skill() -> bool:
 	return _current_attack == null or _attack_elapsed >= maxf(_current_attack.startup, _current_attack.attack_cancel_window)
 
+## Só a cadeia leve e os ataques aéreos encadeiam antes do fim da recuperação.
+## Pesados, launcher e finalizadores comuns precisam terminar primeiro.
+func _can_chain_during_attack() -> bool:
+	if _chain_index <= 0:
+		return _attack_started_in_air and not _owner_body.is_on_floor()
+	var weapon := _equipped_weapon()
+	var chain_size := weapon.light_chain.size() if weapon != null else 4
+	if _chain_index < chain_size:
+		return true
+	var player := _owner_body as PlayerController
+	return player != null and player.equipment != null and player.equipment.mask != null and player.equipment.mask.behavior.continue_after_finisher(weapon)
+
 ## Cancela o ataque atual.
 func cancel_attack() -> void:
 	if _active_hitbox != null:
 		_active_hitbox.end_attack()
 	_current_attack = null
+	_attack_started_in_air = false
 	_active_hitbox = null
 	_hitbox_live = false
 	_current_delivery = "melee"
@@ -186,6 +205,13 @@ func clear_buffer() -> void:
 
 ## Captura input de ataque e armazena no buffer.
 func _capture_attack_input() -> void:
+	var player := _owner_body as PlayerController
+	if player != null and player.is_weapon_wheel_open():
+		clear_buffer()
+		return
+	if _state_machine.state in [PlayerStateMachine.State.HIT, PlayerStateMachine.State.DEAD]:
+		clear_buffer()
+		return
 	if NpcInteraction.is_dialogue_active():
 		return
 	if not GameManager.has_staff:
@@ -288,6 +314,7 @@ func _start_attack(data: AttackData, chain_index: int) -> void:
 	if _active_hitbox != null:
 		_active_hitbox.end_attack()
 	_current_attack = data
+	_attack_started_in_air = not _owner_body.is_on_floor()
 	if _is_grimoire_air_attack(data):
 		_grimoire_air_count = 3 if data.attack_id == &"grimoire_air_heavy" else _grimoire_air_count + 1
 	_attack_elapsed = 0.0
@@ -305,6 +332,8 @@ func _start_attack(data: AttackData, chain_index: int) -> void:
 	_active_hitbox.configure_from_attack(data)
 	_active_hitbox.style_weapon_id = weapon.weapon_id if weapon != null else &""
 	_active_hitbox.hit_filter = Callable(self, "_grimoire_air_can_hit") if _is_grimoire_air_attack(data) else Callable()
+	# Ataque durante dash é intencional: o dash mantém deslocamento/invulnerabilidade
+	# até terminar; CombatController controla a janela de acerto em paralelo.
 	var attacking_during_dodge := _state_machine.state == PlayerStateMachine.State.DODGE
 	if not attacking_during_dodge:
 		_state_machine.set_state(PlayerStateMachine.State.ATTACK if _owner_body.is_on_floor() else PlayerStateMachine.State.AIR_ATTACK)
@@ -358,6 +387,7 @@ func _finish_attack(reset_chain: bool = false) -> void:
 	if _active_hitbox != null:
 		_active_hitbox.end_attack()
 	_current_attack = null
+	_attack_started_in_air = false
 	_active_hitbox = null
 	_hitbox_live = false
 	_current_delivery = "melee"
@@ -373,9 +403,9 @@ func _finish_attack(reset_chain: bool = false) -> void:
 		if player.equipment.weapon != _chain_weapon:
 			_chain_index = 0
 			_chain_weapon = null
-	if _state_machine.state != PlayerStateMachine.State.DODGE:
-		_state_machine.set_state(PlayerStateMachine.State.IDLE if _owner_body.is_on_floor() else PlayerStateMachine.State.FALL)
 	_try_start_buffered()
+	if _current_attack == null and _state_machine.state != PlayerStateMachine.State.DODGE:
+		_state_machine.set_state(PlayerStateMachine.State.IDLE if _owner_body.is_on_floor() else (PlayerStateMachine.State.JUMP if _owner_body.velocity.y > 0.0 else PlayerStateMachine.State.FALL))
 
 func _spawn_basic_visual(weapon: WeaponData, data: AttackData) -> void:
 	if weapon == null:
@@ -465,7 +495,7 @@ func _on_hit_landed(hurtbox: HurtboxComponent, hitbox: HitboxComponent) -> void:
 	GameManager.register_hit(hitbox.attack_id, hitbox.style_points, hitbox.style_weapon_id)
 	if hitbox.attack_id == &"launcher":
 		_owner_body.velocity.y = maxf(_owner_body.velocity.y, 6.6)
-	GameManager.hit_stop(hitbox.hit_stop_duration)
+	_hold_impact_visuals(hitbox.hit_stop_duration)
 	var camera := get_viewport().get_camera_3d()
 	if camera != null and camera.get_parent() != null and camera.get_parent().get_parent() is ThirdPersonCameraController:
 		var rig := camera.get_parent().get_parent() as ThirdPersonCameraController
@@ -479,6 +509,38 @@ func _on_hit_landed(hurtbox: HurtboxComponent, hitbox: HitboxComponent) -> void:
 	elif attack_name.begins_with("grimoire_"):
 		tint = Color(0.55, 0.41, 1.0)
 	_spawn_hit_spark(hurtbox.global_position, tint)
+
+## Segura somente sprite e adereços, sem interromper simulação nem temporizadores.
+## Acertos simultâneos estendem o prazo máximo em vez de somar pausas.
+func _hold_impact_visuals(duration: float) -> void:
+	if not visual_hitstop_enabled or duration <= 0.0 or visual_hitstop_max_duration <= 0.0:
+		return
+	_visual_hold_until_usec = maxi(_visual_hold_until_usec, Time.get_ticks_usec() + int(minf(duration, visual_hitstop_max_duration) * 1000000.0))
+	if _visual_hold_active:
+		return
+	_visual_hold_active = true
+	var sprite := _owner_body.get_node_or_null("DirectionalSprite") as AnimatedSprite3D
+	var player := _owner_body as PlayerController
+	var weapon_display := player.weapon_display if player != null and is_instance_valid(player.weapon_display) else null
+	var sprite_was_processing := sprite.is_processing() if sprite != null else false
+	var sprite_was_playing := sprite.is_playing() if sprite != null else false
+	var weapon_was_processing := weapon_display.is_processing() if weapon_display != null else false
+	if sprite != null:
+		sprite.set_process(false)
+		if sprite_was_playing:
+			sprite.pause()
+	if weapon_display != null:
+		weapon_display.set_process(false)
+	while Time.get_ticks_usec() < _visual_hold_until_usec:
+		var remaining := float(_visual_hold_until_usec - Time.get_ticks_usec()) / 1000000.0
+		await get_tree().create_timer(remaining, true, false, true).timeout
+	if is_instance_valid(sprite):
+		sprite.set_process(sprite_was_processing)
+		if sprite_was_playing:
+			sprite.play()
+	if is_instance_valid(weapon_display):
+		weapon_display.set_process(weapon_was_processing)
+	_visual_hold_active = false
 
 ## Spawna um efeito de impacto na posição especificada.
 ## @param world_position Posição 3D onde o efeito será criado.

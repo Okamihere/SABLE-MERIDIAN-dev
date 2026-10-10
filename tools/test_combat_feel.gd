@@ -23,12 +23,13 @@ func _run() -> void:
 	var floor_y: float = player.global_position.y
 	Input.action_press("jump")
 	await _frames(2)
-	Input.action_release("jump")
 	assert(player.velocity.y > 0.0, "Jump command must produce upward velocity immediately")
 	var apex: float = player.global_position.y
 	var rising_frames := 0
 	var falling_frames := 0
 	for index in 65:
+		if index == 20:
+			Input.action_release("jump")
 		await _frames(1)
 		apex = maxf(apex, player.global_position.y)
 		if player.velocity.y > 0.0:
