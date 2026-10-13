@@ -35,8 +35,8 @@ func _build_room() -> void:
 			_solid_box("Pilaster_%s_%s" % [int(side), index], Vector3(side * 7.12, 2.75, z), Vector3(width, 5.5, 0.85), STONE)
 			_visual_box("Inlay_%s_%s" % [int(side), index], Vector3(side * 6.79, 3.5, z), Vector3(0.07, 2.1, 0.12), ACCENT)
 	_visual_box("RearSigil", Vector3(0, 3.1, 73.4), Vector3(3.4, 2.2, 0.1), ACCENT)
-	_add_glow("ArrivalBlue", Vector3(0, 4.0, 68), Color(0.55, 0.64, 0.95), 2.4, 14.0)
-	_add_glow("ExitRose", Vector3(0, 4.3, 56), Color(0.84, 0.22, 0.51), 1.4, 11.0)
+	_add_glow("ArrivalBlue", Vector3(0, 4.0, 68), ArtDirection.get_color(&"cool_accent"), 2.4, 14.0)
+	_add_glow("ExitRose", Vector3(0, 4.3, 56), ArtDirection.get_color(&"wine"), 1.4, 11.0)
 
 func _solid_box(label: String, where: Vector3, size: Vector3, material: Material) -> void:
 	_visual_box(label, where, size, material)

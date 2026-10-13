@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene format=3]
 
 [ext_resource type="MeshLibrary" path="res://resources/gridmap/sable_graybox_mesh_library.tres" id="1_library"]
 [ext_resource type="PackedScene" path="res://scenes/player/player_rig.tscn" id="2_player"]
@@ -7,6 +7,13 @@
 [ext_resource type="Material" path="res://materials/stone.tres" id="5_platform_material"]
 [ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="6_hud"]
 [ext_resource type="PackedScene" path="res://scenes/levels/room_return_portal.tscn" id="7_return"]
+[ext_resource type="MeshLibrary" path="res://resources/gridmap/sable_architecture_kit.tres" id="8_architecture"]
+
+[sub_resource type="BoxMesh" id="SpawnPlatformMesh"]
+size = Vector3(6, 1, 6)
+
+[sub_resource type="BoxShape3D" id="SpawnPlatformShape"]
+size = Vector3(6, 1, 6)
 
 [sub_resource type="Sky" id="Sky"]
 sky_material = ExtResource("4_sky_material")
@@ -21,65 +28,141 @@ fog_enabled = true
 fog_density = 0.002
 fog_sky_affect = 0.08
 
-[sub_resource type="BoxMesh" id="SpawnPlatformMesh"]
-size = Vector3(6, 1, 6)
-
-[sub_resource type="BoxShape3D" id="SpawnPlatformShape"]
-size = Vector3(6, 1, 6)
-
-[node name="World01" type="Node3D"]
+[node name="World01" type="Node3D" unique_id=460960973]
 metadata/universe_name = "Coro Afundado"
 
-[node name="FloorsAndRamps" type="GridMap" parent="."]
+[node name="FloorsAndRamps" type="GridMap" parent="." unique_id=1620107923]
 mesh_library = ExtResource("1_library")
 cell_size = Vector3(2, 1, 2)
 cell_center_y = false
-collision_layer = 1
-collision_mask = 1
+data = {
+"cells": PackedInt32Array(65534, 65532, 0, 65534, 65533, 0, 65534, 65534, 0, 65534, 65535, 0, 65535, 65532, 0, 65535, 65533, 0, 65535, 65534, 0, 65535, 65535, 0, 0, 65532, 0, 0, 65533, 0, 0, 65534, 0, 0, 65535, 0, 1, 65532, 0, 1, 65533, 0, 1, 65534, 0, 1, 65535, 0, 65532, 65527, 0, 65532, 65528, 0, 65532, 65529, 0, 65532, 65530, 0, 65532, 65531, 0, 65533, 65527, 0, 65533, 65528, 0, 65533, 65529, 0, 65533, 65530, 0, 65533, 65531, 0, 65534, 65527, 0, 65534, 65528, 0, 65534, 65529, 0, 65534, 65530, 0, 65534, 65531, 0, 65535, 65527, 0, 65535, 65528, 0, 65535, 65529, 0, 65535, 65530, 0, 65535, 65531, 0, 0, 65527, 0, 0, 65528, 0, 0, 65529, 0, 0, 65530, 0, 0, 65531, 0, 1, 65527, 0, 1, 65528, 0, 1, 65529, 0, 1, 65530, 0, 1, 65531, 0, 2, 65527, 0, 2, 65528, 0, 2, 65529, 0, 2, 65530, 0, 2, 65531, 0, 3, 65527, 0, 3, 65528, 0, 3, 65529, 0, 3, 65530, 0, 3, 65531, 0, 65534, 65526, 11, 131070, 65525, 0, 131070, 65524, 11, 65535, 65526, 11, 131071, 65525, 0, 131071, 65524, 11, 0, 65526, 11, 65536, 65525, 0, 65536, 65524, 11, 1, 65526, 11, 65537, 65525, 0, 65537, 65524, 11, 196605, 65518, 0, 196605, 65519, 0, 196605, 65520, 0, 196605, 65521, 0, 196605, 65522, 0, 196605, 65523, 0, 196606, 65518, 0, 196606, 65519, 0, 196606, 65520, 0, 196606, 65521, 0, 196606, 65522, 0, 196606, 65523, 0, 196607, 65518, 0, 196607, 65519, 0, 196607, 65520, 0, 196607, 65521, 0, 196607, 65522, 0, 196607, 65523, 0, 131072, 65518, 0, 131072, 65519, 0, 131072, 65520, 0, 131072, 65521, 0, 131072, 65522, 0, 131072, 65523, 0, 131073, 65518, 0, 131073, 65519, 0, 131073, 65520, 0, 131073, 65521, 0, 131073, 65522, 0, 131073, 65523, 0, 131074, 65518, 0, 131074, 65519, 0, 131074, 65520, 0, 131074, 65521, 0, 131074, 65522, 0, 131074, 65523, 0, 4, 65528, 0, 4, 65529, 0, 5, 65528, 0, 5, 65529, 0, 6, 65528, 0, 6, 65529, 0, 7, 65528, 0, 7, 65529, 0, 8, 65528, 0, 8, 65529, 0, 9, 65528, 0, 9, 65529, 0, 10, 65528, 0, 10, 65529, 0, 9, 65524, 0, 9, 65525, 0, 9, 65526, 0, 9, 65527, 0, 10, 65524, 0, 10, 65525, 0, 10, 65526, 0, 10, 65527, 0, 11, 65524, 0, 11, 65525, 0, 11, 65526, 0, 11, 65527, 0, 11, 65528, 0, 11, 65529, 0, 12, 65524, 0, 12, 65525, 0, 12, 65526, 0, 12, 65527, 0, 12, 65528, 0, 12, 65529, 0, 196601, 65520, 0, 196601, 65521, 0, 196601, 65522, 0, 196601, 65523, 0, 196602, 65520, 0, 196602, 65521, 0, 196602, 65522, 0, 196602, 65523, 0, 196603, 65520, 0, 196603, 65521, 0, 196603, 65522, 0, 196603, 65523, 0, 196604, 65520, 0, 196604, 65521, 0, 196604, 65522, 0, 196604, 65523, 0, 131065, 65524, 11, 131065, 65525, 0, 65529, 65526, 11, 131066, 65524, 11, 131066, 65525, 0, 65530, 65526, 11, 131067, 65524, 11, 131067, 65525, 0, 65531, 65526, 11, 65529, 65527, 0, 65529, 65528, 0, 65529, 65529, 0, 65529, 65530, 0, 65529, 65531, 0, 65529, 65532, 0, 65529, 65533, 0, 65529, 65534, 0, 65530, 65527, 0, 65530, 65528, 0, 65530, 65529, 0, 65530, 65530, 0, 65530, 65531, 0, 65530, 65532, 0, 65530, 65533, 0, 65530, 65534, 0, 65531, 65527, 0, 65531, 65528, 0, 65531, 65529, 0, 65531, 65530, 0, 65531, 65531, 0, 65531, 65532, 0, 65531, 65533, 0, 65531, 65534, 0, 65532, 65534, 0, 65532, 65535, 0, 65533, 65534, 0, 65533, 65535, 0, 65529, 65535, 0, 65530, 65535, 0, 65531, 65535, 0)
+}
 
-[node name="Walls" type="GridMap" parent="."]
+[node name="Walls" type="GridMap" parent="." unique_id=1228369482]
 mesh_library = ExtResource("1_library")
 cell_size = Vector3(2, 1, 2)
 cell_center_y = false
-collision_layer = 1
-collision_mask = 1
+data = {
+"cells": PackedInt32Array(131074, 65518, 9, 131074, 65519, 1441801, 131074, 65520, 1441801, 131074, 65521, 1441801, 131074, 65522, 1441801, 131074, 65523, 1441801, 196605, 65518, 9, 196606, 65518, 9, 196607, 65518, 9, 131072, 65518, 9, 131073, 65518, 9, 196601, 65520, 1048585, 196601, 65521, 1048585, 196601, 65522, 1048585, 196601, 65523, 1048585, 65532, 65527, 1048577, 65532, 65528, 1048577, 65532, 65529, 1048577, 65529, 65535, 655369, 65530, 65535, 655369, 65531, 65535, 655369)
+}
 
-[node name="Water" type="GridMap" parent="."]
+[node name="ArchitectureInitial" type="GridMap" parent="."]
+mesh_library = ExtResource("8_architecture")
+cell_size = Vector3(2, 1, 2)
+cell_center_y = false
+data = {
+"cells": PackedInt32Array(65532, 65531, 1048576, 65532, 65530, 1048577, 65534, 65532, 2, 1, 65530, 3, 65533, 65530, 5, 3, 65530, 4, 65533, 65528, 1048585, 3, 65527, 5, 2, 65527, 8, 65533, 65527, 8, 65534, 65531, 9, 3, 65531, 9)
+}
+
+[node name="Water" type="GridMap" parent="." unique_id=642375963]
 mesh_library = ExtResource("1_library")
 cell_size = Vector3(2, 1, 2)
 cell_center_y = false
 collision_layer = 0
 collision_mask = 0
 
-[node name="SpawnPlatform" type="StaticBody3D" parent="."]
-position = Vector3(0, -0.5, 0)
-collision_layer = 1
-collision_mask = 1
+[node name="SpawnPlatform" type="StaticBody3D" parent="." unique_id=2139581914]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="SpawnPlatform"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="SpawnPlatform" unique_id=869630737]
 mesh = SubResource("SpawnPlatformMesh")
 surface_material_override/0 = ExtResource("5_platform_material")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="SpawnPlatform"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="SpawnPlatform" unique_id=788559602]
 shape = SubResource("SpawnPlatformShape")
 
-[node name="Player" parent="." instance=ExtResource("2_player")]
+[node name="Player" type="CharacterBody3D" parent="." unique_id=2058298914 instance=ExtResource("2_player")]
 position = Vector3(0, 0.05, 0)
+rotation = Vector3(0, 3.1415927, 0)
 starts_with_staff = true
 
-[node name="CameraRig" parent="." instance=ExtResource("3_camera")]
+[node name="CameraRig" type="Node3D" parent="." unique_id=497723062 instance=ExtResource("3_camera")]
 
-[node name="HUD" parent="." instance=ExtResource("6_hud")]
+[node name="HUD" type="CanvasLayer" parent="." unique_id=1424310867 instance=ExtResource("6_hud")]
 
-[node name="ReturnToHub" parent="." instance=ExtResource("7_return")]
+[node name="ReturnToHub" type="Node3D" parent="." unique_id=1886376876 instance=ExtResource("7_return")]
 position = Vector3(0, 0, 2)
 destination_scene = "res://scenes/levels/vertical_pilot.tscn"
 destination_name = "HUB"
 return_world_id = &"world_01"
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=2087579940]
 environment = SubResource("Environment")
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
-rotation_degrees = Vector3(-45, -25, 0)
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1428663060]
+transform = Transform3D(0.90630776, 0.29883623, -0.29883623, 0, 0.70710677, 0.70710677, 0.42261827, -0.6408563, 0.6408563, 0, 0, 0)
 light_energy = 1.1
+
+[node name="ArrivalPoints" type="Node3D" parent="." unique_id=1608893185]
+
+[node name="FromHub" type="Marker3D" parent="ArrivalPoints" unique_id=968989303]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+
+[node name="FutureNorth" type="Marker3D" parent="ArrivalPoints" unique_id=356553827]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.05, -31)
+
+[node name="FutureEast" type="Marker3D" parent="ArrivalPoints" unique_id=1818477382]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0.05, -19)
+
+[node name="DistantRegionBlockout" type="Node3D" parent="." unique_id=119618014]
+
+[node name="GroundMass" type="CSGBox3D" parent="DistantRegionBlockout" unique_id=306770965]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.7, -53)
+use_collision = true
+size = Vector3(22, 5.4, 14)
+material = ExtResource("5_platform_material")
+
+[node name="LeftMass" type="CSGBox3D" parent="DistantRegionBlockout" unique_id=229293070]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 3.2, -57)
+use_collision = true
+size = Vector3(4, 7, 5)
+material = ExtResource("5_platform_material")
+
+[node name="RightMass" type="CSGBox3D" parent="DistantRegionBlockout" unique_id=1661384758]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 2.2, -55)
+use_collision = true
+size = Vector3(4, 5, 6)
+material = ExtResource("5_platform_material")
+
+[node name="DestinationPath" type="GridMap" parent="."]
+mesh_library = ExtResource("1_library")
+cell_size = Vector3(2, 1, 2)
+cell_center_y = false
+data = {
+"cells": PackedInt32Array(131075, 65518, 0, 131076, 65518, 0, 131075, 65517, 0, 131076, 65517, 0, 131077, 65517, 0, 131078, 65517, 0, 131077, 65516, 0, 131078, 65516, 0, 65539, 65516, 655371, 65539, 65515, 0, 3, 65514, 655371, 65540, 65516, 655371, 65540, 65515, 0, 4, 65514, 655371, 3, 65513, 0, 4, 65513, 0, 5, 65513, 0, 5, 65512, 11, 65541, 65511, 11, 131077, 65510, 11, 196613, 65509, 11, 262149, 65508, 11, 327685, 65507, 0, 327684, 65507, 0)
+}
+
+[node name="ArchitectureUpperRoute" type="GridMap" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
+mesh_library = ExtResource("8_architecture")
+cell_size = Vector3(2, 1, 2)
+cell_center_y = false
+data = {
+"cells": PackedInt32Array(6, 65517, 5, 6, 65516, 1441801, 5, 65516, 8)
+}
+
+[node name="ArchitectureLowerRoute" type="GridMap" parent="."]
+mesh_library = ExtResource("8_architecture")
+cell_size = Vector3(2, 1, 2)
+cell_center_y = false
+data = {
+"cells": PackedInt32Array(0, 65512, 3, 65535, 65510, 1048584, 1, 65508, 9, 4, 65512, 4)
+}
+
+[node name="ArchitectureRightMass" type="GridMap" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.7, 0)
+mesh_library = ExtResource("8_architecture")
+cell_size = Vector3(2, 1, 2)
+cell_center_y = false
+data = {
+"cells": PackedInt32Array(4, 65510, 2, 3, 65508, 5, 3, 65509, 9)
+}
+
+[node name="ArchitectureStairGuard" type="GridMap" parent="."]
+mesh_library = ExtResource("8_architecture")
+cell_size = Vector3(2, 1, 2)
+cell_center_y = false
+data = {
+"cells": PackedInt32Array(6, 65513, 1048584, 6, 65512, 1048576, 65542, 65511, 1048577, 131078, 65510, 1048584, 196614, 65509, 1048576, 262150, 65508, 1048577)
+}

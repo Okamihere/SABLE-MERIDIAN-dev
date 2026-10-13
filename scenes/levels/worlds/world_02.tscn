@@ -6,7 +6,22 @@
 [ext_resource type="Material" path="res://materials/contemplative_sky.tres" id="4_sky_material"]
 [ext_resource type="PackedScene" uid="uid://cda0geljm45bn" path="res://scenes/ui/hud.tscn" id="6_hud"]
 [ext_resource type="PackedScene" path="res://scenes/levels/room_return_portal.tscn" id="7_return"]
+[ext_resource type="PackedScene" uid="uid://dte2n3f15kdna" path="res://assets/3d model/world_2.blend" id="8_3vb6d"]
 [ext_resource type="Material" path="res://addons/csg_blockout/res/materials/mat_grid_light.tres" id="8_hkdmt"]
+[ext_resource type="Material" path="res://materials/basin_water.tres" id="9_basin_water"]
+[ext_resource type="Script" uid="uid://day4vksgpu5bw" path="res://scripts/levels/palette_region.gd" id="10_palette_region"]
+[ext_resource type="Resource" path="res://resources/palettes/world_02.tres" id="11_palette_profile"]
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_deep_basin"]
+material = ExtResource("9_basin_water")
+size = Vector2(230, 210)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_shallow_basin"]
+material = ExtResource("9_basin_water")
+size = Vector2(170, 200)
+
+[sub_resource type="BoxShape3D" id="BoxShape_spawn_footing"]
+size = Vector3(42, 0.3, 30)
 
 [sub_resource type="Sky" id="Sky"]
 sky_material = ExtResource("4_sky_material")
@@ -15,14 +30,22 @@ sky_material = ExtResource("4_sky_material")
 background_mode = 2
 sky = SubResource("Sky")
 ambient_light_source = 2
-ambient_light_color = Color(0.7, 0.64, 0.75, 1)
+ambient_light_color = Color(0.616, 0.6016, 0.78749996, 1)
 ambient_light_energy = 0.85
 fog_enabled = true
+fog_light_color = Color(0.36032, 0.41043198, 0.56617594, 1)
 fog_density = 0.002
 fog_sky_affect = 0.08
+metadata/sable_original_ambient = Color(0.7, 0.64, 0.75, 1)
+metadata/sable_original_fog = Color(0.518, 0.553, 0.608, 1)
 
 [node name="World02" type="Node3D" unique_id=945127531]
 metadata/universe_name = "Galeria dos Espelhos"
+
+[node name="PaletteRegion" type="Node" parent="." unique_id=81260085]
+script = ExtResource("10_palette_region")
+profile = ExtResource("11_palette_profile")
+tint_targets = Array[NodePath]([NodePath("../world_2/Plane")])
 
 [node name="FloorsAndRamps" type="GridMap" parent="." unique_id=559349695]
 mesh_library = ExtResource("1_library")
@@ -44,17 +67,35 @@ cell_size = Vector3(2, 1, 2)
 cell_center_y = false
 metadata/_editor_floor_ = Vector3(0, -1, 0)
 
+[node name="WaterBasins" type="Node3D" parent="." unique_id=843099516]
+
+[node name="DeepBasin" type="MeshInstance3D" parent="WaterBasins" unique_id=1153420188]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 235, 28.057297, -695)
+cast_shadow = 0
+mesh = SubResource("PlaneMesh_deep_basin")
+
+[node name="ShallowBasin" type="MeshInstance3D" parent="WaterBasins" unique_id=502540970]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -44.211945, 5.366745, -370)
+cast_shadow = 0
+mesh = SubResource("PlaneMesh_shallow_basin")
+
+[node name="SpawnFooting" type="StaticBody3D" parent="." unique_id=1731010872]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.5, 0.95, 9)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="SpawnFooting" unique_id=1316101161]
+shape = SubResource("BoxShape_spawn_footing")
+
 [node name="Player" parent="." unique_id=860437005 instance=ExtResource("2_player")]
-transform = Transform3D(-0.9999701, -0.0058861827, -0.005025999, -0.0059259636, 0.99995095, 0.007936721, 0.0049790326, 0.007966269, -0.9999559, 0, 1.593785, 0)
+transform = Transform3D(-0.9999701, -0.0058861827, -0.005025999, -0.0059259636, 0.99995095, 0.007936721, 0.0049790326, 0.007966269, -0.9999559, -17.46938, 2.7852054, 9.566529)
 starts_with_staff = true
 
 [node name="CameraRig" parent="." unique_id=1594259835 instance=ExtResource("3_camera")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5437851, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.46938, 2.7352054, 9.566529)
 
 [node name="HUD" parent="." unique_id=91833509 instance=ExtResource("6_hud")]
 
 [node name="ReturnToHub" parent="." unique_id=393452719 instance=ExtResource("7_return")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.026293278, 1.6005483)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.46938, 1.2177136, 11.167078)
 destination_scene = "res://scenes/levels/vertical_pilot.tscn"
 destination_name = "HUB"
 return_world_id = &"world_02"
@@ -63,45 +104,18 @@ return_world_id = &"world_02"
 environment = SubResource("Environment")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1733584484]
-transform = Transform3D(0.9063078, 0.29883626, -0.29883626, 0, 0.7071068, 0.7071068, 0.4226183, -0.6408564, 0.6408564, 0, 1.5437851, 0)
+transform = Transform3D(0.9063078, 0.29883626, -0.2988363, 0, 0.7071068, 0.70710677, 0.4226183, -0.6408564, 0.64085644, -17.46938, 2.7352054, 9.566529)
+light_color = Color(0.8008, 0.78959996, 0.9983999, 1)
 light_energy = 1.1
+metadata/sable_original_light = Color(1, 1, 1, 1)
 
 [node name="Room" type="CSGCombiner3D" parent="." unique_id=127876803]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.5, 1.5, -83)
 use_collision = true
 
-[node name="Box" type="CSGBox3D" parent="." unique_id=603306387]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, -6.130127)
-autosmooth = true
-use_collision = true
-size = Vector3(8, 1, 23.260254)
-material = ExtResource("8_hkdmt")
-
-[node name="Box_03" type="CSGBox3D" parent="." unique_id=925820192]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24.909351, -0.49999952, -13.2264)
-use_collision = true
-size = Vector3(89.593994, 1, 9)
-material = ExtResource("8_hkdmt")
-
-[node name="Box_03" type="CSGBox3D" parent="Box_03" unique_id=638130717]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -36.842484, -4.7683716e-07, -601.4675)
-use_collision = true
-size = Vector3(1450.168, 1, 1193.9152)
-material = ExtResource("8_hkdmt")
-
-[node name="Torus" type="CSGTorus3D" parent="." unique_id=1549253745]
-transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 24, 0, -8.476397)
-use_collision = true
-material = ExtResource("8_hkdmt")
-
 [node name="Room_02" type="CSGCombiner3D" parent="." unique_id=177446873]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1260.5, 1.5, -624.5)
 use_collision = true
-
-[node name="Shell" type="CSGBox3D" parent="Room_02" unique_id=855828167]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2347.3281, 3, -1299.1335)
-size = Vector3(845, 9, 707)
-material = ExtResource("8_hkdmt")
 
 [node name="Hollow" type="CSGBox3D" parent="Room_02" unique_id=1844870994]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -289.82654, 4.625, 0)
@@ -109,20 +123,15 @@ operation = 2
 size = Vector3(868.75, 11.75, 706.5)
 material = ExtResource("8_hkdmt")
 
-[node name="Block" type="CSGBox3D" parent="." unique_id=2116451114]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 419.38345, 0.5, -2183.9058)
-use_collision = true
-size = Vector3(348.3446, 1, 1975.9268)
-material = ExtResource("8_hkdmt")
+[node name="world_2" parent="." unique_id=1859271708 instance=ExtResource("8_3vb6d")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30.059143, -0.706728, -554.35364)
 
-[node name="Block2" type="CSGBox3D" parent="." unique_id=320354892]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 419.38345, 0.5, -2183.9058)
+[node name="Room_03" type="CSGCombiner3D" parent="." unique_id=715737394]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1.1006615, 5)
 use_collision = true
-size = Vector3(348.3446, 1, 1975.9268)
-material = ExtResource("8_hkdmt")
 
-[node name="Block_02" type="CSGBox3D" parent="." unique_id=2094562770]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1499.6625, 0.5, -564.48773)
-use_collision = true
-size = Vector3(1632.9042, 1, 787.28076)
+[node name="Hollow" type="CSGBox3D" parent="Room_03" unique_id=489246335]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.13, 0)
+operation = 2
+size = Vector3(15.5, 2.76, 19.5)
 material = ExtResource("8_hkdmt")

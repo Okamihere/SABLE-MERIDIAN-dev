@@ -450,8 +450,8 @@ func _make_strings() -> Node3D:
 	var holder := Node3D.new()
 	holder.name = "EquippedPuppetStrings"
 	add_child(holder)
-	var dark := _material(Color(0.12, 0.13, 0.28), 0.0)
-	var cyan := _material(Color(0.28, 0.82, 0.92), 1.7)
+	var dark := _material(ArtDirection.get_color(&"ink").lightened(0.12), 0.0)
+	var cyan := _material(ArtDirection.get_color(&"cool_accent"), 1.7)
 	_box(holder, Vector3.ZERO, Vector3(0.61, 0.36, 0.23), dark)
 	_box(holder, Vector3(0.0, 0.02, 0.14), Vector3(0.41, 0.065, 0.035), cyan)
 	for side in [-1.0, 1.0]:
@@ -463,8 +463,8 @@ func _make_cane() -> Node3D:
 	var holder := Node3D.new()
 	holder.name = "EquippedCaneBlade"
 	add_child(holder)
-	var dark := _material(Color(0.16, 0.11, 0.26), 0.25)
-	var gold := _material(Color(0.86, 0.63, 0.28), 0.3)
+	var dark := _material(ArtDirection.get_color(&"plum"), 0.25)
+	var gold := _material(ArtDirection.get_color(&"gold"), 0.3)
 	_box(holder, Vector3(0.0, 0.0, 0.0), Vector3(0.085, 1.34, 0.085), dark)
 	_box(holder, Vector3(0.12, 0.68, 0.0), Vector3(0.33, 0.085, 0.085), gold)
 	_box(holder, Vector3(0.27, 0.55, 0.0), Vector3(0.075, 0.27, 0.075), gold)
@@ -475,8 +475,8 @@ func _make_echo_blade() -> Node3D:
 	var holder := Node3D.new()
 	holder.name = "EquippedEchoBlade"
 	add_child(holder)
-	var steel := _material(Color(0.39, 0.43, 0.52), 0.16)
-	var wine := _material(Color(0.43, 0.09, 0.19), 0.3)
+	var steel := _material(ArtDirection.get_color(&"stone_light").lightened(0.22), 0.16)
+	var wine := _material(ArtDirection.get_color(&"wine"), 0.3)
 	_box(holder, Vector3(0, 0.3, 0), Vector3(0.11, 1.13, 0.045), steel)
 	_box(holder, Vector3(0, -0.32, 0), Vector3(0.45, 0.08, 0.1), wine)
 	_box(holder, Vector3(0, -0.57, 0), Vector3(0.105, 0.47, 0.1), wine)
@@ -498,7 +498,7 @@ func _make_grimoire() -> Node3D:
 	ritual.visible = false
 	holder.add_child(ritual)
 	_grimoire_ritual = ritual
-	var ivory := _material(Color(0.75, 0.68, 0.59), 0.12)
+	var ivory := _material(ArtDirection.get_color(&"ivory").darkened(0.1), 0.12)
 	var left := Node3D.new()
 	left.name = "LeftPage"
 	ritual.add_child(left)

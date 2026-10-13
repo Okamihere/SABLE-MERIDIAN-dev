@@ -18,15 +18,17 @@ var _mote_material: StandardMaterial3D
 func _ready() -> void:
 	_beam_material = ShaderMaterial.new()
 	_beam_material.shader = SHAFT_SHADER
+	var beam_color: Color = ArtDirection.get_color(&"violet")
+	_beam_material.set_shader_parameter(&"shaft_color", Vector3(beam_color.r, beam_color.g, beam_color.b))
 	_cloud_material = ShaderMaterial.new()
 	_cloud_material.shader = CLOUD_SHADER
 	_smoke_material = ShaderMaterial.new()
 	_smoke_material.shader = SMOKE_SHADER
 	_mote_material = StandardMaterial3D.new()
 	_mote_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	_mote_material.albedo_color = Color(0.75, 0.43, 0.9, 1)
+	_mote_material.albedo_color = ArtDirection.get_color(&"violet").lerp(ArtDirection.get_color(&"ivory"), 0.35)
 	_mote_material.emission_enabled = true
-	_mote_material.emission = Color(0.55, 0.18, 0.75, 1)
+	_mote_material.emission = ArtDirection.get_color(&"violet")
 	_mote_material.emission_energy_multiplier = 1.4
 	if training_room:
 		_build_training()

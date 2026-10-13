@@ -28,12 +28,12 @@ func activate(caster: Node3D, weapon_id: StringName, heavy: bool) -> void:
 		return
 	global_position = caster.global_position + Vector3.UP * (0.28 if weapon_id == &"living_grimoire" and heavy else 1.25) + forward * (1.0 if heavy else 0.9)
 	look_at(global_position + forward, Vector3.UP, true)
-	var color := Color(0.58, 0.34, 1.0)
+	var color: Color = ArtDirection.get_color(&"violet")
 	match weapon_id:
-		&"card_daggers": color = Color(0.85, 0.27, 0.9)
-		&"puppet_strings": color = Color(0.3, 0.82, 0.94)
-		&"cane_blade": color = Color(1.0, 0.69, 0.34)
-		&"living_grimoire": color = Color(0.55, 0.38, 1.0)
+		&"card_daggers": color = ArtDirection.get_color(&"wine").lerp(color, 0.45)
+		&"puppet_strings": color = ArtDirection.get_color(&"cool_accent")
+		&"cane_blade": color = ArtDirection.get_color(&"gold")
+		&"living_grimoire": color = color.lerp(ArtDirection.get_color(&"ivory"), 0.1)
 	_material = StandardMaterial3D.new()
 	_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA

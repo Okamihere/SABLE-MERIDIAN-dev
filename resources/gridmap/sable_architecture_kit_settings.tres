@@ -1,0 +1,7 @@
+[gd_resource type="Resource" script_class="SableArchitectureKitSettings" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/sable_architecture_kit_settings.gd" id="1_settings"]
+
+[resource]
+script = ExtResource("1_settings")
+seed = 1731

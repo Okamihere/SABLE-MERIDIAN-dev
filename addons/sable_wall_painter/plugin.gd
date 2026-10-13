@@ -3,11 +3,18 @@ extends EditorPlugin
 
 const STROKE := preload("res://addons/sable_wall_painter/wall_stroke.gd")
 const LIBRARY := preload("res://resources/gridmap/sable_graybox_mesh_library.tres")
+const ART_DIRECTION := preload("res://scripts/systems/art_direction.gd")
+const BASE_PALETTE := preload("res://resources/palettes/sable_default.tres")
+const KIT_BUILDER := preload("res://scripts/editor/sable_architecture_kit_builder.gd")
+const KIT_SETTINGS := preload("res://resources/gridmap/sable_architecture_kit_settings.tres")
 const TOOLTIP := "Pinte paredes retas automaticamente. Use Selecionar no GridMap para ocultar a previsualizacao nativa."
 const MAX_OVERLAY_CELLS := 32
 
 var _toolbar: HBoxContainer
 var _toggle: Button
+var _palette_button: Button
+var _palette_sync_button: Button
+var _kit_menu: MenuButton
 var _item_picker: OptionButton
 var _rotation_picker: OptionButton
 var _layer_picker: SpinBox
@@ -36,6 +43,25 @@ func _enter_tree() -> void:
 	_turn_material = _preview_material(Color(1.0, 0.7, 0.18, 0.65))
 	_turn_mesh = BoxMesh.new()
 	_toolbar = HBoxContainer.new()
+	_palette_button = Button.new()
+	_palette_button.text = "Paleta"
+	_palette_button.tooltip_text = "Editar a paleta visual compartilhada"
+	_palette_button.pressed.connect(func() -> void: EditorInterface.edit_resource(BASE_PALETTE))
+	_toolbar.add_child(_palette_button)
+	_palette_sync_button = Button.new()
+	_palette_sync_button.text = "Aplicar cores"
+	_palette_sync_button.tooltip_text = "Atualizar e salvar os materiais e a biblioteca do GridMap"
+	_palette_sync_button.pressed.connect(_save_palette)
+	_toolbar.add_child(_palette_sync_button)
+	BASE_PALETTE.changed.connect(_preview_palette)
+	_kit_menu = MenuButton.new()
+	_kit_menu.text = "Kit 3D"
+	_kit_menu.tooltip_text = "Gerar peças modulares em uma biblioteca separada, sem trocar os grayboxes"
+	_kit_menu.get_popup().add_item("Editar seed", 0)
+	_kit_menu.get_popup().add_item("Gerar peças e prévia", 1)
+	_kit_menu.get_popup().add_item("Abrir prévia", 2)
+	_kit_menu.get_popup().id_pressed.connect(_on_kit_action)
+	_toolbar.add_child(_kit_menu)
 	_toggle = Button.new()
 	_toggle.text = "Autoalinhar paredes"
 	_toggle.toggle_mode = true
@@ -66,10 +92,40 @@ func _enter_tree() -> void:
 
 
 func _exit_tree() -> void:
+	BASE_PALETTE.changed.disconnect(_preview_palette)
 	_cancel_stroke()
 	_clear_preview()
 	remove_control_from_container(CONTAINER_SPATIAL_EDITOR_MENU, _toolbar)
 	_toolbar.queue_free()
+
+
+func _preview_palette() -> void:
+	ART_DIRECTION.apply_shared_assets(BASE_PALETTE)
+	_refresh_preview()
+
+
+func _save_palette() -> void:
+	ART_DIRECTION.apply_shared_assets(BASE_PALETTE, true)
+	_refresh_preview()
+
+
+func _on_kit_action(id: int) -> void:
+	match id:
+		0:
+			EditorInterface.edit_resource(KIT_SETTINGS)
+		1:
+			var save_error := ResourceSaver.save(KIT_SETTINGS)
+			if save_error != OK:
+				push_error("Não foi possível salvar a seed do kit: %s" % error_string(save_error))
+				return
+			var build_error: Error = KIT_BUILDER.save_outputs(KIT_SETTINGS.seed)
+			if build_error != OK:
+				push_error("Não foi possível gerar o kit: %s" % error_string(build_error))
+				return
+			EditorInterface.get_resource_filesystem().scan()
+			EditorInterface.open_scene_from_path(KIT_BUILDER.OUTPUT_PREVIEW)
+		2:
+			EditorInterface.open_scene_from_path(KIT_BUILDER.OUTPUT_PREVIEW)
 
 
 func _handles(object: Object) -> bool:

@@ -31,6 +31,7 @@ config/features=PackedStringArray("4.7", "GL Compatibility")
 
 [autoload]
 
+ArtDirection="*res://scripts/systems/art_direction.gd"
 GameManager="*res://scripts/systems/game_manager.gd"
 CelShading="*res://scripts/systems/cel_shading.gd"
 Progression="*res://scripts/systems/progression.gd"

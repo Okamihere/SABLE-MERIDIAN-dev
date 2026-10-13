@@ -26,48 +26,48 @@ func activate(caster: Node3D, spell: SpellResource) -> void:
 	match spell.ability_id:
 		&"dagger_q":
 			_cards(3, 0.23, 1.0)
-			_glyph(Color(0.8, 0.25, 1.0), 0.75, 0.35)
+			_glyph(ArtDirection.get_color(&"wine").lerp(ArtDirection.get_color(&"violet"), 0.45), 0.75, 0.35)
 		&"dagger_e":
-			_glyph(Color(0.8, 0.25, 1.0), 0.9, 0.45)
+			_glyph(ArtDirection.get_color(&"wine").lerp(ArtDirection.get_color(&"violet"), 0.45), 0.9, 0.45)
 			_safe_advance(3.0)
 			_caster.velocity.x = _direction.x * 10.0
 			_caster.velocity.z = _direction.z * 10.0
 			_caster._skill_guard_until = Time.get_ticks_msec() / 1000.0 + 0.22
 			_hit(Vector3(1.5, 1.5, 1.7), 0.3, 3.0, 0.22, 0.0)
 		&"dagger_r":
-			_trap(Color(0.68, 0.13, 0.9), 1.8, 2.4, 0.95)
+			_trap(ArtDirection.get_color(&"wine").lerp(ArtDirection.get_color(&"violet"), 0.45), 1.8, 2.4, 0.95)
 		&"staff_e":
-			_ring(Color(0.52, 0.28, 1.0), 2.35, 0.45)
+			_ring(ArtDirection.get_color(&"violet"), 2.35, 0.45)
 			_hit(Vector3(4.7, 1.4, 4.7), 0.38, 11.0, 0.5, 0.0)
 		&"staff_r":
-			_lance(Color(0.86, 0.55, 1.0), 5.0, 0.85)
+			_lance(ArtDirection.get_color(&"violet").lerp(ArtDirection.get_color(&"ivory"), 0.3), 5.0, 0.85)
 			_hit(Vector3(1.25, 2.5, 5.0), 0.55, 6.0, 0.35, 10.0)
 		&"strings_q":
-			_lance(Color(0.34, 0.86, 0.94), 4.4, 0.22)
+			_lance(ArtDirection.get_color(&"cool_accent"), 4.4, 0.22)
 			_hit(Vector3(0.8, 1.5, 4.5), 0.45, -9.0, 0.45, 0.0)
 		&"strings_e":
-			_glyph(Color(0.36, 0.89, 0.96), 1.4, 0.6)
+			_glyph(ArtDirection.get_color(&"cool_accent"), 1.4, 0.6)
 			_hit(Vector3(2.5, 2.2, 3.3), 0.42, 0.0, 0.4, 11.0)
 		&"strings_r":
-			_trap(Color(0.33, 0.8, 0.95), 2.3, 3.0, 1.4)
+			_trap(ArtDirection.get_color(&"cool_accent"), 2.3, 3.0, 1.4)
 		&"cane_q":
-			_lance(Color(1.0, 0.8, 0.44), 3.2, 0.3)
+			_lance(ArtDirection.get_color(&"gold"), 3.2, 0.3)
 			_hit(Vector3(0.85, 1.3, 3.3), 0.25, 8.0, 0.27, 0.0)
 		&"cane_e":
-			_ring(Color(1.0, 0.82, 0.37), 1.2, 0.42)
+			_ring(ArtDirection.get_color(&"gold"), 1.2, 0.42)
 			_caster._skill_guard_until = Time.get_ticks_msec() / 1000.0 + 0.42
 		&"cane_r":
 			_safe_advance(2.2)
 			global_position = _caster.global_position + Vector3.UP * 1.15 + _direction * 0.8
 			_caster.velocity.x = _direction.x * 13.0
 			_caster.velocity.z = _direction.z * 13.0
-			_slash(Color(1.0, 0.67, 0.36), 0.85)
+			_slash(ArtDirection.get_color(&"gold"), 0.85)
 			_hit(Vector3(2.6, 1.5, 3.4), 0.48, 10.0, 0.42, 0.0)
 		&"grimoire_q":
 			_play_grimoire_q_cast_sound()
 			_cards(1, 0.0, 1.4, true)
 		&"grimoire_e":
-			_trap(Color(0.47, 0.35, 1.0), 2.0, 3.4, 0.65)
+			_trap(ArtDirection.get_color(&"violet"), 2.0, 3.4, 0.65)
 
 func _process(delta: float) -> void:
 	_age += delta

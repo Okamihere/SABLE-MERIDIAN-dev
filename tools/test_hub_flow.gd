@@ -24,7 +24,7 @@ func _run() -> void:
 		var door := item as Node3D
 		assert(not ids.has(door.world_id), "ID de mundo duplicado")
 		ids[door.world_id] = true
-		assert(door.destination_scene == WORLDS_DIR + String(door.world_id) + ".tscn", "Porta não aponta para o mundo vazio: %s" % door.world_id)
+		assert(door.destination_scene == WORLDS_DIR + String(door.world_id) + ".tscn", "Porta não aponta para o mundo: %s" % door.world_id)
 		assert(ResourceLoader.exists(door.destination_scene), "Mundo sem cena: %s" % door.destination_scene)
 		var approach: Vector3 = door.global_position + Vector3(-signf(door.position.x) * 3.0, 3.0, 0)
 		var query := PhysicsRayQueryParameters3D.create(approach, approach + Vector3.DOWN * 6.0)
@@ -56,7 +56,7 @@ func _run() -> void:
 	action.pressed = true
 	first._unhandled_input(action)
 	await root.get_node("AreaTransition").transition_finished
-	assert(current_scene.scene_file_path == "res://scenes/levels/worlds/world_01.tscn", "Porta 01 não abriu o mundo vazio")
+	assert(current_scene.scene_file_path == "res://scenes/levels/worlds/world_01.tscn", "Porta 01 não abriu o mundo")
 	assert(current_scene.has_node("Player") and current_scene.has_node("CameraRig") and current_scene.has_node("HUD"), "Mundo sem sistemas do Player")
 	var return_portal := current_scene.get_node("ReturnToHub")
 	assert(return_portal.destination_scene == HUB and return_portal.return_world_id == &"world_01")
@@ -69,10 +69,13 @@ func _run() -> void:
 	for index in range(2, 9):
 		var world_id := "world_%02d" % index
 		assert(change_scene_to_file(WORLDS_DIR + world_id + ".tscn") == OK)
-		for frame in 4:
+		for frame in 120:
 			await physics_frame
+			if current_scene != null:
+				break
+		assert(current_scene != null, "Mundo não carregou: %s" % world_id)
 		assert(current_scene.has_node("Player") and current_scene.has_node("CameraRig") and current_scene.has_node("HUD"))
 		var portal := current_scene.get_node("ReturnToHub")
 		assert(portal.destination_scene == HUB and portal.return_world_id == StringName(world_id))
-	print("HUB FLOW PASS: oito portas apontam aos mundos vazios, com HUD e retorno funcional")
+	print("HUB FLOW PASS: oito portas apontam aos mundos, com HUD e retorno funcional")
 	quit(0)

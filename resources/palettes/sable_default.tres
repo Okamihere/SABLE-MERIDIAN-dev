@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="SableArtPalette" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/sable_art_palette.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+ink = Color(0.045, 0.045, 0.075, 1)
+plum = Color(0.24, 0.075, 0.27, 1)
+violet = Color(0.55, 0.27, 0.7, 1)
+wine = Color(0.38, 0.055, 0.19, 1)
+magenta = Color(0.62, 0.07, 0.31, 1)
+gold = Color(0.76, 0.55, 0.25, 1)
+ivory = Color(0.88, 0.82, 0.68, 1)
+stone_dark = Color(0.105, 0.115, 0.15, 1)
+stone_mid = Color(0.278, 0.263, 0.31, 1)
+stone_light = Color(0.19, 0.18, 0.24, 1)
+ambient = Color(0.7, 0.64, 0.75, 1)
+key_light = Color(0.91, 0.84, 0.96, 1)
+fog = Color(0.18, 0.12, 0.29, 1)
+cool_light = Color(0.78, 0.73, 0.93, 1)
+cool_accent = Color(0.28, 0.72, 0.82, 1)

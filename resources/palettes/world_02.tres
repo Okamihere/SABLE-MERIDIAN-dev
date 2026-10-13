@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="SableRegionPalette" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/sable_region_palette.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+ambient_tint = Color(0.88, 0.94, 1.05, 1)
+light_tint = Color(0.88, 0.94, 1.04, 1)
+fog_tint = Color(0.8, 0.88, 1.04, 1)
+accent_tint = Color(0.9, 0.98, 1.08, 1)
+terrain_tint = Color(0.2, 0.17, 0.23, 1)
